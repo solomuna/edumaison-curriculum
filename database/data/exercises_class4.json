@@ -1,0 +1,387 @@
+[
+  {
+    "lesson_slug": "our-country-c4",
+    "title": "Our Country Cameroon - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each fact about Cameroon.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Cameroon is in Central Africa",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "The capital city is Yaounde",
+          "color": "#2196F3"
+        },
+        {
+          "text": "The economic capital is Douala",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Cameroon has two official languages",
+          "color": "#9C27B0"
+        },
+        {
+          "text": "English and French are official languages",
+          "color": "#F44336"
+        },
+        {
+          "text": "The currency is the CFA Franc",
+          "color": "#FFD93D"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "our-country-c4",
+    "title": "Know Your Country",
+    "instructions": "Choose the correct answer about Cameroon.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "What is the capital city of Cameroon?",
+          "options": [
+            "Douala",
+            "Yaounde",
+            "Bafoussam"
+          ],
+          "answer": "Yaounde"
+        },
+        {
+          "question": "What is the economic capital of Cameroon?",
+          "options": [
+            "Yaounde",
+            "Limbe",
+            "Douala"
+          ],
+          "answer": "Douala"
+        },
+        {
+          "question": "How many official languages does Cameroon have?",
+          "options": [
+            "1",
+            "2",
+            "3"
+          ],
+          "answer": "2"
+        },
+        {
+          "question": "Cameroon is located in which part of Africa?",
+          "options": [
+            "West Africa",
+            "East Africa",
+            "Central Africa"
+          ],
+          "answer": "Central Africa"
+        },
+        {
+          "question": "What is the currency of Cameroon?",
+          "options": [
+            "Naira",
+            "CFA Franc",
+            "Dollar"
+          ],
+          "answer": "CFA Franc"
+        },
+        {
+          "question": "What is the nickname of Cameroon?",
+          "options": [
+            "Lion of Africa",
+            "Africa in Miniature",
+            "Heart of Africa"
+          ],
+          "answer": "Africa in Miniature"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "plants-animals-c4",
+    "title": "Plants and Animals - Vocabulary",
+    "instructions": "Listen to Mama Judi. Repeat each word.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Photosynthesis",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Roots",
+          "color": "#795548"
+        },
+        {
+          "text": "Stem",
+          "color": "#8BC34A"
+        },
+        {
+          "text": "Leaves",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Flowers",
+          "color": "#E91E63"
+        },
+        {
+          "text": "Fruits",
+          "color": "#FF9800"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "plants-animals-c4",
+    "title": "Parts of a Plant",
+    "instructions": "Choose the correct answer.",
+    "category": "science",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "Which part of a plant absorbs water from the soil?",
+          "options": [
+            "Leaves",
+            "Stem",
+            "Roots"
+          ],
+          "answer": "Roots"
+        },
+        {
+          "question": "Which part of a plant makes food using sunlight?",
+          "options": [
+            "Roots",
+            "Leaves",
+            "Stem"
+          ],
+          "answer": "Leaves"
+        },
+        {
+          "question": "Which part carries water from roots to leaves?",
+          "options": [
+            "Stem",
+            "Flower",
+            "Fruit"
+          ],
+          "answer": "Stem"
+        },
+        {
+          "question": "Plants make their own food through ___",
+          "options": [
+            "Respiration",
+            "Photosynthesis",
+            "Digestion"
+          ],
+          "answer": "Photosynthesis"
+        },
+        {
+          "question": "What do plants need to make food?",
+          "options": [
+            "Meat and water",
+            "Sunlight and water",
+            "Soil and meat"
+          ],
+          "answer": "Sunlight and water"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "staying-healthy-c4",
+    "title": "Healthy Living - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each healthy habit.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Wash your hands before eating",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Drink clean water every day",
+          "color": "#00BCD4"
+        },
+        {
+          "text": "Eat fruits and vegetables",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Exercise regularly",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Sleep at least 8 hours",
+          "color": "#9C27B0"
+        },
+        {
+          "text": "Visit the doctor regularly",
+          "color": "#F44336"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "staying-healthy-c4",
+    "title": "Healthy Habits Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "How many hours should a child sleep each night?",
+          "options": [
+            "5 hours",
+            "8 hours",
+            "12 hours"
+          ],
+          "answer": "8 hours"
+        },
+        {
+          "question": "What should you do before eating?",
+          "options": [
+            "Watch TV",
+            "Wash your hands",
+            "Run outside"
+          ],
+          "answer": "Wash your hands"
+        },
+        {
+          "question": "Which food is healthiest?",
+          "options": [
+            "Sweets and candy",
+            "Fruits and vegetables",
+            "Fried food only"
+          ],
+          "answer": "Fruits and vegetables"
+        },
+        {
+          "question": "Malaria is spread by ___",
+          "options": [
+            "Dirty water",
+            "Mosquitoes",
+            "Bad food"
+          ],
+          "answer": "Mosquitoes"
+        },
+        {
+          "question": "What should you drink to stay healthy?",
+          "options": [
+            "Soft drinks",
+            "Clean water",
+            "Coffee"
+          ],
+          "answer": "Clean water"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "fractions-c4",
+    "title": "Introduction to Fractions",
+    "instructions": "Listen to Mama Judi. Repeat each fraction.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "One half - 1/2",
+          "color": "#FF6B6B"
+        },
+        {
+          "text": "One quarter - 1/4",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "Three quarters - 3/4",
+          "color": "#6BCB77"
+        },
+        {
+          "text": "One third - 1/3",
+          "color": "#4D96FF"
+        },
+        {
+          "text": "Two thirds - 2/3",
+          "color": "#C77DFF"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "fractions-c4",
+    "title": "Fractions Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "Cut a pizza into 2 equal pieces. Each piece is ___",
+          "options": [
+            "1/3",
+            "1/2",
+            "1/4"
+          ],
+          "answer": "1/2"
+        },
+        {
+          "question": "Cut a cake into 4 equal pieces. Each piece is ___",
+          "options": [
+            "1/2",
+            "1/3",
+            "1/4"
+          ],
+          "answer": "1/4"
+        },
+        {
+          "question": "Which fraction is bigger: 1/2 or 1/4?",
+          "options": [
+            "1/4",
+            "1/2",
+            "They are equal"
+          ],
+          "answer": "1/2"
+        },
+        {
+          "question": "3/4 means ___",
+          "options": [
+            "3 out of 4",
+            "4 out of 3",
+            "1 out of 4"
+          ],
+          "answer": "3 out of 4"
+        },
+        {
+          "question": "1/2 + 1/2 = ___",
+          "options": [
+            "1/4",
+            "3/4",
+            "1"
+          ],
+          "answer": "1"
+        }
+      ]
+    }
+  }
+]

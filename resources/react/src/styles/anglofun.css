@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+* {
+  font-family: 'Nunito', system-ui, sans-serif !important;
+}
+
+/* V1 color tokens */
+:root {
+  --cream: #F5EDD8;
+  --beige: #E8DCC8;
+  --card: #F0E8D8;
+  --dark-green: #1D6B2A;
+  --mid-green: #2D7A3A;
+  --text-dark: #3D2B1F;
+  --text-soft: #7A6050;
+  --border-light: #D0C8B8;
+  --red: #CE1126;
+  --golden: #C47A3C;
+  --blue: #4A8ED0;
+  --purple: #9070C8;
+  --good: #4CAF50;
+  --urgent: #CE1126;
+  --watch: #F59E0B;
+}
+
+/* Nunito weights */
+.font-black  { font-weight: 900; }
+.font-heavy  { font-weight: 800; }
+.font-bold   { font-weight: 700; }
+.font-semi   { font-weight: 600; }
+
+/* PIN keys — round like V1 */
+.pin-key {
+  width: 68px;
+  height: 68px;
+  border-radius: 34px;
+  background: var(--card);
+  border: 1.5px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+
+/* Badge pills */
+.badge {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+}
+.badge-good    { background: var(--good); }
+.badge-urgent  { background: var(--urgent); }
+.badge-watch   { background: var(--watch); }
+
+/* Subject card V1 */
+.subject-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px 12px;
+  border: 1.5px solid var(--border-light);
+  cursor: pointer;
+}
+
+/* Progress bar V1 */
+.progress-bar {
+  height: 5px;
+  background: var(--border-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 5px;
+  background: var(--dark-green);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ── Theme tokens ─────────────────────────────────────────────────────── */
+:root {
+  --bg:        #E8DCC8;
+  --card:      #F0E8D8;
+  --card2:     #F5F0E8;
+  --text-dark: #3D2B1F;
+  --text-soft: #7A6050;
+  --border:    #D0C8B8;
+  --input-bg:  #FDFAF6;
+  --white:     #FFFFFF;
+}
+
+[data-theme="dark"] {
+  --bg:        #1C1208;
+  --card:      #2C1E0F;
+  --card2:     #342514;
+  --text-dark: #F0E4D0;
+  --text-soft: #C8A878;
+  --border:    #3C2E1E;
+  --input-bg:  #2C1E0F;
+  --white:     #2C1E0F;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bg);
+}
+
+/* Desktop responsive fonts */
+@media (min-width: 1024px) {
+  body { font-size: 15px; }
+  #root { font-size: 15px; }
+}

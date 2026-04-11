@@ -1,0 +1,46 @@
+{
+  "name": "EduMaison",
+  "short_name": "EduMaison",
+  "description": "Plateforme éducative numérique MINEDUB Cameroun",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF8F2",
+  "theme_color": "#FF8FAB",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-72.png", "sizes": "72x72", "type": "image/png" },
+    { "src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "/icons/icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/icons/icon-144.png", "sizes": "144x144", "type": "image/png" },
+    { "src": "/icons/icon-152.png", "sizes": "152x152", "type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-384.png", "sizes": "384x384", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Irma",
+      "short_name": "Irma",
+      "description": "Exercices pour Irma",
+      "url": "/?child=1",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mark",
+      "short_name": "Mark",
+      "description": "Exercices pour Mark",
+      "url": "/?child=2",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ruth",
+      "short_name": "Ruth",
+      "description": "Exercices pour Ruth",
+      "url": "/?child=3",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["education", "kids"],
+  "lang": "en",
+  "dir": "ltr"
+}

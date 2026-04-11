@@ -1,0 +1,364 @@
+[
+  {
+    "lesson_slug": "triangle-rectangle-c1",
+    "title": "Triangle and Rectangle - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each shape name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Triangle - 3 sides",
+          "audio_hint": "triangle",
+          "color": "#FF6B6B"
+        },
+        {
+          "text": "Rectangle - 4 sides",
+          "audio_hint": "rectangle",
+          "color": "#4D96FF"
+        },
+        {
+          "text": "Diamond",
+          "audio_hint": "diamond",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "Oval",
+          "audio_hint": "oval",
+          "color": "#6BCB77"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "triangle-rectangle-c1",
+    "title": "How many sides?",
+    "instructions": "Count the sides. Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "How many sides does a triangle have?",
+          "options": [
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": "3"
+        },
+        {
+          "question": "How many sides does a rectangle have?",
+          "options": [
+            "3",
+            "4",
+            "5"
+          ],
+          "answer": "4"
+        },
+        {
+          "question": "How many corners does a square have?",
+          "options": [
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": "4"
+        },
+        {
+          "question": "Which shape has NO corners?",
+          "options": [
+            "Square",
+            "Triangle",
+            "Circle"
+          ],
+          "answer": "Circle"
+        },
+        {
+          "question": "A triangle and a square together have how many sides?",
+          "options": [
+            "5",
+            "6",
+            "7"
+          ],
+          "answer": "7"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "triangle-rectangle-c1",
+    "title": "Shapes in Real Life",
+    "instructions": "Look around you. Listen to Mama Judi. Choose the right shape.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "A door is shaped like a ___",
+          "options": [
+            "Circle",
+            "Triangle",
+            "Rectangle"
+          ],
+          "answer": "Rectangle"
+        },
+        {
+          "question": "A ball is shaped like a ___",
+          "options": [
+            "Circle",
+            "Square",
+            "Triangle"
+          ],
+          "answer": "Circle"
+        },
+        {
+          "question": "A roof of a house is shaped like a ___",
+          "options": [
+            "Rectangle",
+            "Triangle",
+            "Circle"
+          ],
+          "answer": "Triangle"
+        },
+        {
+          "question": "A window is often shaped like a ___",
+          "options": [
+            "Triangle",
+            "Circle",
+            "Square"
+          ],
+          "answer": "Square"
+        },
+        {
+          "question": "The sun looks like a ___",
+          "options": [
+            "Square",
+            "Circle",
+            "Triangle"
+          ],
+          "answer": "Circle"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "triangle-rectangle-c1",
+    "title": "Write the Shape Names",
+    "instructions": "Practise writing the name of each shape.",
+    "category": "handwriting",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "handwriting",
+      "prompts": [
+        "Circle - round, no corners",
+        "Square - 4 equal sides",
+        "Triangle - 3 sides",
+        "Rectangle - 4 sides, 2 long 2 short"
+      ]
+    }
+  },
+  {
+    "lesson_slug": "circle-square-c1",
+    "title": "Draw and Describe Shapes",
+    "instructions": "Listen to the description. Which shape is it?",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "I have 4 equal sides and 4 corners. What am I?",
+          "options": [
+            "Circle",
+            "Square",
+            "Triangle"
+          ],
+          "answer": "Square"
+        },
+        {
+          "question": "I have no sides and no corners. I am perfectly round. What am I?",
+          "options": [
+            "Square",
+            "Triangle",
+            "Circle"
+          ],
+          "answer": "Circle"
+        },
+        {
+          "question": "I have 4 sides but my sides are not all equal. What am I?",
+          "options": [
+            "Square",
+            "Rectangle",
+            "Circle"
+          ],
+          "answer": "Rectangle"
+        },
+        {
+          "question": "I have 3 sides and 3 corners. What am I?",
+          "options": [
+            "Square",
+            "Circle",
+            "Triangle"
+          ],
+          "answer": "Triangle"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "circle-square-c1",
+    "title": "Count the Shapes",
+    "instructions": "Listen carefully. Count and choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "I see 2 circles and 3 squares. How many shapes do I have in total?",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "5"
+        },
+        {
+          "question": "I have 4 triangles. I give away 1. How many are left?",
+          "options": [
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": "3"
+        },
+        {
+          "question": "How many sides do 2 triangles have in total?",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "6"
+        },
+        {
+          "question": "How many corners do 2 squares have in total?",
+          "options": [
+            "6",
+            "8",
+            "10"
+          ],
+          "answer": "8"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "long-short-lesson-c1",
+    "title": "Compare Lengths",
+    "instructions": "Listen to Mama Judi. Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "A pencil is ___ than a ruler.",
+          "options": [
+            "longer",
+            "shorter",
+            "heavier"
+          ],
+          "answer": "shorter"
+        },
+        {
+          "question": "A river is ___ than a road in your street.",
+          "options": [
+            "shorter",
+            "longer",
+            "lighter"
+          ],
+          "answer": "longer"
+        },
+        {
+          "question": "Your finger is ___ than your arm.",
+          "options": [
+            "longer",
+            "shorter",
+            "taller"
+          ],
+          "answer": "shorter"
+        },
+        {
+          "question": "Which word means NOT long?",
+          "options": [
+            "tall",
+            "short",
+            "wide"
+          ],
+          "answer": "short"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "heavy-light-c1",
+    "title": "Heavy or Light?",
+    "instructions": "Listen to Mama Judi. Is it heavy or light?",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "A stone is ___ than a feather.",
+          "options": [
+            "lighter",
+            "heavier",
+            "shorter"
+          ],
+          "answer": "heavier"
+        },
+        {
+          "question": "A feather is ___ than a book.",
+          "options": [
+            "heavier",
+            "lighter",
+            "longer"
+          ],
+          "answer": "lighter"
+        },
+        {
+          "question": "An elephant is ___ than a cat.",
+          "options": [
+            "lighter",
+            "heavier",
+            "smaller"
+          ],
+          "answer": "heavier"
+        },
+        {
+          "question": "Which is the LIGHTEST?",
+          "options": [
+            "A rock",
+            "A bag of rice",
+            "A leaf"
+          ],
+          "answer": "A leaf"
+        }
+      ]
+    }
+  }
+]

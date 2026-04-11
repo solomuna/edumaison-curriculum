@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+
+:root {
+  --color-primary: #00C48C;
+  --color-bg: #0D1B2A;
+  --color-card: #1A2A3A;
+  --color-text: #F0F4F8;
+  --color-muted: #7A90A8;
+  --color-accent: #FFD166;
+  --color-mama: #FF6B9D;
+}
+
+body {
+  background-color: #C8B89A;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 10px);
+  color: #3D2B1F;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  margin: 0;
+}

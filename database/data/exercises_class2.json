@@ -1,0 +1,575 @@
+[
+  {
+    "lesson_slug": "my-street-c2",
+    "title": "Places in My Neighbourhood",
+    "instructions": "Listen to Mama Judi. Repeat each place name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "School",
+          "audio_hint": "school",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Market",
+          "audio_hint": "market",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Hospital",
+          "audio_hint": "hospital",
+          "color": "#F44336"
+        },
+        {
+          "text": "Church",
+          "audio_hint": "church",
+          "color": "#9C27B0"
+        },
+        {
+          "text": "Police Station",
+          "audio_hint": "police-station",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Post Office",
+          "audio_hint": "post-office",
+          "color": "#795548"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "my-street-c2",
+    "title": "Where is it?",
+    "instructions": "Read carefully. Choose the correct place.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "You go here when you are sick. Where do you go?",
+          "options": [
+            "School",
+            "Hospital",
+            "Market"
+          ],
+          "answer": "Hospital"
+        },
+        {
+          "question": "You buy food here. Where is it?",
+          "options": [
+            "Church",
+            "School",
+            "Market"
+          ],
+          "answer": "Market"
+        },
+        {
+          "question": "Children learn here. What is it?",
+          "options": [
+            "Hospital",
+            "School",
+            "Post Office"
+          ],
+          "answer": "School"
+        },
+        {
+          "question": "You send letters here. Where do you go?",
+          "options": [
+            "Post Office",
+            "Market",
+            "Church"
+          ],
+          "answer": "Post Office"
+        },
+        {
+          "question": "You go here to pray. What is it?",
+          "options": [
+            "Hospital",
+            "Church",
+            "School"
+          ],
+          "answer": "Church"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "animals-farm-c2",
+    "title": "Farm Animals - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each animal name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Cow",
+          "audio_hint": "cow",
+          "color": "#795548"
+        },
+        {
+          "text": "Goat",
+          "audio_hint": "goat",
+          "color": "#9E9E9E"
+        },
+        {
+          "text": "Pig",
+          "audio_hint": "pig",
+          "color": "#FF80AB"
+        },
+        {
+          "text": "Chicken",
+          "audio_hint": "chicken",
+          "color": "#FFEB3B"
+        },
+        {
+          "text": "Dog",
+          "audio_hint": "dog",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Cat",
+          "audio_hint": "cat",
+          "color": "#607D8B"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "animals-farm-c2",
+    "title": "Animal Sounds Quiz",
+    "instructions": "Which animal makes this sound? Choose the correct answer.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "This animal says MOO. What is it?",
+          "options": [
+            "Goat",
+            "Cow",
+            "Pig"
+          ],
+          "answer": "Cow"
+        },
+        {
+          "question": "This animal says BAA. What is it?",
+          "options": [
+            "Cow",
+            "Dog",
+            "Goat"
+          ],
+          "answer": "Goat"
+        },
+        {
+          "question": "This animal says OINK. What is it?",
+          "options": [
+            "Pig",
+            "Cat",
+            "Chicken"
+          ],
+          "answer": "Pig"
+        },
+        {
+          "question": "This animal says CLUCK. What is it?",
+          "options": [
+            "Dog",
+            "Chicken",
+            "Cow"
+          ],
+          "answer": "Chicken"
+        },
+        {
+          "question": "This animal says WOOF. What is it?",
+          "options": [
+            "Cat",
+            "Goat",
+            "Dog"
+          ],
+          "answer": "Dog"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "animal-sounds-c2",
+    "title": "Baby Animals",
+    "instructions": "What is the baby of each animal? Listen and choose.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "The baby of a cow is called a ___",
+          "options": [
+            "Puppy",
+            "Calf",
+            "Kitten"
+          ],
+          "answer": "Calf"
+        },
+        {
+          "question": "The baby of a dog is called a ___",
+          "options": [
+            "Puppy",
+            "Lamb",
+            "Calf"
+          ],
+          "answer": "Puppy"
+        },
+        {
+          "question": "The baby of a cat is called a ___",
+          "options": [
+            "Calf",
+            "Puppy",
+            "Kitten"
+          ],
+          "answer": "Kitten"
+        },
+        {
+          "question": "The baby of a goat is called a ___",
+          "options": [
+            "Kid",
+            "Calf",
+            "Lamb"
+          ],
+          "answer": "Kid"
+        },
+        {
+          "question": "The baby of a chicken is called a ___",
+          "options": [
+            "Cub",
+            "Chick",
+            "Puppy"
+          ],
+          "answer": "Chick"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "forest-animals-c2",
+    "title": "Wild Animals - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each wild animal.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Lion",
+          "audio_hint": "lion",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Elephant",
+          "audio_hint": "elephant",
+          "color": "#9E9E9E"
+        },
+        {
+          "text": "Monkey",
+          "audio_hint": "monkey",
+          "color": "#795548"
+        },
+        {
+          "text": "Snake",
+          "audio_hint": "snake",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Crocodile",
+          "audio_hint": "crocodile",
+          "color": "#388E3C"
+        },
+        {
+          "text": "Gorilla",
+          "audio_hint": "gorilla",
+          "color": "#424242"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "africa-animals-c2",
+    "title": "African Animals Quiz",
+    "instructions": "Think about animals in Africa. Choose the correct answer.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "The biggest land animal in Africa is the ___",
+          "options": [
+            "Lion",
+            "Elephant",
+            "Gorilla"
+          ],
+          "answer": "Elephant"
+        },
+        {
+          "question": "The king of the jungle is the ___",
+          "options": [
+            "Monkey",
+            "Crocodile",
+            "Lion"
+          ],
+          "answer": "Lion"
+        },
+        {
+          "question": "This animal lives in rivers and has sharp teeth ___",
+          "options": [
+            "Snake",
+            "Crocodile",
+            "Elephant"
+          ],
+          "answer": "Crocodile"
+        },
+        {
+          "question": "This animal is like a very big monkey ___",
+          "options": [
+            "Lion",
+            "Gorilla",
+            "Snake"
+          ],
+          "answer": "Gorilla"
+        },
+        {
+          "question": "How many legs does a snake have?",
+          "options": [
+            "2",
+            "4",
+            "0"
+          ],
+          "answer": "0"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-to-50-c2",
+    "title": "Count to 50 with Mama Judi",
+    "instructions": "Listen and repeat. Count from 10 to 50.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Ten - 10",
+          "audio_hint": "ten",
+          "color": "#FF6B6B"
+        },
+        {
+          "text": "Twenty - 20",
+          "audio_hint": "twenty",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "Thirty - 30",
+          "audio_hint": "thirty",
+          "color": "#6BCB77"
+        },
+        {
+          "text": "Forty - 40",
+          "audio_hint": "forty",
+          "color": "#4D96FF"
+        },
+        {
+          "text": "Fifty - 50",
+          "audio_hint": "fifty",
+          "color": "#C77DFF"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-to-100-c2",
+    "title": "Numbers to 100",
+    "instructions": "Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "What comes after 49?",
+          "options": [
+            "48",
+            "50",
+            "51"
+          ],
+          "answer": "50"
+        },
+        {
+          "question": "What comes before 100?",
+          "options": [
+            "98",
+            "99",
+            "101"
+          ],
+          "answer": "99"
+        },
+        {
+          "question": "50 + 50 = ___",
+          "options": [
+            "90",
+            "100",
+            "110"
+          ],
+          "answer": "100"
+        },
+        {
+          "question": "Which number is the biggest?",
+          "options": [
+            "67",
+            "76",
+            "57"
+          ],
+          "answer": "76"
+        },
+        {
+          "question": "Which number is the smallest?",
+          "options": [
+            "32",
+            "23",
+            "42"
+          ],
+          "answer": "23"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "adding-to-10-c2",
+    "title": "Adding Numbers to 20",
+    "instructions": "Listen to each sum. Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "8 + 7 = ___",
+          "options": [
+            "14",
+            "15",
+            "16"
+          ],
+          "answer": "15"
+        },
+        {
+          "question": "9 + 9 = ___",
+          "options": [
+            "17",
+            "18",
+            "19"
+          ],
+          "answer": "18"
+        },
+        {
+          "question": "6 + 8 = ___",
+          "options": [
+            "12",
+            "13",
+            "14"
+          ],
+          "answer": "14"
+        },
+        {
+          "question": "7 + 7 = ___",
+          "options": [
+            "13",
+            "14",
+            "15"
+          ],
+          "answer": "14"
+        },
+        {
+          "question": "5 + 9 = ___",
+          "options": [
+            "13",
+            "14",
+            "15"
+          ],
+          "answer": "14"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "subtract-10-c2",
+    "title": "Subtraction to 20",
+    "instructions": "Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "15 - 7 = ___",
+          "options": [
+            "7",
+            "8",
+            "9"
+          ],
+          "answer": "8"
+        },
+        {
+          "question": "18 - 9 = ___",
+          "options": [
+            "8",
+            "9",
+            "10"
+          ],
+          "answer": "9"
+        },
+        {
+          "question": "20 - 6 = ___",
+          "options": [
+            "13",
+            "14",
+            "15"
+          ],
+          "answer": "14"
+        },
+        {
+          "question": "16 - 8 = ___",
+          "options": [
+            "7",
+            "8",
+            "9"
+          ],
+          "answer": "8"
+        },
+        {
+          "question": "12 - 5 = ___",
+          "options": [
+            "6",
+            "7",
+            "8"
+          ],
+          "answer": "7"
+        }
+      ]
+    }
+  }
+]

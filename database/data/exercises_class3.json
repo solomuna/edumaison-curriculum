@@ -1,0 +1,483 @@
+[
+  {
+    "lesson_slug": "places-in-town-c3",
+    "title": "Places in Town - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each place name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Bank",
+          "audio_hint": "bank",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Library",
+          "audio_hint": "library",
+          "color": "#9C27B0"
+        },
+        {
+          "text": "Supermarket",
+          "audio_hint": "supermarket",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Restaurant",
+          "audio_hint": "restaurant",
+          "color": "#F44336"
+        },
+        {
+          "text": "Pharmacy",
+          "audio_hint": "pharmacy",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Town Hall",
+          "audio_hint": "town-hall",
+          "color": "#795548"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "places-in-town-c3",
+    "title": "What do you do there?",
+    "instructions": "Match the place to the activity.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "You go to the ___ to borrow books.",
+          "options": [
+            "Bank",
+            "Library",
+            "Pharmacy"
+          ],
+          "answer": "Library"
+        },
+        {
+          "question": "You go to the ___ to save money.",
+          "options": [
+            "Bank",
+            "Restaurant",
+            "Supermarket"
+          ],
+          "answer": "Bank"
+        },
+        {
+          "question": "You go to the ___ to buy medicine.",
+          "options": [
+            "Library",
+            "Bank",
+            "Pharmacy"
+          ],
+          "answer": "Pharmacy"
+        },
+        {
+          "question": "You go to the ___ to eat.",
+          "options": [
+            "Restaurant",
+            "Library",
+            "Bank"
+          ],
+          "answer": "Restaurant"
+        },
+        {
+          "question": "You go to the ___ to buy food and clothes.",
+          "options": [
+            "Pharmacy",
+            "Supermarket",
+            "Town Hall"
+          ],
+          "answer": "Supermarket"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "community-jobs-c3",
+    "title": "Jobs in the Community",
+    "instructions": "Listen to Mama Judi. Repeat each job name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Doctor",
+          "audio_hint": "doctor",
+          "color": "#F44336"
+        },
+        {
+          "text": "Teacher",
+          "audio_hint": "teacher",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Farmer",
+          "audio_hint": "farmer",
+          "color": "#795548"
+        },
+        {
+          "text": "Police Officer",
+          "audio_hint": "police-officer",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Nurse",
+          "audio_hint": "nurse",
+          "color": "#E91E63"
+        },
+        {
+          "text": "Engineer",
+          "audio_hint": "engineer",
+          "color": "#FF9800"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "community-jobs-c3",
+    "title": "Who does what?",
+    "instructions": "Match the job to the description.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "This person treats sick people. Who is it?",
+          "options": [
+            "Teacher",
+            "Doctor",
+            "Farmer"
+          ],
+          "answer": "Doctor"
+        },
+        {
+          "question": "This person grows food. Who is it?",
+          "options": [
+            "Farmer",
+            "Nurse",
+            "Engineer"
+          ],
+          "answer": "Farmer"
+        },
+        {
+          "question": "This person teaches children. Who is it?",
+          "options": [
+            "Police Officer",
+            "Teacher",
+            "Doctor"
+          ],
+          "answer": "Teacher"
+        },
+        {
+          "question": "This person builds roads and bridges. Who is it?",
+          "options": [
+            "Engineer",
+            "Farmer",
+            "Nurse"
+          ],
+          "answer": "Engineer"
+        },
+        {
+          "question": "This person keeps us safe. Who is it?",
+          "options": [
+            "Teacher",
+            "Doctor",
+            "Police Officer"
+          ],
+          "answer": "Police Officer"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "weather-seasons-c3",
+    "title": "Weather Words - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each weather word.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Sunny",
+          "audio_hint": "sunny",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "Rainy",
+          "audio_hint": "rainy",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Windy",
+          "audio_hint": "windy",
+          "color": "#90CAF9"
+        },
+        {
+          "text": "Cloudy",
+          "audio_hint": "cloudy",
+          "color": "#9E9E9E"
+        },
+        {
+          "text": "Hot",
+          "audio_hint": "hot",
+          "color": "#FF5722"
+        },
+        {
+          "text": "Cold",
+          "audio_hint": "cold",
+          "color": "#00BCD4"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "weather-seasons-c3",
+    "title": "What is the weather today?",
+    "instructions": "Read each description. Choose the correct weather.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "The sun is shining. There are no clouds. The weather is ___",
+          "options": [
+            "Rainy",
+            "Sunny",
+            "Windy"
+          ],
+          "answer": "Sunny"
+        },
+        {
+          "question": "Water is falling from the sky. The weather is ___",
+          "options": [
+            "Sunny",
+            "Windy",
+            "Rainy"
+          ],
+          "answer": "Rainy"
+        },
+        {
+          "question": "The trees are moving. You feel air blowing. The weather is ___",
+          "options": [
+            "Cloudy",
+            "Windy",
+            "Rainy"
+          ],
+          "answer": "Windy"
+        },
+        {
+          "question": "The sky is grey. You cannot see the sun. The weather is ___",
+          "options": [
+            "Sunny",
+            "Cloudy",
+            "Hot"
+          ],
+          "answer": "Cloudy"
+        },
+        {
+          "question": "In Cameroon, the dry season is usually ___",
+          "options": [
+            "Cold",
+            "Hot",
+            "Snowy"
+          ],
+          "answer": "Hot"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "multiplication-c3",
+    "title": "Multiplication Tables 2 and 3",
+    "instructions": "Listen to Mama Judi. Repeat each multiplication.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "2 x 1 = 2",
+          "audio_hint": "two-times-one",
+          "color": "#FF6B6B"
+        },
+        {
+          "text": "2 x 2 = 4",
+          "audio_hint": "two-times-two",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "2 x 3 = 6",
+          "audio_hint": "two-times-three",
+          "color": "#6BCB77"
+        },
+        {
+          "text": "2 x 4 = 8",
+          "audio_hint": "two-times-four",
+          "color": "#4D96FF"
+        },
+        {
+          "text": "2 x 5 = 10",
+          "audio_hint": "two-times-five",
+          "color": "#C77DFF"
+        },
+        {
+          "text": "3 x 3 = 9",
+          "audio_hint": "three-times-three",
+          "color": "#FF9800"
+        },
+        {
+          "text": "3 x 4 = 12",
+          "audio_hint": "three-times-four",
+          "color": "#F44336"
+        },
+        {
+          "text": "3 x 5 = 15",
+          "audio_hint": "three-times-five",
+          "color": "#00BCD4"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "multiplication-c3",
+    "title": "Multiplication Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "2 x 6 = ___",
+          "options": [
+            "10",
+            "12",
+            "14"
+          ],
+          "answer": "12"
+        },
+        {
+          "question": "3 x 4 = ___",
+          "options": [
+            "10",
+            "12",
+            "14"
+          ],
+          "answer": "12"
+        },
+        {
+          "question": "2 x 9 = ___",
+          "options": [
+            "16",
+            "17",
+            "18"
+          ],
+          "answer": "18"
+        },
+        {
+          "question": "3 x 6 = ___",
+          "options": [
+            "16",
+            "18",
+            "20"
+          ],
+          "answer": "18"
+        },
+        {
+          "question": "2 x 7 = ___",
+          "options": [
+            "12",
+            "14",
+            "16"
+          ],
+          "answer": "14"
+        },
+        {
+          "question": "3 x 7 = ___",
+          "options": [
+            "19",
+            "21",
+            "23"
+          ],
+          "answer": "21"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "division-c3",
+    "title": "Introduction to Division",
+    "instructions": "Division means sharing equally. Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "Share 10 mangoes equally between 2 children. Each child gets ___",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "5"
+        },
+        {
+          "question": "12 ÷ 3 = ___",
+          "options": [
+            "3",
+            "4",
+            "5"
+          ],
+          "answer": "4"
+        },
+        {
+          "question": "8 ÷ 2 = ___",
+          "options": [
+            "3",
+            "4",
+            "5"
+          ],
+          "answer": "4"
+        },
+        {
+          "question": "15 ÷ 5 = ___",
+          "options": [
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": "3"
+        },
+        {
+          "question": "Share 20 books equally between 4 students. Each student gets ___",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "5"
+        }
+      ]
+    }
+  }
+]

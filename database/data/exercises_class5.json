@@ -1,0 +1,441 @@
+[
+  {
+    "lesson_slug": "africa-overview-c5",
+    "title": "Africa - Listen and Learn",
+    "instructions": "Listen to Mama Judi. Repeat each fact about Africa.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Africa is the second largest continent",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Africa has 54 countries",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "The Nile is the longest river in Africa",
+          "color": "#2196F3"
+        },
+        {
+          "text": "The Sahara is the largest desert in Africa",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "Mount Kilimanjaro is the highest mountain",
+          "color": "#9E9E9E"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "africa-overview-c5",
+    "title": "Africa Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "How many countries are in Africa?",
+          "options": [
+            "44",
+            "54",
+            "64"
+          ],
+          "answer": "54"
+        },
+        {
+          "question": "What is the longest river in Africa?",
+          "options": [
+            "Congo River",
+            "Niger River",
+            "Nile River"
+          ],
+          "answer": "Nile River"
+        },
+        {
+          "question": "What is the largest desert in Africa?",
+          "options": [
+            "Kalahari",
+            "Sahara",
+            "Namib"
+          ],
+          "answer": "Sahara"
+        },
+        {
+          "question": "Which is the highest mountain in Africa?",
+          "options": [
+            "Mount Kenya",
+            "Mount Cameroon",
+            "Mount Kilimanjaro"
+          ],
+          "answer": "Mount Kilimanjaro"
+        },
+        {
+          "question": "Africa is the ___ largest continent in the world.",
+          "options": [
+            "first",
+            "second",
+            "third"
+          ],
+          "answer": "second"
+        },
+        {
+          "question": "Which ocean is to the west of Africa?",
+          "options": [
+            "Indian Ocean",
+            "Pacific Ocean",
+            "Atlantic Ocean"
+          ],
+          "answer": "Atlantic Ocean"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "modern-tech-c5",
+    "title": "Modern Technology - Vocabulary",
+    "instructions": "Listen to Mama Judi. Repeat each technology word.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Computer",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Internet",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Smartphone",
+          "color": "#9C27B0"
+        },
+        {
+          "text": "Satellite",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Solar energy",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "Electricity",
+          "color": "#F44336"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "modern-tech-c5",
+    "title": "Technology Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "What do we use to search for information online?",
+          "options": [
+            "Television",
+            "Internet",
+            "Radio"
+          ],
+          "answer": "Internet"
+        },
+        {
+          "question": "Solar energy comes from ___",
+          "options": [
+            "The wind",
+            "The sun",
+            "The water"
+          ],
+          "answer": "The sun"
+        },
+        {
+          "question": "Which device can make calls and access the internet?",
+          "options": [
+            "Calculator",
+            "Smartphone",
+            "Radio"
+          ],
+          "answer": "Smartphone"
+        },
+        {
+          "question": "What does ICT stand for?",
+          "options": [
+            "Information and Communication Technology",
+            "International Computer Training",
+            "Internet Cable Television"
+          ],
+          "answer": "Information and Communication Technology"
+        },
+        {
+          "question": "Which energy source is environmentally friendly?",
+          "options": [
+            "Coal",
+            "Petrol",
+            "Solar energy"
+          ],
+          "answer": "Solar energy"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "our-culture-c5",
+    "title": "Our Culture - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each cultural word.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Tradition",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Custom",
+          "color": "#9C27B0"
+        },
+        {
+          "text": "Heritage",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Festival",
+          "color": "#F44336"
+        },
+        {
+          "text": "Folklore",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Ancestor",
+          "color": "#795548"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "our-culture-c5",
+    "title": "Culture and Traditions Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "quiz",
+    "difficulty": "medium",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "A tradition is something that has been ___ for many years.",
+          "options": [
+            "invented recently",
+            "done for many years",
+            "forgotten"
+          ],
+          "answer": "done for many years"
+        },
+        {
+          "question": "National Day in Cameroon is celebrated on ___",
+          "options": [
+            "January 1st",
+            "May 20th",
+            "December 25th"
+          ],
+          "answer": "May 20th"
+        },
+        {
+          "question": "Which instrument is traditional in Cameroon?",
+          "options": [
+            "Piano",
+            "Balafon",
+            "Guitar"
+          ],
+          "answer": "Balafon"
+        },
+        {
+          "question": "Cultural heritage means ___",
+          "options": [
+            "New inventions",
+            "Things we inherit from our ancestors",
+            "Foreign ideas"
+          ],
+          "answer": "Things we inherit from our ancestors"
+        },
+        {
+          "question": "Folklore includes ___",
+          "options": [
+            "Modern music only",
+            "Stories, songs and dances passed down",
+            "Science books"
+          ],
+          "answer": "Stories, songs and dances passed down"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "decimals-c5",
+    "title": "Decimals - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each decimal number.",
+    "category": "oral_drill",
+    "difficulty": "medium",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "0.5 — zero point five",
+          "color": "#FF6B6B"
+        },
+        {
+          "text": "1.5 — one point five",
+          "color": "#FFD93D"
+        },
+        {
+          "text": "2.25 — two point two five",
+          "color": "#6BCB77"
+        },
+        {
+          "text": "3.75 — three point seven five",
+          "color": "#4D96FF"
+        },
+        {
+          "text": "10.5 — ten point five",
+          "color": "#C77DFF"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "decimals-c5",
+    "title": "Decimals Quiz",
+    "instructions": "Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "hard",
+    "minutes": 20,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "0.5 is the same as ___",
+          "options": [
+            "1/4",
+            "1/2",
+            "3/4"
+          ],
+          "answer": "1/2"
+        },
+        {
+          "question": "2.5 + 1.5 = ___",
+          "options": [
+            "3",
+            "4",
+            "5"
+          ],
+          "answer": "4"
+        },
+        {
+          "question": "Which is bigger: 0.75 or 0.5?",
+          "options": [
+            "0.5",
+            "0.75",
+            "They are equal"
+          ],
+          "answer": "0.75"
+        },
+        {
+          "question": "10.5 - 5.5 = ___",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "5"
+        },
+        {
+          "question": "0.25 is the same as ___",
+          "options": [
+            "1/2",
+            "1/3",
+            "1/4"
+          ],
+          "answer": "1/4"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "percentages-c5",
+    "title": "Introduction to Percentages",
+    "instructions": "Choose the correct answer.",
+    "category": "mathematics",
+    "difficulty": "hard",
+    "minutes": 20,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "50% means ___",
+          "options": [
+            "1 out of 4",
+            "1 out of 2",
+            "1 out of 10"
+          ],
+          "answer": "1 out of 2"
+        },
+        {
+          "question": "25% of 100 = ___",
+          "options": [
+            "10",
+            "25",
+            "50"
+          ],
+          "answer": "25"
+        },
+        {
+          "question": "100% means ___",
+          "options": [
+            "half",
+            "nothing",
+            "everything"
+          ],
+          "answer": "everything"
+        },
+        {
+          "question": "If you score 80 out of 100, your percentage is ___",
+          "options": [
+            "70%",
+            "80%",
+            "90%"
+          ],
+          "answer": "80%"
+        },
+        {
+          "question": "10% of 200 = ___",
+          "options": [
+            "10",
+            "20",
+            "30"
+          ],
+          "answer": "20"
+        }
+      ]
+    }
+  }
+]

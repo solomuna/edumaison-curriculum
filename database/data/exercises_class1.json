@@ -1,0 +1,650 @@
+[
+  {
+    "lesson_slug": "hello-goodbye-c1",
+    "title": "Listen and Repeat - Greetings",
+    "instructions": "Listen to Mama Judi. Then repeat each greeting aloud.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Good morning!",
+          "audio_hint": "good-morning"
+        },
+        {
+          "text": "Good afternoon!",
+          "audio_hint": "good-afternoon"
+        },
+        {
+          "text": "Good evening!",
+          "audio_hint": "good-evening"
+        },
+        {
+          "text": "Goodbye!",
+          "audio_hint": "goodbye"
+        },
+        {
+          "text": "Bye bye!",
+          "audio_hint": "bye-bye"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "hello-goodbye-c1",
+    "title": "Match the Greeting",
+    "instructions": "Read each greeting. Choose the right time of day.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "You meet your friend in the morning. What do you say?",
+          "options": [
+            "Good morning!",
+            "Good evening!",
+            "Goodbye!"
+          ],
+          "answer": "Good morning!"
+        },
+        {
+          "question": "You are leaving school. What do you say?",
+          "options": [
+            "Good morning!",
+            "Goodbye!",
+            "Good afternoon!"
+          ],
+          "answer": "Goodbye!"
+        },
+        {
+          "question": "It is 3pm. What is the right greeting?",
+          "options": [
+            "Good morning!",
+            "Good night!",
+            "Good afternoon!"
+          ],
+          "answer": "Good afternoon!"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "hello-goodbye-c1",
+    "title": "Write the Greeting",
+    "instructions": "Look at the picture. Write the correct greeting.",
+    "category": "handwriting",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "fill_in",
+      "items": [
+        {
+          "prompt": "It is morning. Write: ___",
+          "answer": "Good morning!"
+        },
+        {
+          "prompt": "You are leaving. Write: ___",
+          "answer": "Goodbye!"
+        },
+        {
+          "prompt": "It is afternoon. Write: ___",
+          "answer": "Good afternoon!"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "how-are-you-c1",
+    "title": "Listen and Repeat - How are you?",
+    "instructions": "Listen to Mama Judi. Repeat the dialogue aloud.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "How are you?",
+          "audio_hint": "how-are-you"
+        },
+        {
+          "text": "I am fine, thank you.",
+          "audio_hint": "i-am-fine"
+        },
+        {
+          "text": "I am very well.",
+          "audio_hint": "i-am-very-well"
+        },
+        {
+          "text": "And you?",
+          "audio_hint": "and-you"
+        },
+        {
+          "text": "I am okay.",
+          "audio_hint": "i-am-okay"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "how-are-you-c1",
+    "title": "Complete the Dialogue",
+    "instructions": "Fill in the missing words.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "fill_in",
+      "items": [
+        {
+          "prompt": "How ___ you?",
+          "answer": "are"
+        },
+        {
+          "prompt": "I am ___, thank you.",
+          "answer": "fine"
+        },
+        {
+          "prompt": "___ you!",
+          "answer": "Thank"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "my-name-c1",
+    "title": "Listen and Repeat - My Name",
+    "instructions": "Listen to Mama Judi. Repeat each sentence.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "My name is ...",
+          "audio_hint": "my-name-is"
+        },
+        {
+          "text": "What is your name?",
+          "audio_hint": "what-is-your-name"
+        },
+        {
+          "text": "His name is ...",
+          "audio_hint": "his-name-is"
+        },
+        {
+          "text": "Her name is ...",
+          "audio_hint": "her-name-is"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "my-name-c1",
+    "title": "Write Your Name",
+    "instructions": "Practise writing your name. Then write 3 friends names.",
+    "category": "handwriting",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "handwriting",
+      "prompts": [
+        "My name is _______________",
+        "My friend's name is _______________",
+        "My teacher's name is _______________"
+      ]
+    }
+  },
+  {
+    "lesson_slug": "primary-colours-c1",
+    "title": "Learn the Colours",
+    "instructions": "Listen to Mama Judi say each colour. Repeat aloud.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Red",
+          "audio_hint": "red",
+          "color": "#F44336"
+        },
+        {
+          "text": "Blue",
+          "audio_hint": "blue",
+          "color": "#2196F3"
+        },
+        {
+          "text": "Yellow",
+          "audio_hint": "yellow",
+          "color": "#FFEB3B"
+        },
+        {
+          "text": "Green",
+          "audio_hint": "green",
+          "color": "#4CAF50"
+        },
+        {
+          "text": "Orange",
+          "audio_hint": "orange",
+          "color": "#FF9800"
+        },
+        {
+          "text": "Purple",
+          "audio_hint": "purple",
+          "color": "#9C27B0"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "primary-colours-c1",
+    "title": "What colour is this?",
+    "instructions": "Look at each colour. Choose the correct name.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "This is the colour of the sky. What colour is it?",
+          "options": [
+            "Red",
+            "Blue",
+            "Green"
+          ],
+          "answer": "Blue"
+        },
+        {
+          "question": "This is the colour of grass. What colour is it?",
+          "options": [
+            "Yellow",
+            "Orange",
+            "Green"
+          ],
+          "answer": "Green"
+        },
+        {
+          "question": "This is the colour of the sun. What colour is it?",
+          "options": [
+            "Yellow",
+            "Purple",
+            "Blue"
+          ],
+          "answer": "Yellow"
+        },
+        {
+          "question": "This is the colour of blood. What colour is it?",
+          "options": [
+            "Red",
+            "Blue",
+            "Green"
+          ],
+          "answer": "Red"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "mother-father-c1",
+    "title": "Family Words - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each family word.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Mother",
+          "audio_hint": "mother"
+        },
+        {
+          "text": "Father",
+          "audio_hint": "father"
+        },
+        {
+          "text": "Parents",
+          "audio_hint": "parents"
+        },
+        {
+          "text": "Family",
+          "audio_hint": "family"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "mother-father-c1",
+    "title": "Who is this?",
+    "instructions": "Read the description. Choose the correct family member.",
+    "category": "quiz",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "She is a woman. She is your parent. Who is she?",
+          "options": [
+            "Father",
+            "Mother",
+            "Sister"
+          ],
+          "answer": "Mother"
+        },
+        {
+          "question": "He is a man. He is your parent. Who is he?",
+          "options": [
+            "Father",
+            "Mother",
+            "Brother"
+          ],
+          "answer": "Father"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "fruits-c1",
+    "title": "Fruits - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each fruit name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Mango",
+          "audio_hint": "mango"
+        },
+        {
+          "text": "Banana",
+          "audio_hint": "banana"
+        },
+        {
+          "text": "Orange",
+          "audio_hint": "orange-fruit"
+        },
+        {
+          "text": "Pineapple",
+          "audio_hint": "pineapple"
+        },
+        {
+          "text": "Pawpaw",
+          "audio_hint": "pawpaw"
+        },
+        {
+          "text": "Avocado",
+          "audio_hint": "avocado"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "fruits-c1",
+    "title": "I like / I do not like",
+    "instructions": "Listen. Then answer about each fruit.",
+    "category": "speaking",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "oral_response",
+      "prompt": "Say: I like ___ OR I do not like ___",
+      "items": [
+        "mango",
+        "banana",
+        "orange",
+        "pineapple",
+        "pawpaw",
+        "avocado"
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-0-5-c1",
+    "title": "Count with Mama Judi - 0 to 5",
+    "instructions": "Listen to Mama Judi count. Repeat each number.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Zero - 0",
+          "audio_hint": "zero"
+        },
+        {
+          "text": "One - 1",
+          "audio_hint": "one"
+        },
+        {
+          "text": "Two - 2",
+          "audio_hint": "two"
+        },
+        {
+          "text": "Three - 3",
+          "audio_hint": "three"
+        },
+        {
+          "text": "Four - 4",
+          "audio_hint": "four"
+        },
+        {
+          "text": "Five - 5",
+          "audio_hint": "five"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-0-5-c1",
+    "title": "How many? Count and choose",
+    "instructions": "Count the objects. Choose the correct number.",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "You have 3 mangoes and 2 more. How many mangoes do you have?",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "5"
+        },
+        {
+          "question": "There are 4 children. 1 goes home. How many are left?",
+          "options": [
+            "2",
+            "3",
+            "4"
+          ],
+          "answer": "3"
+        },
+        {
+          "question": "Count: 1, 2, 3, ___. What comes next?",
+          "options": [
+            "4",
+            "5",
+            "6"
+          ],
+          "answer": "4"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-0-5-c1",
+    "title": "Write the Numbers 0 to 5",
+    "instructions": "Practise writing each number and its word.",
+    "category": "handwriting",
+    "difficulty": "easy",
+    "minutes": 15,
+    "content": {
+      "type": "handwriting",
+      "prompts": [
+        "0 - zero",
+        "1 - one",
+        "2 - two",
+        "3 - three",
+        "4 - four",
+        "5 - five"
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-6-10-c1",
+    "title": "Count with Mama Judi - 6 to 10",
+    "instructions": "Listen to Mama Judi count. Repeat each number.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Six - 6",
+          "audio_hint": "six"
+        },
+        {
+          "text": "Seven - 7",
+          "audio_hint": "seven"
+        },
+        {
+          "text": "Eight - 8",
+          "audio_hint": "eight"
+        },
+        {
+          "text": "Nine - 9",
+          "audio_hint": "nine"
+        },
+        {
+          "text": "Ten - 10",
+          "audio_hint": "ten"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "numbers-6-10-c1",
+    "title": "What number comes next?",
+    "instructions": "Choose the number that comes next.",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "5, 6, 7, ___?",
+          "options": [
+            "8",
+            "9",
+            "10"
+          ],
+          "answer": "8"
+        },
+        {
+          "question": "7, 8, 9, ___?",
+          "options": [
+            "7",
+            "10",
+            "11"
+          ],
+          "answer": "10"
+        },
+        {
+          "question": "Which number is between 7 and 9?",
+          "options": [
+            "6",
+            "8",
+            "10"
+          ],
+          "answer": "8"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "circle-square-c1",
+    "title": "Shapes - Listen and Repeat",
+    "instructions": "Listen to Mama Judi. Repeat each shape name.",
+    "category": "oral_drill",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "oral_drill",
+      "items": [
+        {
+          "text": "Circle",
+          "audio_hint": "circle"
+        },
+        {
+          "text": "Square",
+          "audio_hint": "square"
+        },
+        {
+          "text": "Triangle",
+          "audio_hint": "triangle"
+        },
+        {
+          "text": "Rectangle",
+          "audio_hint": "rectangle"
+        }
+      ]
+    }
+  },
+  {
+    "lesson_slug": "circle-square-c1",
+    "title": "Name the Shape",
+    "instructions": "Read the description. Choose the correct shape.",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "minutes": 10,
+    "content": {
+      "type": "multiple_choice",
+      "questions": [
+        {
+          "question": "This shape has no corners. What is it?",
+          "options": [
+            "Square",
+            "Triangle",
+            "Circle"
+          ],
+          "answer": "Circle"
+        },
+        {
+          "question": "This shape has 4 equal sides. What is it?",
+          "options": [
+            "Circle",
+            "Square",
+            "Triangle"
+          ],
+          "answer": "Square"
+        },
+        {
+          "question": "This shape has 3 sides. What is it?",
+          "options": [
+            "Rectangle",
+            "Circle",
+            "Triangle"
+          ],
+          "answer": "Triangle"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,52 @@
+[
+  { "subject_slug": "english-class-1", "name": "My World",         "slug": "my-world-eng-c1",       "order": 1 },
+  { "subject_slug": "english-class-1", "name": "My Family",        "slug": "my-family-eng-c1",      "order": 2 },
+  { "subject_slug": "english-class-1", "name": "My School",        "slug": "my-school-eng-c1",      "order": 3 },
+  { "subject_slug": "english-class-1", "name": "My Body",          "slug": "my-body-eng-c1",        "order": 4 },
+  { "subject_slug": "english-class-1", "name": "Food and Health",  "slug": "food-health-eng-c1",    "order": 5 },
+
+  { "subject_slug": "english-class-2", "name": "My Community",     "slug": "my-community-eng-c2",   "order": 1 },
+  { "subject_slug": "english-class-2", "name": "Animals",          "slug": "animals-eng-c2",        "order": 2 },
+  { "subject_slug": "english-class-2", "name": "The Environment",  "slug": "environment-eng-c2",    "order": 3 },
+  { "subject_slug": "english-class-2", "name": "Transport",        "slug": "transport-eng-c2",      "order": 4 },
+
+  { "subject_slug": "english-class-3", "name": "Our Town",         "slug": "our-town-eng-c3",       "order": 1 },
+  { "subject_slug": "english-class-3", "name": "Jobs and Work",    "slug": "jobs-work-eng-c3",      "order": 2 },
+  { "subject_slug": "english-class-3", "name": "Weather",          "slug": "weather-eng-c3",        "order": 3 },
+
+  { "subject_slug": "english-class-4", "name": "Cameroon",         "slug": "cameroon-eng-c4",       "order": 1 },
+  { "subject_slug": "english-class-4", "name": "Science and Nature","slug": "science-nature-eng-c4","order": 2 },
+  { "subject_slug": "english-class-4", "name": "Health",           "slug": "health-eng-c4",         "order": 3 },
+
+  { "subject_slug": "english-class-5", "name": "Africa",           "slug": "africa-eng-c5",         "order": 1 },
+  { "subject_slug": "english-class-5", "name": "Technology",       "slug": "technology-eng-c5",     "order": 2 },
+  { "subject_slug": "english-class-5", "name": "Culture",          "slug": "culture-eng-c5",        "order": 3 },
+
+  { "subject_slug": "english-class-6", "name": "The World",        "slug": "the-world-eng-c6",      "order": 1 },
+  { "subject_slug": "english-class-6", "name": "Citizenship",      "slug": "citizenship-eng-c6",    "order": 2 },
+  { "subject_slug": "english-class-6", "name": "Environment",      "slug": "environment-eng-c6",    "order": 3 },
+
+  { "subject_slug": "math-class-1",    "name": "Numbers 0-20",     "slug": "numbers-0-20-c1",       "order": 1 },
+  { "subject_slug": "math-class-1",    "name": "Shapes",           "slug": "shapes-c1",             "order": 2 },
+  { "subject_slug": "math-class-1",    "name": "Measurement",      "slug": "measurement-c1",        "order": 3 },
+
+  { "subject_slug": "math-class-2",    "name": "Numbers 0-100",    "slug": "numbers-0-100-c2",      "order": 1 },
+  { "subject_slug": "math-class-2",    "name": "Addition",         "slug": "addition-c2",           "order": 2 },
+  { "subject_slug": "math-class-2",    "name": "Subtraction",      "slug": "subtraction-c2",        "order": 3 },
+
+  { "subject_slug": "math-class-3",    "name": "Numbers 0-1000",   "slug": "numbers-0-1000-c3",     "order": 1 },
+  { "subject_slug": "math-class-3",    "name": "Multiplication",   "slug": "multiplication-c3",     "order": 2 },
+  { "subject_slug": "math-class-3",    "name": "Division",         "slug": "division-c3",           "order": 3 },
+
+  { "subject_slug": "math-class-4",    "name": "Large Numbers",    "slug": "large-numbers-c4",      "order": 1 },
+  { "subject_slug": "math-class-4",    "name": "Fractions",        "slug": "fractions-c4",          "order": 2 },
+  { "subject_slug": "math-class-4",    "name": "Geometry",         "slug": "geometry-c4",           "order": 3 },
+
+  { "subject_slug": "math-class-5",    "name": "Decimals",         "slug": "decimals-c5",           "order": 1 },
+  { "subject_slug": "math-class-5",    "name": "Percentages",      "slug": "percentages-c5",        "order": 2 },
+  { "subject_slug": "math-class-5",    "name": "Problem Solving",  "slug": "problem-solving-c5",    "order": 3 },
+
+  { "subject_slug": "math-class-6",    "name": "Advanced Numbers", "slug": "advanced-numbers-c6",   "order": 1 },
+  { "subject_slug": "math-class-6",    "name": "Statistics",       "slug": "statistics-c6",         "order": 2 },
+  { "subject_slug": "math-class-6",    "name": "Algebra Intro",    "slug": "algebra-intro-c6",      "order": 3 }
+]

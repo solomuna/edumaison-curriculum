@@ -1,0 +1,57 @@
+[
+  { "level_slug": "pre-nursery", "name": "English",                "slug": "english-pre-nursery",   "color": "#4CAF50", "order": 1 },
+  { "level_slug": "pre-nursery", "name": "Mathematics",            "slug": "math-pre-nursery",       "color": "#2196F3", "order": 2 },
+  { "level_slug": "pre-nursery", "name": "Artistic Activities",    "slug": "art-pre-nursery",        "color": "#FF9800", "order": 3 },
+
+  { "level_slug": "nursery-1",   "name": "English",                "slug": "english-nursery-1",      "color": "#4CAF50", "order": 1 },
+  { "level_slug": "nursery-1",   "name": "Mathematics",            "slug": "math-nursery-1",         "color": "#2196F3", "order": 2 },
+  { "level_slug": "nursery-1",   "name": "French",                 "slug": "french-nursery-1",       "color": "#9C27B0", "order": 3 },
+  { "level_slug": "nursery-1",   "name": "Artistic Activities",    "slug": "art-nursery-1",          "color": "#FF9800", "order": 4 },
+
+  { "level_slug": "nursery-2",   "name": "English",                "slug": "english-nursery-2",      "color": "#4CAF50", "order": 1 },
+  { "level_slug": "nursery-2",   "name": "Mathematics",            "slug": "math-nursery-2",         "color": "#2196F3", "order": 2 },
+  { "level_slug": "nursery-2",   "name": "French",                 "slug": "french-nursery-2",       "color": "#9C27B0", "order": 3 },
+  { "level_slug": "nursery-2",   "name": "Artistic Activities",    "slug": "art-nursery-2",          "color": "#FF9800", "order": 4 },
+
+  { "level_slug": "class-1",     "name": "English",                "slug": "english-class-1",        "color": "#4CAF50", "order": 1 },
+  { "level_slug": "class-1",     "name": "Mathematics",            "slug": "math-class-1",           "color": "#2196F3", "order": 2 },
+  { "level_slug": "class-1",     "name": "French",                 "slug": "french-class-1",         "color": "#9C27B0", "order": 3 },
+  { "level_slug": "class-1",     "name": "Science and Technology", "slug": "science-class-1",        "color": "#00BCD4", "order": 4 },
+  { "level_slug": "class-1",     "name": "Reading",                "slug": "reading-class-1",        "color": "#FF5722", "order": 5 },
+  { "level_slug": "class-1",     "name": "Handwriting",            "slug": "handwriting-class-1",    "color": "#795548", "order": 6 },
+
+  { "level_slug": "class-2",     "name": "English",                "slug": "english-class-2",        "color": "#4CAF50", "order": 1 },
+  { "level_slug": "class-2",     "name": "Mathematics",            "slug": "math-class-2",           "color": "#2196F3", "order": 2 },
+  { "level_slug": "class-2",     "name": "French",                 "slug": "french-class-2",         "color": "#9C27B0", "order": 3 },
+  { "level_slug": "class-2",     "name": "Science and Technology", "slug": "science-class-2",        "color": "#00BCD4", "order": 4 },
+  { "level_slug": "class-2",     "name": "Reading",                "slug": "reading-class-2",        "color": "#FF5722", "order": 5 },
+  { "level_slug": "class-2",     "name": "Handwriting",            "slug": "handwriting-class-2",    "color": "#795548", "order": 6 },
+
+  { "level_slug": "class-3",     "name": "English",                "slug": "english-class-3",        "color": "#4CAF50", "order": 1 },
+  { "level_slug": "class-3",     "name": "Mathematics",            "slug": "math-class-3",           "color": "#2196F3", "order": 2 },
+  { "level_slug": "class-3",     "name": "French",                 "slug": "french-class-3",         "color": "#9C27B0", "order": 3 },
+  { "level_slug": "class-3",     "name": "Science and Technology", "slug": "science-class-3",        "color": "#00BCD4", "order": 4 },
+  { "level_slug": "class-3",     "name": "ICT",                    "slug": "ict-class-3",            "color": "#607D8B", "order": 5 },
+  { "level_slug": "class-3",     "name": "Citizenship",            "slug": "citizenship-class-3",    "color": "#F44336", "order": 6 },
+
+  { "level_slug": "class-4",     "name": "English",                "slug": "english-class-4",        "color": "#4CAF50", "order": 1 },
+  { "level_slug": "class-4",     "name": "Mathematics",            "slug": "math-class-4",           "color": "#2196F3", "order": 2 },
+  { "level_slug": "class-4",     "name": "French",                 "slug": "french-class-4",         "color": "#9C27B0", "order": 3 },
+  { "level_slug": "class-4",     "name": "Science and Technology", "slug": "science-class-4",        "color": "#00BCD4", "order": 4 },
+  { "level_slug": "class-4",     "name": "ICT",                    "slug": "ict-class-4",            "color": "#607D8B", "order": 5 },
+  { "level_slug": "class-4",     "name": "Citizenship",            "slug": "citizenship-class-4",    "color": "#F44336", "order": 6 },
+
+  { "level_slug": "class-5",     "name": "English",                "slug": "english-class-5",        "color": "#4CAF50", "order": 1 },
+  { "level_slug": "class-5",     "name": "Mathematics",            "slug": "math-class-5",           "color": "#2196F3", "order": 2 },
+  { "level_slug": "class-5",     "name": "French",                 "slug": "french-class-5",         "color": "#9C27B0", "order": 3 },
+  { "level_slug": "class-5",     "name": "Science and Technology", "slug": "science-class-5",        "color": "#00BCD4", "order": 4 },
+  { "level_slug": "class-5",     "name": "ICT",                    "slug": "ict-class-5",            "color": "#607D8B", "order": 5 },
+  { "level_slug": "class-5",     "name": "Citizenship",            "slug": "citizenship-class-5",    "color": "#F44336", "order": 6 },
+
+  { "level_slug": "class-6",     "name": "English",                "slug": "english-class-6",        "color": "#4CAF50", "order": 1 },
+  { "level_slug": "class-6",     "name": "Mathematics",            "slug": "math-class-6",           "color": "#2196F3", "order": 2 },
+  { "level_slug": "class-6",     "name": "French",                 "slug": "french-class-6",         "color": "#9C27B0", "order": 3 },
+  { "level_slug": "class-6",     "name": "Science and Technology", "slug": "science-class-6",        "color": "#00BCD4", "order": 4 },
+  { "level_slug": "class-6",     "name": "ICT",                    "slug": "ict-class-6",            "color": "#607D8B", "order": 5 },
+  { "level_slug": "class-6",     "name": "Citizenship",            "slug": "citizenship-class-6",    "color": "#F44336", "order": 6 }
+]

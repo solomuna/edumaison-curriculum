@@ -1,0 +1,53 @@
+<?php
+namespace Database\Seeders;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class UnitSummariesFinalSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $updated = 0;
+        $data = [
+            "Unit 1 - La maison" => "## La maison\n- la maison, la chambre, la cuisine, le salon, la salle de bain\n- Les articles: le(masc.), la(f\u00e9m.), l'(voyelle), les(pluriel)\n- Adjectifs possessifs: mon/ma/mes, ton/ta/tes, son/sa/ses\n- Phrase: J'habite dans une maison. Ma chambre est grande.",
+            "Unit 2 - Le village et la ville" => "## Le village et la ville\n- Le village: la for\u00eat, le champ, la rivi\u00e8re, les animaux\n- La ville: la rue, le march\u00e9, l'\u00e9cole, l'h\u00f4pital\n- Pr\u00e9positions: dans, sur, sous, devant, derri\u00e8re\n- En ville il y a plus de voitures. Au village l'air est plus frais.",
+            "Unit 3 - L'\u00e9cole" => "## L'\u00e9cole\n- le cahier, le stylo, le tableau, la craie, l'enseignant, la cour\n- Je vais \u00e0 l'\u00e9cole le matin. Mon enseignant s'appelle ___.\n- Verbes: aller, \u00e9crire, lire, apprendre, \u00e9couter\n- Horaires: le matin, l'apr\u00e8s-midi, la r\u00e9cr\u00e9ation",
+            "Unit 4 - Les m\u00e9tiers" => "## Les m\u00e9tiers\n- m\u00e9decin, infirmier, enseignant, agriculteur, commer\u00e7ant, policier\n- Mon p\u00e8re est m\u00e9decin. Je voudrais \u00eatre enseignant(e).\n- Genre: un enseignant / une enseignante\n- Je vais devenir... / Je voudrais \u00eatre...",
+            "Unit 5 - Les voyages" => "## Les voyages\n- Transports: la voiture, le bus, le train, l'avion, le bateau, le v\u00e9lo\n- Directions: \u00e0 gauche, \u00e0 droite, tout droit, en face\n- Je vais au march\u00e9 en bus. Tournez \u00e0 gauche au carrefour.\n- Vocabulaire: le passeport, la valise, le billet, l'h\u00f4tel",
+            "Unit 6 - Les jeux" => "## Les jeux et loisirs\n- Sports: le football, le basketball, la course, la natation\n- Loisirs: lire, dessiner, chanter, cuisiner, regarder la t\u00e9l\u00e9\n- J'aime jouer au football. Le week-end je joue avec mes amis.\n- Verbe AIMER: j'aime, tu aimes, il aime, nous aimons",
+            "Unit 7 - Les traditions" => "## Les traditions\n- Danses traditionnelles, contes et proverbes\n- C\u00e9r\u00e9monies: mariage, naissance, fun\u00e9railles\n- Habits traditionnels selon la r\u00e9gion\n- Dans ma culture, on c\u00e9l\u00e8bre ___.\n- Imparfait: autrefois on c\u00e9l\u00e9brait... / jadis les gens portaient...",
+            "Unit 8 - La communication" => "## La communication\n- Moyens: le t\u00e9l\u00e9phone, la radio, la t\u00e9l\u00e9vision, l'internet\n- \u00c9crire une lettre: en-t\u00eate, formule d'appel, corps, politesse, signature\n- SMS et messages: courts et clairs\n- Soyez poli et respectueux dans vos communications",
+            "Unit 1 - Counting 0-10" => "## Counting 0 to 10\n0,1,2,3,4,5,6,7,8,9,10\n- Even: 0,2,4,6,8 / Odd: 1,3,5,7,9\n- More than (>), Less than (<), Equal to (=)\n- Addition: 3+4=7; Subtraction: 7-3=4",
+            "Unit 2 - Counting 11-20" => "## Counting 11 to 20\n11,12,13,14,15,16,17,18,19,20\n- eleven, twelve, thirteen, fourteen, fifteen...\n- Place value: 15 = 1 ten + 5 units\n- Adding to 20: 13+7=20",
+            "Unit 3 - Basic Shapes" => "## Basic Shapes\n- Circle: round, no corners; Square: 4 equal sides; Triangle: 3 sides; Rectangle: 4 sides\n- 3D shapes: sphere(ball), cube(dice), cylinder(tin), cone\n- Find shapes around you: clock=circle, book=rectangle",
+            "Unit 4 - Long and Short" => "## Long and Short / Measurement\n- Longer/Shorter, Taller/Shorter, Wider/Narrower\n- Standard units: cm for short lengths, m for longer lengths\n- 100 cm = 1 m\n- Always start measuring from the 0 mark on a ruler",
+            "Unit 2 \u2014 Addition & Subtraction" => "## Addition and Subtraction\n- Addition (+): 8+5=13. Key words: plus, add, more, total\n- Subtraction (-): 13-5=8. Key words: minus, take away, difference\n- Fact families: 3+4=7, 4+3=7, 7-3=4, 7-4=3",
+            "Unit 6 \u2014 Sets & Patterns" => "## Sets and Patterns\n- Set: group of objects with something in common\n- Venn diagrams show what sets share\n- Patterns: repeating sequences (circle, square, triangle, circle...)\n- Number patterns: 2,4,6,8 (add 2); 5,10,15,20 (add 5)",
+            "Unit 6 \u2014 Sets & Statistics" => "## Sets and Statistics\n- Set: group with something in common; Venn diagram: shows shared elements\n- Tally chart: count data with marks; Frequency table: organise data\n- Bar graph: compare categories; Pie chart: parts of a whole\n- Mean=sum divided by count; Median=middle value; Mode=most frequent",
+            "Senses" => "## The Five Senses\n- Eyes: see (sight); Ears: hear (hearing); Nose: smell (smell)\n- Tongue: taste (taste); Skin: touch (temperature, pressure, pain)\n- Protect: wear glasses if needed, avoid loud sounds, use sunscreen\n- Senses work together: taste and smell combine for flavour",
+            "Machines" => "## Machines\n- Simple machines make work easier\n- Lever: see-saw, scissors; Wheel and axle: car, bicycle; Pulley: flagpole\n- Inclined plane: ramp; Wedge: axe, knife; Screw: bolt, jar lid\n- Forces: push or pull; Friction slows motion; Gravity pulls down",
+            "Plants" => "## Plants\n- Parts: roots(absorb water), stem(supports), leaves(make food), flowers(reproduction), seeds(new plant)\n- Photosynthesis: CO2 + Water + Sunlight = Glucose + Oxygen\n- Types: trees, shrubs, herbs, grasses, ferns\n- Seed dispersal: wind, water, animals, explosion",
+            "Animals" => "## Animals\n- Vertebrates (have backbone): fish, amphibians, reptiles, birds, mammals\n- Invertebrates (no backbone): insects, worms, snails, crabs\n- Mammals: warm-blooded, hair/fur, feed young with milk\n- Food chains: grass > grasshopper > frog > snake > eagle",
+            "The Human Body" => "## The Human Body\n- Skeletal: 206 bones, provides structure and protection\n- Muscular: over 600 muscles, enables movement\n- Circulatory: heart pumps blood through arteries and veins\n- Respiratory: lungs take in oxygen, release carbon dioxide\n- Digestive: breaks down food for energy\n- Nervous: brain and nerves control all body functions",
+            "Diseases" => "## Diseases\n- Infectious: malaria(mosquito), cholera(dirty water), typhoid(contaminated food)\n- Prevention: mosquito nets, boil water, wash hands, cook food well\n- Vaccines protect against: polio, measles, tuberculosis, hepatitis B\n- First aid: clean cuts and bandage; burns: cool with water (not butter!)\n- Non-infectious: diabetes, cancer, asthma (not spread by germs)",
+            "\u00c9crire des textes" => "## \u00c9crire des textes\n- Narratif: situation initiale > probleme > actions > resolution > fin\n- Connecteurs: d'abord, ensuite, puis, enfin (ordre)\n- Parce que, car (cause); Mais, cependant (opposition)\n- Conseils: planifie avant d'ecrire, relis et corrige apres",
+            "Unit\u00e9 01 - La nature" => "## Unit\u00e9 01 - La nature\n- La flore: les arbres, les plantes, les fleurs, la for\u00eat\n- La faune: les animaux sauvages, les oiseaux, les insectes\n- Les saisons: saison s\u00e8che et saison des pluies en Afrique\n- Prot\u00e9ger: ne pas polluer, planter des arbres, recycler",
+            "Unit\u00e9 02 - Le village et la ville" => "## Unit\u00e9 02 - Le village et la ville\n- Architecture traditionnelle vs moderne\n- Services urbains: eau, \u00e9lectricit\u00e9, internet, transport en commun\n- Probl\u00e8mes: embouteillages, pollution, d\u00e9chets\n- Migration: des villages vers les villes",
+            "Unit\u00e9 03 - L'\u00e9cole" => "## Unit\u00e9 03 - L'\u00e9cole\n- Syst\u00e8me \u00e9ducatif: maternelle, primaire, secondaire, universit\u00e9\n- MINEDUB: Minist\u00e8re de l'\u00c9ducation de Base\n- Droits: tout enfant a le droit d'aller \u00e0 l'\u00e9cole\n- R\u00e8gles: ponctualit\u00e9, respect, travail, tenue vestimentaire",
+            "Unit\u00e9 04 - Les m\u00e9tiers" => "## Unit\u00e9 04 - Les m\u00e9tiers\n- Secteurs: primaire(agriculture), secondaire(industrie), tertiaire(services)\n- Professions: m\u00e9decin, avocat, architecte, ing\u00e9nieur, informaticien\n- Lettre de motivation: se pr\u00e9senter et expliquer sa motivation\n- Je voudrais devenir ___ parce que...",
+            "Unit\u00e9 05 - Les voyages" => "## Unit\u00e9 05 - Les voyages\n- Transports: avion, train, bus, bateau\n- Planifier: destination, billet, h\u00e9bergement, budget\n- Tourisme au Cameroun: Kribi, Mont Cameroun, Parc de la B\u00e9nou\u00e9\n- Vocabulaire: le passeport, la valise, l'h\u00f4tel, la r\u00e9servation",
+            "Unit\u00e9 06 - La sant\u00e9" => "## Unit\u00e9 06 - La sant\u00e9\n- La sant\u00e9: physique, mentale et sociale\n- Maladies: paludisme, chol\u00e9ra, fi\u00e8vre typho\u00efde\n- Pr\u00e9vention: moustiquaires, eau propre, vaccins, bonne hygi\u00e8ne\n- Alimentation saine: fruits, l\u00e9gumes, eau, \u00e9viter sucre et graisses",
+            "Unit\u00e9 07 - Les sports et loisirs" => "## Unit\u00e9 07 - Les sports et loisirs\n- Sports: football, basketball, athl\u00e9tisme (Lions Indomptables!)\n- Loisirs: musique(bikutsi/makossa), danse, lecture, cin\u00e9ma\n- Jeux Olympiques: toutes les 4 ans\n- Bienfaits du sport: sant\u00e9, discipline, esprit d'\u00e9quipe",
+            "Unit\u00e9 08 - La communication" => "## Unit\u00e9 08 - La communication\n- R\u00e9volution num\u00e9rique: internet, smartphones, r\u00e9seaux sociaux\n- Communication formelle vs informelle\n- Les m\u00e9dias: presse, radio, t\u00e9l\u00e9vision, podcasts\n- CRTV: Cameroon Radio Television. Droits num\u00e9riques: vie priv\u00e9e, s\u00e9curit\u00e9",
+            "Temps du pass\u00e9" => "## Les temps du pass\u00e9\n- Pass\u00e9 compos\u00e9: action termin\u00e9e. j'ai mange, elle est all\u00e9e\n- Imparfait: description ou habitude. il faisait beau, nous jouions\n- Plus-que-parfait: avant une autre action pass\u00e9e. j'avais d\u00e9j\u00e0 mang\u00e9\n- Participes irr\u00e9guliers: \u00eatre/\u00e9t\u00e9, avoir/eu, faire/fait, aller/all\u00e9",
+        ];
+        foreach ($data as $name => $summary) {
+            $n = DB::table('units')->where('name',$name)->whereNull('summary')->update(['summary'=>$summary,'updated_at'=>now()]);
+            if ($n === 0) {
+                $n = DB::table('units')->where('name','like','%'.$name.'%')->whereNull('summary')->update(['summary'=>$summary,'updated_at'=>now()]);
+            }
+            $updated += $n;
+        }
+        echo 'Final: ' . $updated . ' units updated.' . PHP_EOL;
+    }
+}

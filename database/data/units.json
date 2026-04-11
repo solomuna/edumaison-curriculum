@@ -1,0 +1,40 @@
+[
+  { "theme_slug": "my-world-eng-c1",     "name": "Unit 1 - Greetings",        "slug": "greetings-c1",          "order": 1, "weeks": 2 },
+  { "theme_slug": "my-world-eng-c1",     "name": "Unit 2 - Colours",          "slug": "colours-c1",            "order": 2, "weeks": 2 },
+  { "theme_slug": "my-family-eng-c1",    "name": "Unit 3 - My Family",        "slug": "my-family-c1",          "order": 3, "weeks": 2 },
+  { "theme_slug": "my-school-eng-c1",    "name": "Unit 4 - My Classroom",     "slug": "my-classroom-c1",       "order": 4, "weeks": 2 },
+  { "theme_slug": "my-body-eng-c1",      "name": "Unit 5 - Parts of the Body","slug": "body-parts-c1",         "order": 5, "weeks": 2 },
+  { "theme_slug": "food-health-eng-c1",  "name": "Unit 6 - Food I Like",      "slug": "food-i-like-c1",        "order": 6, "weeks": 2 },
+
+  { "theme_slug": "my-community-eng-c2", "name": "Unit 1 - My Neighbourhood", "slug": "neighbourhood-c2",      "order": 1, "weeks": 2 },
+  { "theme_slug": "animals-eng-c2",      "name": "Unit 2 - Farm Animals",     "slug": "farm-animals-c2",       "order": 2, "weeks": 2 },
+  { "theme_slug": "animals-eng-c2",      "name": "Unit 3 - Wild Animals",     "slug": "wild-animals-c2",       "order": 3, "weeks": 2 },
+  { "theme_slug": "environment-eng-c2",  "name": "Unit 4 - Our Environment",  "slug": "our-environment-c2",    "order": 4, "weeks": 2 },
+  { "theme_slug": "transport-eng-c2",    "name": "Unit 5 - How We Travel",    "slug": "how-we-travel-c2",      "order": 5, "weeks": 2 },
+
+  { "theme_slug": "our-town-eng-c3",     "name": "Unit 1 - Places in Town",   "slug": "places-in-town-c3",     "order": 1, "weeks": 2 },
+  { "theme_slug": "jobs-work-eng-c3",    "name": "Unit 2 - Community Jobs",   "slug": "community-jobs-c3",     "order": 2, "weeks": 2 },
+  { "theme_slug": "weather-eng-c3",      "name": "Unit 3 - Weather and Seasons","slug": "weather-seasons-c3",  "order": 3, "weeks": 2 },
+
+  { "theme_slug": "cameroon-eng-c4",     "name": "Unit 1 - Our Country",      "slug": "our-country-c4",        "order": 1, "weeks": 2 },
+  { "theme_slug": "science-nature-eng-c4","name": "Unit 2 - Plants and Animals","slug": "plants-animals-c4",   "order": 2, "weeks": 2 },
+  { "theme_slug": "health-eng-c4",       "name": "Unit 3 - Staying Healthy",  "slug": "staying-healthy-c4",   "order": 3, "weeks": 2 },
+
+  { "theme_slug": "africa-eng-c5",       "name": "Unit 1 - Africa Overview",  "slug": "africa-overview-c5",   "order": 1, "weeks": 2 },
+  { "theme_slug": "technology-eng-c5",   "name": "Unit 2 - Modern Tech",      "slug": "modern-tech-c5",        "order": 2, "weeks": 2 },
+  { "theme_slug": "culture-eng-c5",      "name": "Unit 3 - Our Culture",      "slug": "our-culture-c5",        "order": 3, "weeks": 2 },
+
+  { "theme_slug": "the-world-eng-c6",    "name": "Unit 1 - World Geography",  "slug": "world-geography-c6",   "order": 1, "weeks": 2 },
+  { "theme_slug": "citizenship-eng-c6",  "name": "Unit 2 - Being a Citizen",  "slug": "being-citizen-c6",     "order": 2, "weeks": 2 },
+  { "theme_slug": "environment-eng-c6",  "name": "Unit 3 - Protecting Nature","slug": "protecting-nature-c6", "order": 3, "weeks": 2 },
+
+  { "theme_slug": "numbers-0-20-c1",     "name": "Unit 1 - Counting 0-10",    "slug": "counting-0-10-c1",      "order": 1, "weeks": 2 },
+  { "theme_slug": "numbers-0-20-c1",     "name": "Unit 2 - Counting 11-20",   "slug": "counting-11-20-c1",     "order": 2, "weeks": 2 },
+  { "theme_slug": "shapes-c1",           "name": "Unit 3 - Basic Shapes",     "slug": "basic-shapes-c1",       "order": 3, "weeks": 2 },
+  { "theme_slug": "measurement-c1",      "name": "Unit 4 - Long and Short",   "slug": "long-short-c1",         "order": 4, "weeks": 2 },
+
+  { "theme_slug": "numbers-0-100-c2",    "name": "Unit 1 - Numbers to 50",    "slug": "numbers-to-50-c2",      "order": 1, "weeks": 2 },
+  { "theme_slug": "numbers-0-100-c2",    "name": "Unit 2 - Numbers to 100",   "slug": "numbers-to-100-c2",     "order": 2, "weeks": 2 },
+  { "theme_slug": "addition-c2",         "name": "Unit 3 - Adding Numbers",   "slug": "adding-numbers-c2",     "order": 3, "weeks": 2 },
+  { "theme_slug": "subtraction-c2",      "name": "Unit 4 - Taking Away",      "slug": "taking-away-c2",        "order": 4, "weeks": 2 }
+]

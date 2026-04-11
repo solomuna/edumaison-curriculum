@@ -1,0 +1,338 @@
+[
+  {
+    "unit_slug": "greetings-c1",
+    "name": "Lesson 1 - Hello and Goodbye",
+    "slug": "hello-goodbye-c1",
+    "order": 1,
+    "type": "speaking",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "greetings-c1",
+    "name": "Lesson 2 - How are you?",
+    "slug": "how-are-you-c1",
+    "order": 2,
+    "type": "speaking",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "greetings-c1",
+    "name": "Lesson 3 - My Name",
+    "slug": "my-name-c1",
+    "order": 3,
+    "type": "listening",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "greetings-c1",
+    "name": "Lesson 4 - Greetings Song",
+    "slug": "greetings-song-c1",
+    "order": 4,
+    "type": "listening",
+    "minutes": 20
+  },
+  {
+    "unit_slug": "colours-c1",
+    "name": "Lesson 1 - Primary Colours",
+    "slug": "primary-colours-c1",
+    "order": 1,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "colours-c1",
+    "name": "Lesson 2 - Colour the Picture",
+    "slug": "colour-picture-c1",
+    "order": 2,
+    "type": "writing",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "colours-c1",
+    "name": "Lesson 3 - What colour is it?",
+    "slug": "what-colour-c1",
+    "order": 3,
+    "type": "speaking",
+    "minutes": 25
+  },
+  {
+    "unit_slug": "my-family-c1",
+    "name": "Lesson 1 - Mother and Father",
+    "slug": "mother-father-c1",
+    "order": 1,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "my-family-c1",
+    "name": "Lesson 2 - Brothers and Sisters",
+    "slug": "brothers-sisters-c1",
+    "order": 2,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "my-family-c1",
+    "name": "Lesson 3 - My Family Tree",
+    "slug": "family-tree-c1",
+    "order": 3,
+    "type": "writing",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "my-classroom-c1",
+    "name": "Lesson 1 - Classroom Objects",
+    "slug": "classroom-objects-c1",
+    "order": 1,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "my-classroom-c1",
+    "name": "Lesson 2 - My Teacher",
+    "slug": "my-teacher-c1",
+    "order": 2,
+    "type": "listening",
+    "minutes": 25
+  },
+  {
+    "unit_slug": "my-classroom-c1",
+    "name": "Lesson 3 - School Rules",
+    "slug": "school-rules-c1",
+    "order": 3,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "body-parts-c1",
+    "name": "Lesson 1 - Head and Face",
+    "slug": "head-face-c1",
+    "order": 1,
+    "type": "speaking",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "body-parts-c1",
+    "name": "Lesson 2 - Arms and Legs",
+    "slug": "arms-legs-c1",
+    "order": 2,
+    "type": "speaking",
+    "minutes": 25
+  },
+  {
+    "unit_slug": "body-parts-c1",
+    "name": "Lesson 3 - Head Shoulders Knees",
+    "slug": "head-shoulders-c1",
+    "order": 3,
+    "type": "listening",
+    "minutes": 20
+  },
+  {
+    "unit_slug": "food-i-like-c1",
+    "name": "Lesson 1 - Fruits",
+    "slug": "fruits-c1",
+    "order": 1,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "food-i-like-c1",
+    "name": "Lesson 2 - Vegetables",
+    "slug": "vegetables-c1",
+    "order": 2,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "food-i-like-c1",
+    "name": "Lesson 3 - I like and I don't like",
+    "slug": "i-like-c1",
+    "order": 3,
+    "type": "speaking",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "neighbourhood-c2",
+    "name": "Lesson 1 - My Street",
+    "slug": "my-street-c2",
+    "order": 1,
+    "type": "reading",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "neighbourhood-c2",
+    "name": "Lesson 2 - Buildings Around Us",
+    "slug": "buildings-c2",
+    "order": 2,
+    "type": "reading",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "neighbourhood-c2",
+    "name": "Lesson 3 - Where do you live?",
+    "slug": "where-live-c2",
+    "order": 3,
+    "type": "speaking",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "farm-animals-c2",
+    "name": "Lesson 1 - Animals on the Farm",
+    "slug": "animals-farm-c2",
+    "order": 1,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "farm-animals-c2",
+    "name": "Lesson 2 - Animal Sounds",
+    "slug": "animal-sounds-c2",
+    "order": 2,
+    "type": "listening",
+    "minutes": 25
+  },
+  {
+    "unit_slug": "farm-animals-c2",
+    "name": "Lesson 3 - Baby Animals",
+    "slug": "baby-animals-c2",
+    "order": 3,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "wild-animals-c2",
+    "name": "Lesson 1 - Animals in the Forest",
+    "slug": "forest-animals-c2",
+    "order": 1,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "wild-animals-c2",
+    "name": "Lesson 2 - Animals in Africa",
+    "slug": "africa-animals-c2",
+    "order": 2,
+    "type": "reading",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "counting-0-10-c1",
+    "name": "Lesson 1 - Numbers 0 to 5",
+    "slug": "numbers-0-5-c1",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "counting-0-10-c1",
+    "name": "Lesson 2 - Numbers 6 to 10",
+    "slug": "numbers-6-10-c1",
+    "order": 2,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "counting-0-10-c1",
+    "name": "Lesson 3 - Count and Write",
+    "slug": "count-write-0-10-c1",
+    "order": 3,
+    "type": "mathematics",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "counting-11-20-c1",
+    "name": "Lesson 1 - Numbers 11 to 15",
+    "slug": "numbers-11-15-c1",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "counting-11-20-c1",
+    "name": "Lesson 2 - Numbers 16 to 20",
+    "slug": "numbers-16-20-c1",
+    "order": 2,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "counting-11-20-c1",
+    "name": "Lesson 3 - Before and After",
+    "slug": "before-after-c1",
+    "order": 3,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "basic-shapes-c1",
+    "name": "Lesson 1 - Circle and Square",
+    "slug": "circle-square-c1",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "basic-shapes-c1",
+    "name": "Lesson 2 - Triangle and Rectangle",
+    "slug": "triangle-rectangle-c1",
+    "order": 2,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "long-short-c1",
+    "name": "Lesson 1 - Long and Short",
+    "slug": "long-short-lesson-c1",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 25
+  },
+  {
+    "unit_slug": "long-short-c1",
+    "name": "Lesson 2 - Heavy and Light",
+    "slug": "heavy-light-c1",
+    "order": 2,
+    "type": "mathematics",
+    "minutes": 25
+  },
+  {
+    "unit_slug": "adding-numbers-c2",
+    "name": "Lesson 1 - Adding to 10",
+    "slug": "adding-to-10-c2",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "adding-numbers-c2",
+    "name": "Lesson 2 - Adding to 20",
+    "slug": "adding-to-20-c2",
+    "order": 2,
+    "type": "mathematics",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "adding-numbers-c2",
+    "name": "Lesson 3 - Word Problems",
+    "slug": "word-problems-add-c2",
+    "order": 3,
+    "type": "mathematics",
+    "minutes": 40
+  },
+  {
+    "unit_slug": "taking-away-c2",
+    "name": "Lesson 1 - Subtract from 10",
+    "slug": "subtract-10-c2",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "taking-away-c2",
+    "name": "Lesson 2 - Subtract from 20",
+    "slug": "subtract-20-c2",
+    "order": 2,
+    "type": "mathematics",
+    "minutes": 35
+  }
+]

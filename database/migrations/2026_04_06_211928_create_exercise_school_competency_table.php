@@ -1,0 +1,22 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('exercise_school_competency', function (Blueprint $table) {
+            $table->foreignId('exercise_id')->constrained()->onDelete('cascade');
+            $table->foreignId('school_competency_id')->constrained()->onDelete('cascade');
+            $table->primary(['exercise_id', 'school_competency_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('exercise_school_competency');
+    }
+};

@@ -1,0 +1,58 @@
+[
+  {
+    "unit_slug": "numbers-to-50-c2",
+    "name": "Lesson 1 - Numbers to 50",
+    "slug": "numbers-to-50-c2",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "numbers-to-100-c2",
+    "name": "Lesson 1 - Numbers to 100",
+    "slug": "numbers-to-100-c2",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "places-in-town-c3",
+    "name": "Lesson 1 - Places in Town",
+    "slug": "places-in-town-c3",
+    "order": 1,
+    "type": "reading",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "community-jobs-c3",
+    "name": "Lesson 1 - Community Jobs",
+    "slug": "community-jobs-c3",
+    "order": 1,
+    "type": "speaking",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "weather-seasons-c3",
+    "name": "Lesson 1 - Weather",
+    "slug": "weather-seasons-c3",
+    "order": 1,
+    "type": "listening",
+    "minutes": 30
+  },
+  {
+    "unit_slug": "multiplication-c3",
+    "name": "Lesson 1 - Multiplication",
+    "slug": "multiplication-c3",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 35
+  },
+  {
+    "unit_slug": "division-c3",
+    "name": "Lesson 1 - Division",
+    "slug": "division-c3",
+    "order": 1,
+    "type": "mathematics",
+    "minutes": 35
+  }
+]
