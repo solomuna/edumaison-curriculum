@@ -100,7 +100,7 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 ## 🟡 BACKLOG PRIORISÉ
 
 ### P1 — Court terme
-- [ ] Seeders manquants : French C2/C3/C6, Science C2/C3/C6, ICT C6, Citizenship C6
+- [x] Seeders French/Science/ICT/Citizenship C2/C3/C6 complet�s (9 combinaisons)
 - [ ] Bulletins Filament : Irma (15.54 rang27), Mark (7.32 rang34 ⚠️), Ruth (14.91 rang71)
 - [ ] Plan remédiation Mark : Maths 27/100, Science 22/100
 - [ ] Pagination exercices (actuellement tout chargé d'un coup → lenteur)
