@@ -26,8 +26,22 @@ export async function loginChild(childId: number, pin: string) {
 }
 
 export async function getExercisesForChild(childId: number, levelId: number) {
-  const res = await fetch(`${BASE}/exercises/child/${childId}?level_id=${levelId}`)
-  return res.json()
+  // Charge la premiere page immediatement (20 exercices)
+  const res = await fetch(`${BASE}/exercises/child/${childId}?level_id=${levelId}&page=1&limit=20`)
+  const data = await res.json()
+  // Retourne tableau plat pour compatibilite avec composants existants
+  return Array.isArray(data) ? data : (data.data ?? [])
+}
+
+export async function getMoreExercisesForChild(childId: number, levelId: number, page: number) {
+  // Charge une page supplementaire en arriere-plan
+  const res = await fetch(`${BASE}/exercises/child/${childId}?level_id=${levelId}&page=${page}&limit=20`)
+  const data = await res.json()
+  return {
+    exercises: Array.isArray(data) ? data : (data.data ?? []),
+    hasMore:   data.has_more ?? false,
+    total:     data.total ?? 0,
+  }
 }
 
 export async function saveAttempt(childId: number, exerciseId: number, score: number) {

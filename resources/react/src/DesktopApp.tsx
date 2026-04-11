@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getExercisesForChild, saveAttempt } from './services/api'
+import { getExercisesForChild, getMoreExercisesForChild, saveAttempt } from './services/api'
 import { useStreak } from './hooks/useStreak'
 import ExercisePlayer from './pages/child/ExercisePlayer'
 import SubjectsPage from './pages/child/SubjectsPage'
@@ -59,8 +59,22 @@ export default function DesktopApp({ child, onLogout }: Props) {
   useEffect(() => {
     if (!child.id || !child.level_id) return
     getExercisesForChild(child.id, child.level_id!)
-      .then(data => { setExercises(data); exercisesRef.current = data })
-      .finally(() => setLoading(false))
+      .then(first => {
+        setExercises(first)
+        exercisesRef.current = first
+        setLoading(false)
+        // Charge les pages suivantes en arriere-plan
+        let page = 2
+        const loadMore = async () => {
+          const { exercises, hasMore } = await getMoreExercisesForChild(child.id, child.level_id!, page)
+          if (exercises.length > 0) {
+            setExercises(prev => { const u = [...prev, ...exercises]; exercisesRef.current = u; return u })
+          }
+          if (hasMore) { page++; setTimeout(loadMore, 500) }
+        }
+        setTimeout(loadMore, 1000)
+      })
+      .catch(() => setLoading(false))
   }, [child.id])
 
   useEffect(() => {

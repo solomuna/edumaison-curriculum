@@ -8,7 +8,7 @@ import ProgressPage from './ProgressPage'
 import ProfilePage from './ProfilePage'
 import ExamSession from './ExamSession'
 import BulletinPage from './BulletinPage'
-import { getExercisesForChild, saveAttempt } from '../../services/api'
+import { getExercisesForChild, getMoreExercisesForChild, saveAttempt } from '../../services/api'
 import { useStreak } from '../../hooks/useStreak'
 import { useOfflineSync } from '../../hooks/useOfflineSync'
 import OfflineBanner from '../../components/OfflineBanner'
@@ -158,9 +158,26 @@ export default function ChildHome({ child, onLogout }: Props) {
 
   useEffect(() => {
     if (!child.id || !child.level_id) return
+    // Charge la premiere page immediatement
     getExercisesForChild(child.id, child.level_id!)
-      .then(setExercises)
-      .finally(() => setLoading(false))
+      .then(first => {
+        setExercises(first)
+        setLoading(false)
+        // Charge les pages suivantes en arriere-plan
+        let page = 2
+        const loadMore = async () => {
+          const { exercises, hasMore } = await getMoreExercisesForChild(child.id, child.level_id!, page)
+          if (exercises.length > 0) {
+            setExercises(prev => [...prev, ...exercises])
+          }
+          if (hasMore) {
+            page++
+            setTimeout(loadMore, 500) // delai pour ne pas surcharger
+          }
+        }
+        setTimeout(loadMore, 1000) // demarre apres 1s
+      })
+      .catch(() => setLoading(false))
   }, [child.id])
 
   const handleComplete = async (score: number) => {
