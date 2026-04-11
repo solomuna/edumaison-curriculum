@@ -258,7 +258,7 @@ function TVDashboard({ child, onLogout }: { child: Child; onLogout: () => void }
 
   useEffect(() => {
     if (!child.level_id) return
-    getExercisesForChild(child.id, child.level_id!).then(setExercises).finally(() => setLoading(false))
+    getExercisesForChild(child.id, child.level_id!).then(data => setExercises(Array.isArray(data) ? data : (data.data ?? []))).finally(() => setLoading(false))
   }, [child.id])
 
   const subjects = Object.entries(
