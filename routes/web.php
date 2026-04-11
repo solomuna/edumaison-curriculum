@@ -32,3 +32,12 @@ Route::get("/tv/{any?}", function () {
     }
     return redirect("/");
 })->where("any", ".*");
+
+// Espace Mama Judi
+Route::get("/mama/{any?}", function () {
+    $indexPath = public_path("react/mama.html");
+    if (file_exists($indexPath)) {
+        return response()->file($indexPath);
+    }
+    return redirect("/app");
+})->where("any", ".*");
