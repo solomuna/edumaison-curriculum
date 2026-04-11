@@ -57,6 +57,20 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 
 ---
 
+## 🔧 SESSION DU 2026-04-12 — CE QUI A ÉTÉ FAIT
+- [x] Migration FastAPI complète — 24 endpoints migrés de Laravel vers FastAPI
+- [x] Structure `C:\laragon\www\edumaison-api\` créée (FastAPI + SQLAlchemy + PostgreSQL)
+- [x] Modules : auth, children, exercises, subjects, exams, leaderboard, streak, parent, remediation, bulletin, certificates
+- [x] Port 8100 — Laravel reste sur 80 pendant la transition
+- [x] `school_years` table peuplée (label=2025-2026, is_current=true)
+- [x] Dashboard parent fonctionnel — 171 exercices, 4 enfants
+- [x] Performance confirmée — auth Mark ~2ms vs 200-400ms Laravel
+- [ ] **À FAIRE** : Basculer React vers port 8100 (changer BASE dans api.ts)
+- [ ] **À FAIRE** : Ouvrir port 8100 dans le pare-feu Windows
+- [ ] **À FAIRE** : Commit edumaison-api sur GitHub
+
+---
+
 ## 🔧 SESSION DU 2026-04-11 — CE QUI A ÉTÉ FAIT
 - [x] Laragon accessible WiFi local (192.168.100.106)
 - [x] Pare-feu Windows ouvert port 80
@@ -116,12 +130,34 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 - [ ] Multi-familles (inscription famille, isolation données, `family_id` sur children)
 - [ ] Page inscription famille (voisine de pallier = premier test)
 - [ ] **Portabilité/Multi-nœuds** : VPS + sync local↔VPS (PostgreSQL replication, APP_URL dynamique)
-- [ ] APK Capacitor
+- [ ] APK Capacitor (Julia → papa de Julia = premier utilisateur externe)
 - [ ] Assistant IA intégré (plus tard — bien plus tard 😄)
+- [ ] Structure Books : ajouter couche Books → Résumés manquante (vision originale non encore implémentée)
 
 ---
 
-## 🏗️ DÉCISIONS ARCHITECTURALES EN ATTENTE
+## 🎯 VISION ORIGINALE (non encore implémentée)
+La structure prévue dès le départ était :
+```
+Niveau → Book physique → Chapitre/Leçon → Résumé pédagogique → Exercices
+```
+On a construit dans le sens inverse (exercices d'abord). Il faudra ajouter :
+- Table `books` (nom, niveau, éditeur, couverture)
+- Table `book_chapters` (book_id, page, unit_id)
+- Champ `summary` sur `lessons` (contenu pédagogique)
+
+---
+
+## 🚀 ROADMAP COMMERCIALE
+```
+Phase 1 (maintenant)  : Famille Kamgang — beta vivant
+Phase 2 (court terme) : Voisine de pallier — premier test externe
+Phase 3 (moyen terme) : Papa de Julia (APK) — premier utilisateur distant
+Phase 4 (moyen terme) : 5-10 familles pilotes — validation pédagogique
+Phase 5 (long terme)  : Déploiement public — abonnement famille
+```
+**Modèle économique envisagé** : gratuit limité + abonnement famille (fonctionnalités avancées)
+**Différenciateur** : seule plateforme camerounaise anglophone alignée MINEDUB + Espace Mama Judi
 
 ### 1. Supprimer Filament
 **Problème** : incompatibilités PHP 8.3/8.4, lourd, mal adapté à Mama Judi
