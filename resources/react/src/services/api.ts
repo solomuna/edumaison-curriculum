@@ -1,4 +1,4 @@
-const BASE = '/api'
+const BASE = (import.meta.env.VITE_API_URL ?? 'http://192.168.100.106:8100') + '/api'
 
 
 // Shuffle array in place — Fisher-Yates
