@@ -120,7 +120,7 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 - [ ] Bulletins Filament : Irma (15.54 rang27), Mark (7.32 rang34 ⚠️), Ruth (14.91 rang71)
 - [ ] Plan remédiation Mark : Maths 27/100, Science 22/100
 - [ ] Pagination exercices (actuellement tout chargé d'un coup → lenteur)
-- [ ] Landing page publique (Hero + Hall of Fame slider + CTA)
+- [x] Landing page publique -- bilingue FR/EN, avatars dynamiques, stats API, ordre par age
 
 ### P2 — Moyen terme
 - [ ] **Whisper.js (reconnaissance vocale offline)** — intégrer OpenAI Whisper en WebAssembly pour évaluer la prononciation dans OralDrill ET dans les duels. Tourne entièrement en local (~50MB téléchargé une fois). Évaluation phonème par phonème avec score de similarité. Permet aussi de réécouter sa propre prononciation. C'est le différenciateur majeur vs apps basiques.

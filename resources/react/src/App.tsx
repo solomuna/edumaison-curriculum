@@ -13,6 +13,7 @@ const isTV = window.location.pathname.startsWith('/tv') ||
   navigator.userAgent.toLowerCase().includes('webos') ||
   navigator.userAgent.toLowerCase().includes('smart-tv')
 const isDesktop = !isTV && window.innerWidth >= 1024
+const isMama = window.location.pathname.startsWith('/mama')
 
 export default function App() {
   const [child, setChild] = useState<Child | null>(null)
@@ -20,12 +21,14 @@ export default function App() {
 
   if (isTV) return <ThemeProvider><TVApp /></ThemeProvider>
 
-  // Unlock audio on first interaction
-if (typeof window !== 'undefined') {
-  document.addEventListener('click', () => SoundService.unlock(), { once: true })
-}
+  if (isMama) return <ThemeProvider><MamaSpace onExit={() => window.location.href = '/'} /></ThemeProvider>
 
-const shell: Record<string, string | number> = {
+  // Unlock audio on first interaction
+  if (typeof window !== 'undefined') {
+    document.addEventListener('click', () => SoundService.unlock(), { once: true })
+  }
+
+  const shell: Record<string, string | number> = {
     maxWidth: 480, margin: '0 auto', minHeight: '100vh',
     position: 'relative', overflow: 'hidden',
     boxShadow: '0 0 60px rgba(0,0,0,0.15)'

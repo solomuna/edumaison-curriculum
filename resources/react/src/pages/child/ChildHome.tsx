@@ -89,6 +89,13 @@ function MiniLeaderboard({ child }: { child: Child }) {
 }
 
 function MamaJudiSmall() {
+  const [src, setSrc] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    fetch('/api/mama/profile').then(r => r.json()).then(d => {
+      if (d.avatar) setSrc('http://192.168.100.106/storage/' + d.avatar)
+    }).catch(() => {})
+  }, [])
+  if (src) return <img src={src} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.3)' }} />
   return (
     <svg viewBox="0 0 60 60" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
       <circle cx="30" cy="30" r="30" fill="#C8874A"/>

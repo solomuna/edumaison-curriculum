@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\BulletinController;
 use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\RemediationController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MamaProfileController;
 
 Route::get("/children", [AuthController::class, "children"]);
 Route::post("/auth/login", [AuthController::class, "login"]);
@@ -44,3 +45,10 @@ Route::get('/units/{unitId}/exercises/{childId}', [SubjectController::class, 'ex
 Route::post('/children/{id}/promote', [ChildController::class, 'promote']);
 Route::post('/children/promote-all', [ChildController::class, 'promoteAll']);
 Route::post('/children/{id}/avatar', [ChildController::class, 'uploadAvatar']);
+Route::get('/mama/profile', [MamaProfileController::class, 'getProfile']);
+Route::post('/mama/profile/verify-pin', [MamaProfileController::class, 'verifyPin']);
+Route::post('/mama/profile/pin', [MamaProfileController::class, 'updatePin']);
+Route::post('/mama/profile/avatar', [MamaProfileController::class, 'updateAvatar']);
+Route::get('/mama/brief', [\App\Http\Controllers\Api\MamaController::class, 'brief']);
+Route::get('/mama/subjects/{levelId}', [\App\Http\Controllers\Api\MamaController::class, 'subjects']);
+Route::post('/mama/trigger-revision', [\App\Http\Controllers\Api\MamaController::class, 'triggerRevision']);
