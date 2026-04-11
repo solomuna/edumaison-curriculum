@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
+import { SoundService } from '../../../services/SoundService'
 import type { OralDrillContent } from '../../../types/exercise'
 
 interface Props {
@@ -15,6 +16,21 @@ export default function OralDrill({ title, instructions, content, onComplete, on
   const [speaking, setSpeaking] = useState(false)
   const [listened, setListened] = useState<boolean[]>([])
   const [done, setDone] = useState(false)
+  const [showEval, setShowEval] = useState(false)
+  const [selfEval, setSelfEval] = useState<'good' | 'retry' | null>(null)
+  const [repeatedCount, setRepeatedCount] = useState(0)
+
+  const ENCOURAGEMENTS_GOOD = [
+    'Super ! Tu prononces tres bien !',
+    'Excellent ! Continue comme ca !',
+    'Magnifique ! Ta prononciation est belle !',
+    'Bravo ! Je suis fiere de toi !',
+  ]
+  const ENCOURAGEMENTS_RETRY = [
+    'Ecoute encore et repete apres moi !',
+    'Courage ! Prends ton temps et repete.',
+    'Tu peux le faire ! Ecoute bien et repete.',
+  ]
 
   const items = content.items
   const item = items[current]
@@ -26,20 +42,42 @@ export default function OralDrill({ title, instructions, content, onComplete, on
 
   const playItem = async () => {
     setSpeaking(true)
-    await MamaJudi.speak(item.text, 0.8, 1.1)
-    setSpeaking(false)
+    MamaJudi.speak(item.text)
+    setTimeout(() => setSpeaking(false), 2000)
     const updated = [...listened]
     updated[current] = true
     setListened(updated)
+    setRepeatedCount(prev => prev + 1)
+  }
+
+  const handleSelfEval = (val: 'good' | 'retry') => {
+    setSelfEval(val)
+    setShowEval(false)
+    if (val === 'good') {
+      SoundService.correct()
+      const msg = ENCOURAGEMENTS_GOOD[Math.floor(Math.random() * ENCOURAGEMENTS_GOOD.length)]
+      MamaJudi.speak(msg)
+      setTimeout(() => {
+        setSelfEval(null)
+        setRepeatedCount(0)
+        if (current < items.length - 1) { setCurrent(current + 1) }
+        else { setDone(true); const score = Math.round((listened.filter(Boolean).length / items.length) * 100); onComplete(score) }
+      }, 1800)
+    } else {
+      SoundService.streak()
+      const msg = ENCOURAGEMENTS_RETRY[Math.floor(Math.random() * ENCOURAGEMENTS_RETRY.length)]
+      MamaJudi.speak(msg)
+      setTimeout(() => { setSelfEval(null) }, 1500)
+    }
   }
 
   const next = () => {
-    if (current < items.length - 1) {
-      setCurrent(current + 1)
+    if (listened[current]) {
+      setShowEval(true)
     } else {
-      setDone(true)
-      const score = Math.round((listened.filter(Boolean).length / items.length) * 100)
-      onComplete(score)
+      // N'a pas encore ecoute — passer directement
+      if (current < items.length - 1) { setCurrent(current + 1) }
+      else { setDone(true); onComplete(0) }
     }
   }
 
@@ -48,17 +86,17 @@ export default function OralDrill({ title, instructions, content, onComplete, on
   if (done) {
     return (
       <div style={{
-        background: '#FFF8F2', minHeight: '100vh',
+        background: '#E8DCC8', minHeight: '100vh',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', sans-serif",
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', padding: '24px 20px', textAlign: 'center'
       }}>
         <div style={{ fontSize: 56, marginBottom: 12 }}>🌟</div>
-        <div style={{ fontSize: 26, fontWeight: 900, color: '#2D1B0E', marginBottom: 6 }}>Bravo !</div>
-        <div style={{ fontSize: 14, color: '#8A6050', marginBottom: 24 }}>Tu as terminé : {title}</div>
+        <div style={{ fontSize: 26, fontWeight: 900, color: '#3D2B1F', marginBottom: 6 }}>Bravo !</div>
+        <div style={{ fontSize: 14, color: '#7A6050', marginBottom: 24 }}>Tu as terminé : {title}</div>
         <button onClick={onBack} style={{
           padding: '13px 32px', borderRadius: 16, border: 'none',
-          background: '#FF8FAB', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer'
+          background: '#1D6B2A', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer'
         }}>Retour aux activités</button>
       </div>
     )
@@ -68,22 +106,22 @@ export default function OralDrill({ title, instructions, content, onComplete, on
 
   return (
     <div style={{
-      background: '#FFF8F2', minHeight: '100vh',
+      background: '#E8DCC8', minHeight: '100vh',
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', sans-serif"
     }}>
       {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
-        padding: '14px 16px', background: 'white', borderBottom: '1px solid #F0E4D8'
+        padding: '14px 16px', background: '#F0E8D8', borderBottom: '1px solid #F0E4D8'
       }}>
         <button onClick={onBack} style={{
-          background: '#FFF0E8', border: '1.5px solid #FFD4B0', borderRadius: 10,
-          padding: '6px 12px', fontSize: 13, fontWeight: 700, color: '#C8704A', cursor: 'pointer', flexShrink: 0
+          background: '#F0E8D8', border: '1.5px solid #D0C8B8', borderRadius: 10,
+          padding: '6px 12px', fontSize: 13, fontWeight: 700, color: '#7A6050', cursor: 'pointer', flexShrink: 0
         }}>← Retour</button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#2D1B0E', marginBottom: 4 }}>{title}</div>
-          <div style={{ height: 5, background: '#F0E4D8', borderRadius: 3 }}>
-            <div style={{ height: 5, borderRadius: 3, background: '#FF8FAB', width: `${pct}%`, transition: 'width 0.3s' }}/>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#3D2B1F', marginBottom: 4 }}>{title}</div>
+          <div style={{ height: 5, background: '#D0C8B8', borderRadius: 3 }}>
+            <div style={{ height: 5, borderRadius: 3, background: '#1D6B2A', width: `${pct}%`, transition: 'width 0.3s', background: '#1D6B2A' }}/>
           </div>
         </div>
         <div style={{ fontSize: 12, color: '#C8A090', fontWeight: 700, flexShrink: 0 }}>
@@ -94,12 +132,12 @@ export default function OralDrill({ title, instructions, content, onComplete, on
       <div style={{ padding: 16 }}>
         {/* Instructions */}
         <div style={{
-          background: '#FFF0E6', borderRadius: 16, padding: '10px 14px',
-          marginBottom: 14, border: '1px solid #FFD4B0',
+          background: '#F0E8D8', borderRadius: 16, padding: '10px 14px',
+          marginBottom: 14, border: '1px solid #D0C8B8',
           display: 'flex', alignItems: 'center', gap: 10
         }}>
           <span style={{ fontSize: 20 }}>👩‍🏫</span>
-          <span style={{ fontSize: 13, color: '#B8704A', fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: '#7A6050', fontWeight: 600 }}>
             {speaking ? 'Mama Judi parle...' : instructions}
           </span>
         </div>
@@ -107,9 +145,9 @@ export default function OralDrill({ title, instructions, content, onComplete, on
         {/* Illustration */}
         {content.illustration && (
           <div style={{
-            background: '#FFF0E6', borderRadius: 20, padding: 16,
+            background: '#F0E8D8', borderRadius: 20, padding: 16,
             textAlign: 'center', fontSize: 56, marginBottom: 14,
-            border: '1px solid #FFD4B0', lineHeight: 1
+            border: '1px solid #D0C8B8', lineHeight: 1
           }}>
             {content.illustration}
           </div>
@@ -117,7 +155,7 @@ export default function OralDrill({ title, instructions, content, onComplete, on
 
         {/* Item card */}
         <div style={{
-          background: 'white', borderRadius: 24, padding: '32px 20px',
+          background: '#F0E8D8', borderRadius: 24, padding: '32px 20px',
           marginBottom: 16, border: `2.5px solid ${item.color || '#FF8FAB'}`,
           textAlign: 'center', minHeight: 160,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
@@ -162,6 +200,68 @@ export default function OralDrill({ title, instructions, content, onComplete, on
           </svg>
           {speaking ? 'Mama Judi parle...' : 'Écouter Mama Judi'}
         </button>
+
+        {/* Auto-eval popup */}
+        {showEval && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+            <div style={{ background: '#F0E8D8', borderRadius: 24, padding: '28px 24px', width: '100%', maxWidth: 340, textAlign: 'center' }}>
+              <div style={{ fontSize: 44, marginBottom: 12 }}>{'🗣️'}</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: '#3D2B1F', marginBottom: 6 }}>Tu as bien prononce ?</div>
+              <div style={{ fontSize: 13, color: '#7A6050', marginBottom: 24 }}>Ecoute encore si tu n es pas sur !</div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => handleSelfEval('retry')} style={{ flex: 1, padding: '14px', borderRadius: 14, border: '2px solid #D0C8B8', background: '#E8DCC8', fontSize: 24, cursor: 'pointer' }}>
+                  {'😐'}
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#7A6050', marginTop: 4 }}>Pas encore</div>
+                </button>
+                <button onClick={() => handleSelfEval('good')} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: '#1D6B2A', fontSize: 24, cursor: 'pointer' }}>
+                  {'😊'}
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'white', marginTop: 4 }}>Oui !</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Overlay encouragement */}
+        {selfEval && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+            <div style={{ background: '#F0E8D8', borderRadius: 24, padding: '24px', textAlign: 'center', maxWidth: 300 }}>
+              <div style={{ fontSize: 48, marginBottom: 8 }}>{selfEval === 'good' ? '🌟' : '💪'}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#3D2B1F' }}>{selfEval === 'good' ? 'Super !' : 'Courage !'}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Auto-eval popup */}
+        {showEval && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+            <div style={{ background: '#F0E8D8', borderRadius: 24, padding: '28px 24px', width: '100%', maxWidth: 340, textAlign: 'center' }}>
+              <div style={{ fontSize: 44, marginBottom: 12 }}>{'🗣️'}</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: '#3D2B1F', marginBottom: 6 }}>Tu as bien prononce ?</div>
+              <div style={{ fontSize: 13, color: '#7A6050', marginBottom: 24 }}>Ecoute encore si tu n es pas sur !</div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => handleSelfEval('retry')} style={{ flex: 1, padding: '14px', borderRadius: 14, border: '2px solid #D0C8B8', background: '#E8DCC8', fontSize: 24, cursor: 'pointer' }}>
+                  {'😐'}
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#7A6050', marginTop: 4 }}>Pas encore</div>
+                </button>
+                <button onClick={() => handleSelfEval('good')} style={{ flex: 1, padding: '14px', borderRadius: 14, border: 'none', background: '#1D6B2A', fontSize: 24, cursor: 'pointer' }}>
+                  {'😊'}
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'white', marginTop: 4 }}>Oui !</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Overlay encouragement */}
+        {selfEval && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+            <div style={{ background: '#F0E8D8', borderRadius: 24, padding: '24px', textAlign: 'center', maxWidth: 300 }}>
+              <div style={{ fontSize: 48, marginBottom: 8 }}>{selfEval === 'good' ? '🌟' : '💪'}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#3D2B1F' }}>{selfEval === 'good' ? 'Super !' : 'Courage !'}</div>
+            </div>
+          </div>
+        )}
 
         {/* Prev / Next */}
         <div style={{ display: 'flex', gap: 10 }}>

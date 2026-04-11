@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
+import { SoundService } from '../../../services/SoundService'
 
 interface HandwritingContent {
   type: 'handwriting'
@@ -17,6 +18,8 @@ interface Props {
 export default function Handwriting({ title, instructions, content, onComplete, onBack }: Props) {
   const [current, setCurrent] = useState(0)
   const [done, setDone] = useState(false)
+  const [selfEval, setSelfEval] = useState<'good' | 'retry' | null>(null)
+  const [showEval, setShowEval] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const drawing = useRef(false)
@@ -73,7 +76,7 @@ export default function Handwriting({ title, instructions, content, onComplete, 
     ctx.beginPath()
     ctx.moveTo(lastPos.current.x, lastPos.current.y)
     ctx.lineTo(pos.x, pos.y)
-    ctx.strokeStyle = '#FF8FAB'
+    ctx.strokeStyle = '#1D6B2A'
     ctx.lineWidth = 5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
@@ -107,19 +110,47 @@ export default function Handwriting({ title, instructions, content, onComplete, 
     ctx.setLineDash([])
   }
 
-  const next = () => {
-    if (current < prompts.length - 1) {
-      setCurrent(current + 1)
+  // Messages encouragement Mama Judi par enfant
+  const ENCOURAGEMENTS_GOOD = [
+    'Excellent ! Tes lettres sont tres belles !',
+    'Bravo ! Tu as bien travaille ton ecriture !',
+    'Magnifique ! Continue comme ca !',
+    'Tres bien ! Je suis fiere de toi !',
+  ]
+  const ENCOURAGEMENTS_RETRY = [
+    'Pas grave ! Efface et recommence, tu peux le faire !',
+    'Courage ! Prends ton temps et trace bien les lettres.',
+    'Essaie encore ! Je crois en toi !',
+  ]
+
+  const handleSelfEval = (val: 'good' | 'retry') => {
+    setSelfEval(val)
+    setShowEval(false)
+    if (val === 'good') {
+      SoundService.correct()
+      const msg = ENCOURAGEMENTS_GOOD[Math.floor(Math.random() * ENCOURAGEMENTS_GOOD.length)]
+      MamaJudi.speak(msg)
+      setTimeout(() => {
+        setSelfEval(null)
+        if (current < prompts.length - 1) { setCurrent(current + 1) }
+        else { setDone(true); onComplete(100) }
+      }, 1800)
     } else {
-      setDone(true)
-      onComplete(100)
+      SoundService.streak()
+      const msg = ENCOURAGEMENTS_RETRY[Math.floor(Math.random() * ENCOURAGEMENTS_RETRY.length)]
+      MamaJudi.speak(msg)
+      setTimeout(() => { setSelfEval(null); clearCanvas() }, 1500)
     }
+  }
+
+  const next = () => {
+    setShowEval(true)
   }
 
   if (done) {
     return (
       <div style={{
-        background: '#FFF8F2', minHeight: '100vh',
+        background: '#E8DCC8', minHeight: '100vh',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', sans-serif",
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         justifyContent: 'center', padding: '24px 20px', textAlign: 'center'
@@ -137,23 +168,23 @@ export default function Handwriting({ title, instructions, content, onComplete, 
 
   return (
     <div style={{
-      background: '#FFF8F2', minHeight: '100vh',
+      background: '#E8DCC8', minHeight: '100vh',
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Trebuchet MS', sans-serif"
     }}>
       {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
-        padding: '14px 16px', background: 'white', borderBottom: '1px solid #F0E4D8'
+        padding: '14px 16px', background: '#F0E8D8', borderBottom: '1px solid #F0E4D8'
       }}>
         <button onClick={onBack} style={{
-          background: '#FFF0E8', border: '1.5px solid #FFD4B0', borderRadius: 10,
-          padding: '6px 12px', fontSize: 13, fontWeight: 700, color: '#C8704A',
+          background: '#F0E8D8', border: '1.5px solid #D0C8B8', borderRadius: 10,
+          padding: '6px 12px', fontSize: 13, fontWeight: 700, color: '#7A6050',
           cursor: 'pointer', flexShrink: 0
         }}>← Retour</button>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: '#2D1B0E', marginBottom: 4 }}>{title}</div>
           <div style={{ height: 5, background: '#F0E4D8', borderRadius: 3 }}>
-            <div style={{ height: 5, borderRadius: 3, background: '#0EA5E9', width: `${pct}%`, transition: 'width 0.3s' }}/>
+            <div style={{ height: 5, borderRadius: 3, background: '#1D6B2A', width: `${pct}%`, transition: 'width 0.3s' }}/>
           </div>
         </div>
         <div style={{ fontSize: 12, color: '#C8A090', fontWeight: 700, flexShrink: 0 }}>
@@ -164,22 +195,22 @@ export default function Handwriting({ title, instructions, content, onComplete, 
       <div style={{ padding: 16 }}>
         {/* Prompt card */}
         <div style={{
-          background: '#CFFAFE', borderRadius: 20, padding: '16px 18px',
-          marginBottom: 14, border: '1.5px solid #BAE6FD',
+          background: '#F0E8D8', borderRadius: 20, padding: '16px 18px',
+          marginBottom: 14, border: '1.5px solid #D0C8B8',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <div>
-            <div style={{ fontSize: 11, color: '#0EA5E9', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>
+            <div style={{ fontSize: 11, color: '#1D6B2A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>
               À écrire
             </div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: '#0C4A6E', fontFamily: 'Georgia, serif' }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: '#3D2B1F', fontFamily: 'Georgia, serif' }}>
               {prompt}
             </div>
           </div>
           <button
             onClick={() => MamaJudi.speak('Write: ' + prompt, 0.75)}
             style={{
-              background: '#0EA5E9', border: 'none', borderRadius: 12,
+              background: '#1D6B2A', border: 'none', borderRadius: 12,
               padding: '8px 14px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6
             }}
@@ -196,7 +227,7 @@ export default function Handwriting({ title, instructions, content, onComplete, 
         <div style={{
           background: '#FFF0E6', borderRadius: 14, padding: '8px 14px',
           marginBottom: 14, border: '1px solid #FFD4B0',
-          fontSize: 12, color: '#C8704A', fontWeight: 600
+          fontSize: 12, color: '#7A6050', fontWeight: 600
         }}>
           ✏️ Trace les lettres avec ton doigt ou ta souris !
         </div>
@@ -205,8 +236,8 @@ export default function Handwriting({ title, instructions, content, onComplete, 
         <div
           ref={containerRef}
           style={{
-            background: 'white', borderRadius: 20, marginBottom: 14,
-            border: '2px solid #BAE6FD', height: 220, position: 'relative',
+            background: '#F0E8D8', borderRadius: 20, marginBottom: 14,
+            border: '2px solid #D0C8B8', height: 220, position: 'relative',
             overflow: 'hidden'
           }}
         >
@@ -230,14 +261,14 @@ export default function Handwriting({ title, instructions, content, onComplete, 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={clearCanvas} style={{
-            flex: 1, padding: '13px 0', borderRadius: 16, border: '1.5px solid #FFD4B0',
-            background: '#FFF0E8', color: '#C8704A', fontSize: 14, fontWeight: 800, cursor: 'pointer'
+            flex: 1, padding: '13px 0', borderRadius: 16, border: '1.5px solid #D0C8B8',
+            background: '#F0E8D8', color: '#7A6050', fontSize: 14, fontWeight: 800, cursor: 'pointer'
           }}>
             Effacer
           </button>
           <button onClick={next} style={{
             flex: 2, padding: '13px 0', borderRadius: 16, border: 'none',
-            background: '#0EA5E9', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer'
+            background: '#1D6B2A', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer'
           }}>
             {current === prompts.length - 1 ? 'Terminer ✓' : 'Suivant →'}
           </button>
