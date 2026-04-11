@@ -7,6 +7,7 @@ import SubjectsPage from './SubjectsPage'
 import ProgressPage from './ProgressPage'
 import ProfilePage from './ProfilePage'
 import ExamSession from './ExamSession'
+import DuelSession from './DuelSession'
 import BulletinPage from './BulletinPage'
 import { getExercisesForChild, getMoreExercisesForChild, saveAttempt } from '../../services/api'
 import { useStreak } from '../../hooks/useStreak'
@@ -113,6 +114,10 @@ export default function ChildHome({ child, onLogout }: Props) {
   const [activeExam, setActiveExam] = useState<any>(null)
   const [openSubjectName, setOpenSubjectName] = useState<string | null>(null)
   const [showQuitDialog, setShowQuitDialog] = useState(false)
+  const [pendingDuel, setPendingDuel] = useState<any>(null)
+  const [pendingEvening, setPendingEvening] = useState<any>(null)
+  const [activeDuelId, setActiveDuelId] = useState<number | null>(null)
+  const [activeDuelData, setActiveDuelData] = useState<any>(null)
   const justArrivedAtHome = useRef(false)
   const streakData = useStreak(child)
   const { isOnline, syncPending } = useOfflineSync(child)
@@ -151,6 +156,31 @@ export default function ChildHome({ child, onLogout }: Props) {
   useEffect(() => {
   }, [])
 
+  // Polling toutes les 5s — duel et revision du soir en attente
+  const activeDuelRef = useRef<number | null>(null)
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        // Duel en attente
+        const duelRes = await fetch(`/api/duels/pending/${child.id}`)
+        const duel = await duelRes.json()
+        if (duel && duel.id && !activeDuelRef.current) {
+          activeDuelRef.current = duel.id
+          setPendingDuel(duel)
+        }
+        // Revision du soir en attente
+        const eveningRes = await fetch(`/api/evening-sessions/pending/${child.id}`)
+        const evening = await eveningRes.json()
+        if (evening && evening.id) {
+          setPendingEvening(prev => prev?.id === evening.id ? prev : evening)
+        }
+      } catch (_) {}
+    }
+    poll() // immediat
+    const interval = setInterval(poll, 5000)
+    return () => clearInterval(interval)
+  }, [child.id])
+
   useEffect(() => {
     MamaJudi.setChild(child.name)
     setTimeout(() => MamaJudi.greeting(), 500)
@@ -187,6 +217,13 @@ export default function ChildHome({ child, onLogout }: Props) {
     setActive(null)
   }
 
+  if (activeDuelId && activeDuelData) return (
+    <DuelSession
+      child={child}
+      duel={{ ...activeDuelData, id: activeDuelId }}
+      onComplete={() => { setActiveDuelId(null); setActiveDuelData(null); activeDuelRef.current = null }}
+    />
+  )
   if (activeExam) return <ExamSession child={child} exam={activeExam} onBack={() => setActiveExam(null)} onComplete={() => setActiveExam(null)} />
   if (active) return <ExercisePlayer exercise={active} onComplete={handleComplete} onBack={() => setActive(null)} />
 
@@ -375,6 +412,88 @@ export default function ChildHome({ child, onLogout }: Props) {
       </div>
           <BackgroundMusic />
 
+      {/* Popup Duel en attente */}
+      {pendingDuel && !activeDuelId && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '0 24px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 24, padding: '28px 24px',
+            width: '100%', maxWidth: 360, textAlign: 'center'
+          }}>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>⚔️</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: '#3D2B1F', marginBottom: 8 }}>Duel !</div>
+            <div style={{ fontSize: 14, color: '#8A6050', marginBottom: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 800, color: '#3D2B1F' }}>{pendingDuel.child1_name} vs {pendingDuel.child2_name}</span>
+            </div>
+            <div style={{ fontSize: 13, color: '#C8A090', marginBottom: 24 }}>
+              <span style={{ fontSize: 16 }}>{pendingDuel.nb_exercises} exercices</span>
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setPendingDuel(null)}
+                style={{ flex: 1, padding: '12px', borderRadius: 14, border: '2px solid #F0E4D8', background: '#FFF8F2', fontSize: 15, fontWeight: 800, color: '#8A6050', cursor: 'pointer' }}>
+                Plus tard
+              </button>
+              <button onClick={() => {
+                  SoundService.fanfare()
+                  fetch(`/api/duels/${pendingDuel.id}/start`, { method: 'POST' })
+                  setActiveDuelData(pendingDuel)
+                  setActiveDuelId(pendingDuel.id)
+                  setPendingDuel(null)
+                }}
+                style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: '#FF8FAB', fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer' }}>
+                ⚡ Jouer !
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Popup Revision du soir */}
+      {pendingEvening && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9997,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '0 24px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: 24, padding: '28px 24px',
+            width: '100%', maxWidth: 360, textAlign: 'center'
+          }}>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>📚</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#2D1B0E', marginBottom: 8 }}>Revision du soir !</div>
+            {pendingEvening.mama_judi_message && (
+              <div style={{ fontSize: 14, color: '#8A6050', marginBottom: 12, fontStyle: 'italic' }}>
+                "{pendingEvening.mama_judi_message}"
+              </div>
+            )}
+            {pendingEvening.subject_name && (
+              <div style={{ fontSize: 13, color: '#C8A090', marginBottom: 16 }}>{pendingEvening.subject_name}</div>
+            )}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={async () => {
+                  await fetch(`/api/evening-sessions/${pendingEvening.id}/done`, { method: 'POST' })
+                  setPendingEvening(null)
+                }}
+                style={{ flex: 1, padding: '12px', borderRadius: 14, border: '2px solid #F0E4D8', background: '#FFF8F2', fontSize: 15, fontWeight: 800, color: '#8A6050', cursor: 'pointer' }}>
+                Plus tard
+              </button>
+              <button onClick={() => {
+                  SoundService.levelup()
+                  MamaJudi.speak(pendingEvening.mama_judi_message || 'Bonsoir ! Mama Judi a prepare ta revision.')
+                  fetch(`/api/evening-sessions/${pendingEvening.id}/done`, { method: 'POST' })
+                  setPendingEvening(null)
+                }}
+                style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: '#1D6B2A', fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer' }}>
+                📚 Commencer !
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showQuitDialog && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,

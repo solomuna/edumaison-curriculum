@@ -24,15 +24,15 @@ interface Subject { id: number; name: string; units: { id: number; name: string 
 
 // ── Palette Mama Judi ─────────────────────────────────────────────────────────
 const P = {
-  bg:      '#FFF8F2',
-  card:    '#FFFFFF',
+  bg:      '#E8DCC8',
+  card:    '#F0E8D8',
   green:   '#1D6B2A',
   rose:    '#FF8FAB',
   amber:   '#F59E0B',
   red:     '#CE1126',
-  soft:    '#C8A090',
-  dark:    '#2D1B0E',
-  border:  '#F0E4D8',
+  soft:    '#7A6050',
+  dark:    '#3D2B1F',
+  border:  '#D0C8B8',
 }
 
 // ── Traductions ───────────────────────────────────────────────────────────────
