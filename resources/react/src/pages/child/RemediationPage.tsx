@@ -75,15 +75,15 @@ export default function RemediationPage({ child, onBack }: Props) {
   // Exercise player
   if (activeEx && !sessionDone) {
     return (
-      <div style={{ background: '#FFF8F2', minHeight: '100vh', fontFamily: 'system-ui,sans-serif' }}>
-        <div style={{ background: 'white', padding: '14px 18px', borderBottom: '2px solid #F0E4D8', display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'system-ui,sans-serif' }}>
+        <div style={{ background: 'var(--white)', padding: '14px 18px', borderBottom: '2px solid #F0E4D8', display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => { setActiveEx(null); setActivePlan(null) }}
-            style={{ background: '#FFF0E8', border: '1.5px solid #FFD4B0', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C8704A', cursor: 'pointer' }}>
+            style={{ background: 'var(--card)', border: '1.5px solid #D0C8B8', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C47A3C', cursor: 'pointer' }}>
             ← Stop
           </button>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#2D1B0E' }}>Remediation — {activePlan?.subject}</div>
-            <div style={{ fontSize: 11, color: '#C8A090' }}>Q {sessionIdx + 1}/{activePlan?.exercises.length}</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-dark)' }}>Remediation — {activePlan?.subject}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-soft)' }}>Q {sessionIdx + 1}/{activePlan?.exercises.length}</div>
           </div>
           <div style={{ display: 'flex', gap: 5 }}>
             {activePlan?.exercises.map((_, i) => (
@@ -103,9 +103,9 @@ export default function RemediationPage({ child, onBack }: Props) {
     const good = sessionScores.filter(Boolean).length
     const pct = Math.round(good / sessionScores.length * 100)
     return (
-      <div style={{ background: '#FFF8F2', minHeight: '100vh', fontFamily: 'system-ui,sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'system-ui,sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>{pct >= 70 ? '🌟' : '💪'}</div>
-        <div style={{ fontSize: 22, fontWeight: 900, color: '#2D1B0E', marginBottom: 8 }}>
+        <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-dark)', marginBottom: 8 }}>
           {pct >= 70 ? 'Great progress!' : 'Keep going!'}
         </div>
         <div style={{ fontSize: 15, color: '#8A6050', marginBottom: 28 }}>{activePlan.subject} remediation session</div>
@@ -121,11 +121,11 @@ export default function RemediationPage({ child, onBack }: Props) {
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <button onClick={() => { setActivePlan(null); setSessionDone(false) }}
-            style={{ padding: '13px 24px', borderRadius: 14, border: '1.5px solid #F0E4D8', background: 'white', color: '#2D1B0E', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            style={{ padding: '13px 24px', borderRadius: 14, border: '1.5px solid #F0E4D8', background: 'var(--white)', color: 'var(--text-dark)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
             ← Plans
           </button>
           <button onClick={() => startSession(activePlan)}
-            style={{ padding: '13px 24px', borderRadius: 14, border: 'none', background: '#FF8FAB', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+            style={{ padding: '13px 24px', borderRadius: 14, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
             Practice again 🔄
           </button>
         </div>
@@ -134,22 +134,22 @@ export default function RemediationPage({ child, onBack }: Props) {
   }
 
   return (
-    <div style={{ background: '#FFF8F2', minHeight: '100vh', fontFamily: 'system-ui,sans-serif', paddingBottom: 40 }}>
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #F0E4D8', background: 'white' }}>
-        <button onClick={onBack} style={{ background: '#FFF0E8', border: '1.5px solid #FFD4B0', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C8704A', cursor: 'pointer' }}>← Back</button>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'system-ui,sans-serif', paddingBottom: 40 }}>
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #F0E4D8', background: 'var(--white)' }}>
+        <button onClick={onBack} style={{ background: 'var(--card)', border: '1.5px solid #D0C8B8', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C47A3C', cursor: 'pointer' }}>← Back</button>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 900, color: '#2D1B0E' }}>📋 Remediation Plan</div>
-          <div style={{ fontSize: 12, color: '#C8A090' }}>{data?.child_name}</div>
+          <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--text-dark)' }}>📋 Remediation Plan</div>
+          <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{data?.child_name}</div>
         </div>
       </div>
 
-      {loading && <div style={{ padding: '40px', textAlign: 'center', color: '#C8A090' }}>Loading...</div>}
+      {loading && <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-soft)' }}>Loading...</div>}
 
       {!loading && data?.status === 'excellent' && (
         <div style={{ padding: '60px 18px', textAlign: 'center' }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🏆</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: '#2D1B0E', marginBottom: 8 }}>Excellent results!</div>
-          <div style={{ fontSize: 13, color: '#C8A090' }}>No remediation needed. Keep up the great work!</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--text-dark)', marginBottom: 8 }}>Excellent results!</div>
+          <div style={{ fontSize: 13, color: 'var(--text-soft)' }}>No remediation needed. Keep up the great work!</div>
         </div>
       )}
 
@@ -167,7 +167,7 @@ export default function RemediationPage({ child, onBack }: Props) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 16, fontWeight: 900, color: '#2D1B0E' }}>{plan.subject}</span>
+                      <span style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-dark)' }}>{plan.subject}</span>
                       <span style={{ background: ps.badge, color: ps.accent, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 8 }}>{ps.label}</span>
                     </div>
                     <div style={{ fontSize: 12, color: '#6B7280' }}>

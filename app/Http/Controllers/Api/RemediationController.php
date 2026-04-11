@@ -11,14 +11,38 @@ class RemediationController extends Controller
         $child = DB::table('children')->where('id', $childId)->first();
         if (!$child) return response()->json([]);
 
-        // Get weak subjects (average < 12)
-        $weakSubjects = DB::table('school_results')
-            ->join('subjects','school_results.subject_id','=','subjects.id')
-            ->where('school_results.child_id', $childId)
-            ->where('school_results.average_score', '<', 12)
-            ->orderBy('school_results.average_score')
-            ->select('subjects.id as subject_id','subjects.name as subject','school_results.average_score','school_results.appreciation')
-            ->get();
+        // Calcul dynamique depuis exercise_attempts
+        $dynamicRaw = DB::select("
+            SELECT
+                s.id   AS subject_id,
+                s.name AS subject,
+                ROUND(AVG(ea.score::float / NULLIF(ea.max_score,0) * 20)::numeric, 2) AS average_score
+            FROM exercise_attempts ea
+            JOIN exercises e   ON ea.exercise_id  = e.id
+            JOIN lessons l     ON e.lesson_id     = l.id
+            JOIN units u       ON l.unit_id       = u.id
+            JOIN integrated_themes it ON u.integrated_theme_id = it.id
+            JOIN subjects s    ON it.subject_id   = s.id
+            WHERE ea.child_id = :cid
+              AND ea.status   = 'completed'
+              AND ea.max_score > 0
+            GROUP BY s.id, s.name
+            HAVING ROUND(AVG(ea.score::float / NULLIF(ea.max_score,0) * 20)::numeric, 2) < 12
+            ORDER BY average_score ASC
+        ", ['cid' => $childId]);
+
+        // Fallback sur school_results si pas assez d'attempts
+        if (empty($dynamicRaw)) {
+            $weakSubjects = DB::table('school_results')
+                ->join('subjects','school_results.subject_id','=','subjects.id')
+                ->where('school_results.child_id', $childId)
+                ->where('school_results.average_score', '<', 12)
+                ->orderBy('school_results.average_score')
+                ->select('subjects.id as subject_id','subjects.name as subject','school_results.average_score')
+                ->get();
+        } else {
+            $weakSubjects = collect($dynamicRaw);
+        }
 
         if ($weakSubjects->isEmpty()) {
             return response()->json(['status' => 'excellent', 'plans' => []]);
@@ -64,8 +88,7 @@ class RemediationController extends Controller
                 'subject_id'    => $sub->subject_id,
                 'subject'       => $sub->subject,
                 'average'       => $avg,
-                'appreciation'  => $sub->appreciation,
-                'priority'      => $priority,
+                                'priority'      => $priority,
                 'target'        => $avg < 7 ? 10 : ($avg < 10 ? 12 : 14),
                 'exercises'     => $todo,
                 'done_count'    => $doneCount,

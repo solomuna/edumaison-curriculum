@@ -71,6 +71,22 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 
 ---
 
+## 🔧 SESSION DU 2026-04-12 ? CE QUI A ETE FAIT
+- [x] Sons Chrome regles (TTS Mama Judi + effets sonores)
+- [x] Julia C2 (id=4, pin=2110) ajoutee
+- [x] Migration FastAPI complete -- 24 endpoints, auth ~2ms, port 8100
+- [x] React bascule vers FastAPI port 8100
+- [x] Port 8100 ouvert dans le pare-feu Windows
+- [x] edumaison-api commite sur GitHub
+- [x] Seeders French/Science/ICT/Citizenship C2/C3/C6 completes
+- [x] Bulletins dynamiques depuis exercise_attempts (fallback school_results)
+- [x] Appreciations traduites EN + gamme motivante (Let's Work Harder! etc.)
+- [x] Mama Judi's Remarks -- commentaires traduits EN
+- [x] Moyenne par groupe Comp dans le bulletin
+- [x] Comp_1 adaptee par niveau (110 C1-C3, 60 C4-C6)
+
+---
+
 ## 🔧 SESSION DU 2026-04-11 — CE QUI A ÉTÉ FAIT
 - [x] Laragon accessible WiFi local (192.168.100.106)
 - [x] Pare-feu Windows ouvert port 80
@@ -100,7 +116,7 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 ## 🟡 BACKLOG PRIORISÉ
 
 ### P1 — Court terme
-- [x] Seeders French/Science/ICT/Citizenship C2/C3/C6 complet�s (9 combinaisons)
+- [x] Seeders French/Science/ICT/Citizenship C2/C3/C6 complet�s (9 combinaisons)
 - [ ] Bulletins Filament : Irma (15.54 rang27), Mark (7.32 rang34 ⚠️), Ruth (14.91 rang71)
 - [ ] Plan remédiation Mark : Maths 27/100, Science 22/100
 - [ ] Pagination exercices (actuellement tout chargé d'un coup → lenteur)
