@@ -58,7 +58,9 @@ const T = {
     nav_brief: 'Résumé', nav_revision: 'Révision', nav_duel: 'Duel', nav_books: 'Livres', nav_profile: 'Profil',
     today: "Aujourd'hui", active: 'actifs', attention: 'attention',
     nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
+    auto_section: 'Révision automatique', auto_on: 'Activé', auto_off: 'Désactivé', auto_time: 'Heure', auto_trigger_now: 'Déclencher maintenant', auto_triggered: 'Envoyé !',
     nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
+    auto_section: 'Révision automatique', auto_on: 'Activé', auto_off: 'Désactivé', auto_time: 'Heure', auto_trigger_now: 'Déclencher maintenant', auto_triggered: 'Envoyé !',
   },
   en: {
     title: 'Mama Judi Space',
@@ -84,7 +86,9 @@ const T = {
     nav_brief: 'Summary', nav_revision: 'Revision', nav_duel: 'Duel', nav_books: 'Books', nav_profile: 'Profile',
     today: 'Today', active: 'active', attention: 'attention',
     nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
+    auto_section: 'Auto Revision', auto_on: 'On', auto_off: 'Off', auto_time: 'Time', auto_trigger_now: 'Trigger now', auto_triggered: 'Sent!',
     nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
+    auto_section: 'Auto Revision', auto_on: 'On', auto_off: 'Off', auto_time: 'Time', auto_trigger_now: 'Trigger now', auto_triggered: 'Sent!',
   }
 }
 
@@ -251,12 +255,12 @@ function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
     <div style={{ background: cardBg, borderRadius: 18, padding: '14px 16px',
       marginBottom: 20, border: '1.5px solid ' + cardBdr }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 900, color: P.dark }}>{t.auto_section}</div>
+        <div style={{ fontSize: 13, fontWeight: 900, color: P.dark, flex: 1, marginRight: 10 }}>{t.auto_section}</div>
         <button onClick={() => saveConfig({ ...config, enabled: !config.enabled })}
-          style={{ padding: '4px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+          style={{ padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
             background: config.enabled ? P.green : P.border,
             color: config.enabled ? 'white' : P.soft,
-            fontSize: 12, fontWeight: 800, fontFamily: 'Nunito, sans-serif' }}>
+            fontSize: 13, fontWeight: 800, fontFamily: 'Nunito, sans-serif', flexShrink: 0 }}>
           {config.enabled ? t.auto_on : t.auto_off}
         </button>
       </div>
