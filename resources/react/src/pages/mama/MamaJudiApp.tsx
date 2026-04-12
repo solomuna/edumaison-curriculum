@@ -23,7 +23,7 @@ interface Brief {
   summary: { total_exercises: number; active_today: number; needs_attention: string[] }
 }
 interface Subject { id: number; name: string; units: { id: number; name: string }[] }
-type Screen = 'home' | 'revision' | 'duel' | 'profile' | 'books'
+type Screen = 'home' | 'revision' | 'duel' | 'profile' | 'books' | 'tableau' | 'tableau'
 
 // ── PALETTE ───────────────────────────────────────────────────────────────────
 const P = {
@@ -57,6 +57,8 @@ const T = {
     photo_success: 'Photo mise à jour !', logout: 'Quitter',
     nav_brief: 'Résumé', nav_revision: 'Révision', nav_duel: 'Duel', nav_books: 'Livres', nav_profile: 'Profil',
     today: "Aujourd'hui", active: 'actifs', attention: 'attention',
+    nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
+    nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
   },
   en: {
     title: 'Mama Judi Space',
@@ -81,6 +83,8 @@ const T = {
     photo_success: 'Photo updated!', logout: 'Logout',
     nav_brief: 'Summary', nav_revision: 'Revision', nav_duel: 'Duel', nav_books: 'Books', nav_profile: 'Profile',
     today: 'Today', active: 'active', attention: 'attention',
+    nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
+    nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
   }
 }
 
@@ -531,12 +535,109 @@ function BooksScreen({ t }: { t: typeof T['fr'] }) {
   )
 }
 
+
+// ── TABLEAU NOIR ─────────────────────────────────────────────────────────────────────────────
+function TableauScreen({ t, brief }: { t: typeof T['fr']; brief: Brief | null }) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState(null as any)
+  const [loading, setLoading] = useState(false)
+  const [total, setTotal] = useState(0)
+  const levelId = brief && brief.children.length > 0 ? brief.children[0].level_id : null
+
+  const search = async () => {
+    const q = query.trim()
+    if (q.length < 2) return
+    setLoading(true)
+    try {
+      const base = '/api/mama/blackboard?q=' + encodeURIComponent(q)
+      const url = levelId ? base + '&level_id=' + levelId : base
+      const data = await fetch(url).then(r => r.json())
+      setResults(data.results)
+      setTotal(data.total)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const btnDisabled = loading || query.trim().length < 2
+  const btnBg = btnDisabled ? P.border : P.brown
+  const btnColor = btnDisabled ? P.soft : 'white'
+  const showEmpty = results !== null && total === 0
+  const showResults = results !== null && total > 0
+
+  return (
+    <div>
+      <textarea
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Ex: fractions, adjectives, human body, hygiene..."
+        rows={3}
+        style={{ width: '100%', padding: 12, borderRadius: 12, border: '1.5px solid ' + P.border,
+          fontFamily: 'Nunito, sans-serif', fontSize: 14, background: P.card, color: P.dark,
+          resize: 'none' as const, marginBottom: 12 }}
+      />
+      <button
+        onClick={search}
+        disabled={btnDisabled}
+        style={{ width: '100%', padding: 13, borderRadius: 16, border: 'none', background: btnBg,
+          color: btnColor, fontSize: 15, fontWeight: 900,
+          cursor: btnDisabled ? 'not-allowed' : 'pointer',
+          fontFamily: 'Nunito, sans-serif', marginBottom: 20 }}
+      >
+        {loading ? '...' : t.tableau_search}
+      </button>
+      {showEmpty && (
+        <div style={{ textAlign: 'center' as const, padding: '30px 0', color: P.soft, fontSize: 14 }}>
+          {t.tableau_no_results}
+        </div>
+      )}
+      {showResults && (
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 900, color: P.soft,
+            textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 12 }}>
+            {total} {t.tableau_exercises_found}
+          </div>
+          {results.map((s: any) => (
+            <div key={s.subject_id} style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: P.green, marginBottom: 8 }}>
+                {s.subject_name}
+              </div>
+              {s.units.map((u: any) => (
+                <div key={u.unit_id} style={{ background: P.white, borderRadius: 16,
+                  padding: '12px 14px', marginBottom: 8, border: '1.5px solid ' + P.border }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: P.dark, marginBottom: 6 }}>
+                    {u.unit_name}
+                  </div>
+                  {u.lessons.map((l: any) => (
+                    <div key={l.lesson_id} style={{ display: 'flex', justifyContent: 'space-between',
+                      alignItems: 'center', paddingTop: 6, borderTop: '1px solid ' + P.border }}>
+                      <div style={{ fontSize: 12, color: P.soft }}>{l.lesson_name}</div>
+                      <span style={{ background: P.green, color: 'white', borderRadius: 20,
+                        padding: '2px 10px', fontSize: 11, fontWeight: 800, flexShrink: 0 }}>
+                        {l.exercise_count} ex.
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+
 function ScreenContent({ screen, brief, t, lang, avatarSrc, onAvatarChange }: { screen: Screen; brief: Brief | null; t: typeof T['fr']; lang: 'fr'|'en'; avatarSrc: string | null; onAvatarChange: (url: string) => void }) {
-  if (!brief && screen !== 'profile') return <div style={{ padding: 40, textAlign: 'center', color: P.soft }}>Chargement...</div>
+  if (!brief && screen !== 'profile' && screen !== 'tableau') return <div style={{ padding: 40, textAlign: 'center', color: P.soft }}>Chargement...</div>
   if (screen === 'home' && brief) return <BriefScreen brief={brief} t={t} />
   if (screen === 'revision' && brief) return <RevisionScreen brief={brief} t={t} lang={lang} />
   if (screen === 'duel' && brief) return <DuelScreen brief={brief} t={t} />
   if (screen === 'books') return <BooksScreen t={t} />
+  if (screen === 'tableau') return <TableauScreen t={t} brief={brief} />
+  if (screen === 'tableau') return <TableauScreen t={t} brief={brief} />
   if (screen === 'profile') return <ProfileScreen t={t} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} />
   return null
 }
@@ -551,6 +652,7 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
     { id: 'duel' as Screen, icon: '⚔️', label: t.nav_duel },
     { id: 'books' as Screen, icon: '📖', label: t.nav_books },
     { id: 'profile' as Screen, icon: '👤', label: t.nav_profile },
+    { id: 'tableau' as Screen, icon: '📝', label: t.nav_tableau },
   ]
 
   return (
@@ -619,6 +721,7 @@ function DesktopMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, on
     { id: 'duel' as Screen, icon: '⚔️', label: t.duel },
     { id: 'books' as Screen, icon: '📖', label: t.nav_books },
     { id: 'profile' as Screen, icon: '👤', label: t.profile },
+    { id: 'tableau' as Screen, icon: '📝', label: t.nav_tableau },
   ]
 
   const screenTitle = screen === 'books' ? t.nav_books : NAV.find(n => n.id === screen)?.label || t.title
