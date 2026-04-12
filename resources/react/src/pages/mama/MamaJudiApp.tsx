@@ -208,6 +208,80 @@ function BriefScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
   )
 }
 
+
+// ── AUTO REVISION CARD ─────────────────────────────────────────────────────────────────
+function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
+  const [config, setConfig] = useState(null as any)
+  const [triggering, setTriggering] = useState(false)
+  const [triggered, setTriggered] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/evening-sessions/scheduler-config')
+      .then(r => r.json())
+      .then(setConfig)
+      .catch(() => {})
+  }, [])
+
+  const saveConfig = async (next: any) => {
+    setConfig(next)
+    await fetch('/api/evening-sessions/scheduler-config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(next)
+    }).catch(() => {})
+  }
+
+  const trigger = async () => {
+    setTriggering(true)
+    try {
+      await fetch('/api/evening-sessions/trigger-auto', { method: 'POST' })
+      setTriggered(true)
+      setTimeout(() => setTriggered(false), 3000)
+    } finally { setTriggering(false) }
+  }
+
+  if (!config) return null
+
+  const hour   = config.hour   ?? 19
+  const minute = config.minute ?? 0
+  const timeStr = String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0')
+  const cardBg  = config.enabled ? 'rgba(29,107,42,.07)' : P.card
+  const cardBdr = config.enabled ? 'rgba(29,107,42,.22)' : P.border
+
+  return (
+    <div style={{ background: cardBg, borderRadius: 18, padding: '14px 16px',
+      marginBottom: 20, border: '1.5px solid ' + cardBdr }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 900, color: P.dark }}>{t.auto_section}</div>
+        <button onClick={() => saveConfig({ ...config, enabled: !config.enabled })}
+          style={{ padding: '4px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: config.enabled ? P.green : P.border,
+            color: config.enabled ? 'white' : P.soft,
+            fontSize: 12, fontWeight: 800, fontFamily: 'Nunito, sans-serif' }}>
+          {config.enabled ? t.auto_on : t.auto_off}
+        </button>
+      </div>
+      {config.enabled && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ fontSize: 12, color: P.soft, flexShrink: 0 }}>{t.auto_time}</div>
+          <input type="time" value={timeStr}
+            onChange={e => {
+              const parts = e.target.value.split(':')
+              saveConfig({ ...config, hour: parseInt(parts[0]), minute: parseInt(parts[1]) })
+            }}
+            style={{ padding: '6px 10px', borderRadius: 10, border: '1.5px solid ' + P.border,
+              fontFamily: 'Nunito, sans-serif', fontSize: 14, background: P.white, color: P.dark }} />
+        </div>
+      )}
+      <button onClick={trigger} disabled={triggering}
+        style={{ width: '100%', padding: 10, borderRadius: 14, border: 'none',
+          background: triggered ? P.green : P.brown, color: 'white',
+          fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+        {triggered ? t.auto_triggered : triggering ? '...' : t.auto_trigger_now}
+      </button>
+    </div>
+  )
+}
+
 // ── REVISION ──────────────────────────────────────────────────────────────────
 function RevisionScreen({ brief, t, lang }: { brief: Brief; t: typeof T['fr']; lang: 'fr' | 'en' }) {
   const [selectedChildren, setSelectedChildren] = useState<number[]>(brief.children.map(c => c.id))
@@ -251,6 +325,7 @@ function RevisionScreen({ brief, t, lang }: { brief: Brief; t: typeof T['fr']; l
 
   return (
     <div>
+      <AutoRevisionCard t={t} />
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 800, color: P.soft, marginBottom: 8 }}>{t.choose_children}</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
