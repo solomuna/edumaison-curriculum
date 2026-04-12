@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getChildren, loginChild } from '../../services/api'
 import '../../styles/anglofun.css'
 import type { Child } from '../../types/child'
@@ -79,8 +79,39 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [checking, setChecking] = useState(false)
+  const [showQuitLogin, setShowQuitLogin] = useState(false)
+  const selectedRef = useRef(selected)
+  const showQuitLoginRef = useRef(false)
+  const loginPushCount = useRef(0)
+  const quittingLogin = useRef(false)
+  useEffect(() => { selectedRef.current = selected }, [selected])
+  useEffect(() => { showQuitLoginRef.current = showQuitLogin }, [showQuitLogin])
 
   useEffect(() => { getChildren().then(setChildren).finally(() => setLoading(false)) }, [])
+
+  // Back button -- une seule inscription, refs pour valeurs courantes
+  useEffect(() => {
+    window.history.pushState({}, '')
+    loginPushCount.current = 1
+    const handler = () => {
+      if (quittingLogin.current) return
+      if (selectedRef.current) {
+        setSelected(null); setPin(''); setError('')
+        window.history.pushState({}, '')
+        loginPushCount.current++
+      } else if (!showQuitLoginRef.current) {
+        setShowQuitLogin(true)
+        window.history.pushState({}, '')
+        loginPushCount.current++
+      } else {
+        // Dialog deja ouvert -- bloquer le back
+        window.history.pushState({}, '')
+        loginPushCount.current++
+      }
+    }
+    window.addEventListener('popstate', handler)
+    return () => window.removeEventListener('popstate', handler)
+  }, [])
 
   useEffect(() => {
     if (!selected) return
@@ -192,12 +223,43 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
       </div>
 
       <div style={{ padding: '12px 18px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <button onClick={onParentMode} style={{ background: 'rgba(255,255,255,0.3)', border: '1.5px solid rgba(255,255,255,0.5)', borderRadius: 24, padding: '10px 28px', fontSize: 14, fontWeight: 700, color: '#2A4A1A', cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
           &#128106; Parent view
         </button>
+        <button onClick={() => window.location.href = '/mama'} style={{ background: '#6B4226', border: 'none', borderRadius: 24, padding: '10px 28px', fontSize: 14, fontWeight: 700, color: 'white', cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
+          Mama Judi
+        </button>
+      </div>
       </div>
 
       <TreeLine />
+      {showQuitLogin && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.55)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '0 32px' }}>
+          <div style={{ background: '#F5EDD8', borderRadius: 24, padding: '28px 24px',
+            width: '100%', maxWidth: 360, textAlign: 'center',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#3D2B1F', marginBottom: 8 }}>Quit EduMaison?</div>
+            <div style={{ fontSize: 14, color: '#7A6050', marginBottom: 24 }}>See you soon!</div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => { setShowQuitLogin(false) }}
+                style={{ flex: 1, padding: '12px', borderRadius: 14, border: '2px solid #D0C8B8',
+                  background: '#fff', fontSize: 15, fontWeight: 800, color: '#3D2B1F', cursor: 'pointer' }}>
+                Stay
+              </button>
+              <button onClick={() => { quittingLogin.current = true; setShowQuitLogin(false); window.history.go(-loginPushCount.current) }}
+                style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+                  background: '#1D6B2A', fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer' }}>
+                Quit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

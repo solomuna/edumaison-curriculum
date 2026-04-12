@@ -59,8 +59,10 @@ const T = {
     today: "Aujourd'hui", active: 'actifs', attention: 'attention',
     nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
     auto_section: 'Révision automatique', auto_on: 'Activé', auto_off: 'Désactivé', auto_time: 'Heure', auto_trigger_now: 'Déclencher maintenant', auto_triggered: 'Envoyé !',
+    brief_vocal: 'Brief vocal', brief_stop: 'Arrêter', brief_speaking: 'En cours...',
     nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
     auto_section: 'Révision automatique', auto_on: 'Activé', auto_off: 'Désactivé', auto_time: 'Heure', auto_trigger_now: 'Déclencher maintenant', auto_triggered: 'Envoyé !',
+    brief_vocal: 'Brief vocal', brief_stop: 'Arrêter', brief_speaking: 'En cours...',
   },
   en: {
     title: 'Mama Judi Space',
@@ -87,8 +89,10 @@ const T = {
     today: 'Today', active: 'active', attention: 'attention',
     nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
     auto_section: 'Auto Revision', auto_on: 'On', auto_off: 'Off', auto_time: 'Time', auto_trigger_now: 'Trigger now', auto_triggered: 'Sent!',
+    brief_vocal: 'Voice Brief', brief_stop: 'Stop', brief_speaking: 'Speaking...',
     nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
     auto_section: 'Auto Revision', auto_on: 'On', auto_off: 'Off', auto_time: 'Time', auto_trigger_now: 'Trigger now', auto_triggered: 'Sent!',
+    brief_vocal: 'Voice Brief', brief_stop: 'Stop', brief_speaking: 'Speaking...',
   }
 }
 
@@ -173,11 +177,77 @@ function PinScreen({ onUnlock, t, avatarSrc }: { onUnlock: () => void; t: typeof
   )
 }
 
+
+// ── BRIEF VOCAL ─────────────────────────────────────────────────────────────────────────────
+function generateBriefText(brief: Brief): string {
+  const hour = new Date().getHours()
+  const greet = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
+  let text = greet + ' ! Voici le résumé EduMaison du ' + brief.date + '. '
+  for (const ch of brief.children) {
+    if (ch.today_count === 0) {
+      text += ch.name + ' n’a pas encore fait d’exercices aujourd’hui. '
+    } else {
+      const s = ch.today_count > 1 ? 's' : ''
+      text += ch.name + ' a fait ' + ch.today_count + ' exercice' + s + ' avec une moyenne de ' + ch.today_avg + ' pour cent. '
+    }
+    if (ch.weak_subjects.length > 0) {
+      const names = ch.weak_subjects.map(w => w.name).join(', ')
+      text += 'A renforcer pour ' + ch.name + ' : ' + names + '. '
+    }
+  }
+  const allActive = brief.children.every(ch => ch.today_count > 0)
+  if (allActive) text += 'Tous les enfants ont travaillé aujourd’hui, bravo !'
+  return text
+}
 // ── BRIEF ─────────────────────────────────────────────────────────────────────
 function BriefScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
+  const [speaking, setSpeaking] = useState(false)
+
+  const startVocal = () => {
+    if (!('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const voices = window.speechSynthesis.getVoices()
+    const frVoice = voices.find(v => v.lang.startsWith('fr')) || null
+    // Decouper en phrases courtes -- Android ne supporte pas les utterances longues
+    const sentences = generateBriefText(brief)
+      .split('.')
+      .map(s => s.trim())
+      .filter(s => s.length > 1)
+    let idx = 0
+    setSpeaking(true)
+    const speakNext = () => {
+      if (idx >= sentences.length) { setSpeaking(false); return }
+      const utter = new SpeechSynthesisUtterance(sentences[idx] + '.')
+      if (frVoice) utter.voice = frVoice
+      utter.lang = 'fr-FR'
+      utter.rate = 0.85
+      utter.pitch = 1.0
+      utter.onend = () => { idx++; speakNext() }
+      utter.onerror = () => { idx++; speakNext() }
+      window.speechSynthesis.speak(utter)
+    }
+    speakNext()
+  }
+
+  const stopVocal = () => {
+    window.speechSynthesis.cancel()
+    setSpeaking(false)
+  }
+
+
   return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 900, color: P.soft, textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 14 }}>{t.brief}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 900, color: P.soft, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{t.brief}</div>
+        <button onClick={speaking ? stopVocal : startVocal}
+          style={{ padding: '6px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: speaking ? P.red : P.brown, color: 'white',
+            fontSize: 12, fontWeight: 800, fontFamily: 'Nunito, sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>{speaking ? '⏹️' : '🔊'}</span>
+          <span>{speaking ? t.brief_stop : t.brief_vocal}</span>
+        </button>
+      </div>
       {brief.children.map(c => (
         <div key={c.id} style={{ background: P.white, borderRadius: 18, padding: 16, marginBottom: 12, border: `1.5px solid ${c.needs_attention ? '#FECACA' : P.border}`, background: c.needs_attention ? '#FFF5F5' : P.white }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>

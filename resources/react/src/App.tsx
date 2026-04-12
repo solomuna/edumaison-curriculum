@@ -1,5 +1,5 @@
 import './styles/anglofun.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SoundService } from './services/SoundService'
 import { ThemeProvider } from './context/ThemeContext'
 import ChildLogin from './pages/child/ChildLogin'
@@ -16,7 +16,12 @@ const isDesktop = !isTV && window.innerWidth >= 1024
 const isMama = window.location.pathname.startsWith('/mama')
 
 export default function App() {
-  const [child, setChild] = useState<Child | null>(null)
+  const [child, setChild] = useState<Child | null>(() => {
+    try {
+      const s = localStorage.getItem('edumaison_session')
+      return s ? JSON.parse(s) : null
+    } catch { return null }
+  })
   const [mode, setMode] = useState<'child' | 'parent'>('child')
 
   if (isTV) return <ThemeProvider><TVApp /></ThemeProvider>
@@ -53,10 +58,10 @@ export default function App() {
   }
 
   if (!child) {
-    if (isDesktop) return <ThemeProvider><ChildLogin onLogin={setChild} onParentMode={() => setMode('parent')} /></ThemeProvider>
-    return <ThemeProvider><div style={shell}><ChildLogin onLogin={setChild} onParentMode={() => setMode('parent')} /></div></ThemeProvider>
+    if (isDesktop) return <ThemeProvider><ChildLogin onLogin={c => { localStorage.setItem('edumaison_session', JSON.stringify(c)); setChild(c) }} onParentMode={() => setMode('parent')} /></ThemeProvider>
+    return <ThemeProvider><div style={shell}><ChildLogin onLogin={c => { localStorage.setItem('edumaison_session', JSON.stringify(c)); setChild(c) }} onParentMode={() => setMode('parent')} /></div></ThemeProvider>
   }
 
-  if (isDesktop) return <ThemeProvider><DesktopApp child={child} onLogout={() => setChild(null)} /></ThemeProvider>
-  return <ThemeProvider><div style={shell}><ChildHome child={child} onLogout={() => setChild(null)} /></div></ThemeProvider>
+  if (isDesktop) return <ThemeProvider><DesktopApp child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} /></ThemeProvider>
+  return <ThemeProvider><div style={shell}><ChildHome child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} /></div></ThemeProvider>
 }

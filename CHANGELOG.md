@@ -242,3 +242,20 @@ style: CSS/UI uniquement
 | App TV | http://192.168.100.106/tv | LG webOS |
 | Admin Filament | http://192.168.100.106/admin | PC David |
 | Espace Mama Judi | http://192.168.100.106/mama | Samsung S9+ (à créer) |
+
+## 🔧 SESSION DU 2026-04-12 — CE QUI A ÉTÉ FAIT (suite)
+- [x] Tableau noir Mama Judi — onglet 📝, GET /api/mama/blackboard?q=...
+      Recherche dans lessons/units/subjects, résultats groupés par matière→unité
+- [x] Révision automatique APScheduler — lun-ven 19h00 (Africa/Douala)
+      scheduler.py — BackgroundScheduler, sujet le plus faible du jour
+      Endpoints: GET/POST /api/evening-sessions/scheduler-config
+                 POST /api/evening-sessions/trigger-auto
+      Carte Auto dans RevisionScreen — toggle On/Off, heure configurable, déclencher maintenant
+- [ ] Brief vocal — À FAIRE
+
+## 🟡 BACKLOG RESTANT
+- [ ] Brief vocal
+- [ ] Seeders C1/C2/Nursery (Reading/Handwriting faibles)
+- [ ] Pagination exercices
+- [ ] Portabilité VPS
+- [ ] APK Capacitor

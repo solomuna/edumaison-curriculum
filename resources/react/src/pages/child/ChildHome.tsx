@@ -113,7 +113,11 @@ function MamaJudiSmall() {
 }
 
 export default function ChildHome({ child, onLogout }: Props) {
-  const [tab, setTab] = useState<Tab>('home')
+  const [tab, setTab] = useState<Tab>(() => {
+    const saved = localStorage.getItem('edumaison_tab_' + child.id)
+    const valid = ['home', 'subjects', 'progress', 'profile', 'bulletin']
+    return (saved && valid.includes(saved) ? saved : 'home') as Tab
+  })
   const [exercises, setExercises] = useState<(Exercise & { subject: string })[]>([])
   const [loading, setLoading] = useState(true)
   const [active, setActive] = useState<(Exercise & { subject: string }) | null>(null)
@@ -125,40 +129,59 @@ export default function ChildHome({ child, onLogout }: Props) {
   const [pendingEvening, setPendingEvening] = useState<any>(null)
   const [activeDuelId, setActiveDuelId] = useState<number | null>(null)
   const [activeDuelData, setActiveDuelData] = useState<any>(null)
-  const justArrivedAtHome = useRef(false)
   const streakData = useStreak(child)
   const { isOnline, syncPending } = useOfflineSync(child)
+
+  // Refs pour eviter stale closure dans popstate handler
+  const activeRef = useRef(active)
+  const activeExamRef = useRef(activeExam)
+  const tabRef = useRef(tab)
+  const activeDuelIdRef = useRef(activeDuelId)
+  const showQuitRef = useRef(false)
+  const quitPushCount = useRef(0)
+  useEffect(() => { activeRef.current = active }, [active])
+  useEffect(() => { activeExamRef.current = activeExam }, [activeExam])
+  useEffect(() => { tabRef.current = tab }, [tab])
+  useEffect(() => { activeDuelIdRef.current = activeDuelId }, [activeDuelId])
+  useEffect(() => { showQuitRef.current = showQuitDialog }, [showQuitDialog])
 
   // Native back button support
   const pushNav = () => window.history.pushState({}, '')
 
   useEffect(() => {
+    // Restaurer le tab actif apres actualisation
+    const saved = localStorage.getItem('edumaison_tab_' + child.id)
+    if (saved && ['home','subjects','progress','profile','bulletin'].includes(saved)) {
+      setTab(saved as Tab)
+    }
     window.history.pushState({ sentinel: true }, '')
   }, [])
 
+  // Sauvegarder le tab actif a chaque changement
+  useEffect(() => {
+    localStorage.setItem('edumaison_tab_' + child.id, tab)
+  }, [tab, child.id])
+
   useEffect(() => {
     const handleBack = (_e: PopStateEvent) => {
-      if (activeExam) { setActiveExam(null); pushNav(); return }
-      if (active) { setActive(null); pushNav(); return }
-      if (tab !== 'home') {
-        justArrivedAtHome.current = true
+      if (activeExamRef.current) { setActiveExam(null); pushNav(); return }
+      if (activeDuelIdRef.current) { pushNav(); return }
+      if (activeRef.current) { setActive(null); pushNav(); return }
+      if (tabRef.current !== 'home') {
         setTab('home')
         setOpenSubjectName(null)
         pushNav()
         return
       }
-      // Already on Home
-      if (justArrivedAtHome.current) {
-        justArrivedAtHome.current = false
-        pushNav()
-        return
-      }
+      // Ne pas afficher le dialog deux fois
+      if (showQuitRef.current) { pushNav(); return }
       setShowQuitDialog(true)
       pushNav()
+      quitPushCount.current++
     }
     window.addEventListener('popstate', handleBack)
     return () => window.removeEventListener('popstate', handleBack)
-  }, [activeExam, active, tab])
+  }, [])
 
   useEffect(() => {
   }, [])
@@ -518,7 +541,7 @@ export default function ChildHome({ child, onLogout }: Props) {
             <div style={{ fontSize: 14, color: 'var(--text-soft)', marginBottom: 24 }}>Your progress is saved. See you soon!</div>
             <div style={{ display: 'flex', gap: 12 }}>
               <button onClick={() => setShowQuitDialog(false)} style={{ flex: 1, padding: '12px', borderRadius: 14, border: '2px solid var(--border)', background: 'var(--bg)', fontSize: 15, fontWeight: 800, color: 'var(--text-dark)', cursor: 'pointer' }}>Stay</button>
-              <button onClick={() => { setShowQuitDialog(false); window.history.back() }} style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: '#1D6B2A', fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer' }}>Quit</button>
+              <button onClick={() => { quitPushCount.current = 0; setShowQuitDialog(false); onLogout() }} style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: '#1D6B2A', fontSize: 15, fontWeight: 800, color: 'white', cursor: 'pointer' }}>Quit</button>
             </div>
           </div>
         </div>
