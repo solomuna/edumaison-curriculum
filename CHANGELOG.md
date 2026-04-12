@@ -125,7 +125,7 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
 ### P2 — Moyen terme
 - [ ] **Whisper.js (reconnaissance vocale offline)** — intégrer OpenAI Whisper en WebAssembly pour évaluer la prononciation dans OralDrill ET dans les duels. Tourne entièrement en local (~50MB téléchargé une fois). Évaluation phonème par phonème avec score de similarité. Permet aussi de réécouter sa propre prononciation. C'est le différenciateur majeur vs apps basiques.
 - [ ] **TensorFlow.js OCR (reconnaissance écriture offline)** — modèle léger (~5MB) pour évaluer le handwriting sur canvas tactile. Court terme : auto-évaluation enfant (Correct/Pas tout à fait). Long terme : reconnaissance automatique des lettres/mots via TensorFlow.js. Handwriting exclu des duels jusqu'à implémentation.
-- [ ] **Espace Mama Judi** (`/mama`) — interface simple S9+, bilingue FR/EN
+- [x] **Espace Mama Judi** -- Brief, Revision multi-matieres, Duel, Profil photo+PIN, Books physiques (`/mama`) — interface simple S9+, bilingue FR/EN
   - Brief du soir (résumé progrès enfants)
   - Programmation révision du soir
   - Lancer un duel
