@@ -140,7 +140,7 @@ MCQ, OralDrill, FillIn, Handwriting, MatchPairs, SentenceOrder, TrueFalse, Clock
   - Analyse `attempts` du jour → unité avec plus d'erreurs
   - Son + popup qui s'impose sur tablettes
   - Message vocal Mama Judi personnalisé
-- [ ] **Association books physiques**
+- [x] Books physiques Mama Judi -- association livres/unites, CRUD, icone, titre**
   - Table `book_references` (subject_id, book_name, page, unit_id)
   - Mama Judi associe une fois → automatique ensuite
 

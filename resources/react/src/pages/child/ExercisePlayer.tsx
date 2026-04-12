@@ -12,7 +12,7 @@ import NumberLine from './exercises/NumberLine'
 import Geometry from './exercises/Geometry'
 import IctIllustration from '../../components/IctIllustration'
 import { MamaJudi } from '../../services/MamaJudi'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 
 interface Props {
@@ -21,12 +21,32 @@ interface Props {
   onBack: () => void
 }
 
-function ExerciseShell({ title, onBack, children, category, keyword }: {
+function BookHint({ exerciseId }: { exerciseId: number }) {
+  const [book, setBook] = useState<{book_name:string;page_from:number|null;page_to:number|null;chapter:string}|null>(null)
+  useEffect(() => {
+    fetch('/api/books/exercise/' + exerciseId)
+      .then(r => r.json()).then(d => { if (d && d.book_name) setBook(d) }).catch(() => {})
+  }, [exerciseId])
+  if (!book) return null
+  return (
+    <div style={{ background: '#FEF9C3', borderRadius: 14, padding: '8px 14px', margin: '0 16px 10px', border: '1.5px solid #FCD34D', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+      <span style={{ fontSize: 18 }}>&#128214;</span>
+      <div>
+        <span style={{ fontWeight: 800, color: '#92400E' }}>{book.book_name}</span>
+        {book.chapter && <span style={{ color: '#B45309' }}> — {book.chapter}</span>}
+        {book.page_from && <span style={{ color: '#B45309' }}> p.{book.page_from}{book.page_to && book.page_to !== book.page_from ? '-'+book.page_to : ''}</span>}
+      </div>
+    </div>
+  )
+}
+
+function ExerciseShell({ title, onBack, children, category, keyword, exerciseId }: {
   title: string
   onBack: () => void
   children: React.ReactNode
   category?: string
   keyword?: string
+  exerciseId?: number
 }) {
   return (
     <div style={{
@@ -51,6 +71,7 @@ function ExerciseShell({ title, onBack, children, category, keyword }: {
           {title}
         </span>
       </div>
+      {exerciseId && <BookHint exerciseId={exerciseId} />}
       {category === 'ict' && keyword && (
         <div style={{
           background: 'var(--card)', borderRadius: 20, margin: '14px 16px 0',
