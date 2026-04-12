@@ -23,7 +23,7 @@ interface Brief {
   summary: { total_exercises: number; active_today: number; needs_attention: string[] }
 }
 interface Subject { id: number; name: string; units: { id: number; name: string }[] }
-type Screen = 'home' | 'revision' | 'duel' | 'profile'
+type Screen = 'home' | 'revision' | 'duel' | 'profile' | 'books'
 
 // ── PALETTE ───────────────────────────────────────────────────────────────────
 const P = {
@@ -422,6 +422,7 @@ function ScreenContent({ screen, brief, t, lang, avatarSrc, onAvatarChange }: { 
   if (screen === 'home' && brief) return <BriefScreen brief={brief} t={t} />
   if (screen === 'revision' && brief) return <RevisionScreen brief={brief} t={t} lang={lang} />
   if (screen === 'duel' && brief) return <DuelScreen brief={brief} t={t} />
+  if (screen === 'books') return <BooksScreen t={t} />
   if (screen === 'profile') return <ProfileScreen t={t} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} />
   return null
 }
