@@ -25,7 +25,20 @@ const SUBJECT_ICONS: Record<string, string> = {
 }
 
 function MamaJudiDesk() {
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    fetch('/api/mama/profile').then(r => r.json()).then(d => {
+      if (d.avatar) setSrc('/storage/' + d.avatar)
+    }).catch(() => {})
+  }, [])
+  if (src) return (
+    <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden',
+      border: '3px solid rgba(255,255,255,.35)', flexShrink: 0 }}>
+      <img src={src} alt='Mama Judi' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    </div>
+  )
   return (
+
     <svg viewBox="0 0 84 84" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
       <circle cx="42" cy="42" r="42" fill="#C8874A"/>
       <circle cx="42" cy="38" r="22" fill="#A06830"/>

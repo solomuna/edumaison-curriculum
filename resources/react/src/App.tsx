@@ -19,7 +19,10 @@ export default function App() {
   const [child, setChild] = useState<Child | null>(() => {
     try {
       const s = localStorage.getItem('edumaison_session')
-      return s ? JSON.parse(s) : null
+      if (!s) return null
+      const parsed = JSON.parse(s)
+      if (!parsed || !parsed.id || !parsed.name) return null
+      return parsed
     } catch { return null }
   })
   const [mode, setMode] = useState<'child' | 'parent'>('child')
@@ -58,8 +61,8 @@ export default function App() {
   }
 
   if (!child) {
-    if (isDesktop) return <ThemeProvider><ChildLogin onLogin={c => { localStorage.setItem('edumaison_session', JSON.stringify(c)); setChild(c) }} onParentMode={() => setMode('parent')} /></ThemeProvider>
-    return <ThemeProvider><div style={shell}><ChildLogin onLogin={c => { localStorage.setItem('edumaison_session', JSON.stringify(c)); setChild(c) }} onParentMode={() => setMode('parent')} /></div></ThemeProvider>
+    if (isDesktop) return <ThemeProvider><ChildLogin onLogin={c => { if (c && c.id) { localStorage.setItem('edumaison_session', JSON.stringify(c)) }; setChild(c) }} onParentMode={() => setMode('parent')} /></ThemeProvider>
+    return <ThemeProvider><div style={shell}><ChildLogin onLogin={c => { if (c && c.id) { localStorage.setItem('edumaison_session', JSON.stringify(c)) }; setChild(c) }} onParentMode={() => setMode('parent')} /></div></ThemeProvider>
   }
 
   if (isDesktop) return <ThemeProvider><DesktopApp child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} /></ThemeProvider>

@@ -60,11 +60,12 @@ export default function ExamBanner({ child, onStartExam }: Props) {
     return () => clearInterval(t)
   }, [child.id])
 
-  if (exams.length === 0) return null
+  const visible = exams.filter(e => !e.already_taken)
+  if (visible.length === 0) return null
 
   return (
     <div style={{ padding: '0 16px', marginBottom: 14 }}>
-      {exams.map(exam => {
+      {visible.map(exam => {
         const scheduledAt = new Date(exam.scheduled_at)
         const isReady = Date.now() >= scheduledAt.getTime()
         const isDone = exam.already_taken

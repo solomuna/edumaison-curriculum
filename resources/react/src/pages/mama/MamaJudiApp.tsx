@@ -523,7 +523,7 @@ function ProfileScreen({ t, avatarSrc, onAvatarChange }: { t: typeof T['fr']; av
     try {
       const r = await fetch('/api/mama/profile/avatar', { method: 'POST', body: form })
       const d = await r.json()
-      if (d.success) { onAvatarChange('http://192.168.100.106/storage/' + d.avatar); setPhotoMsg(t.photo_success) }
+      if (d.success) { onAvatarChange('/storage/' + d.avatar); setPhotoMsg(t.photo_success) }
     } catch (_) {} finally { setUploading(false) }
   }
 
@@ -951,7 +951,7 @@ export default function MamaJudiApp() {
 
   useEffect(() => {
     fetch('/api/mama/profile').then(r => r.json()).then(d => {
-      if (d.avatar) setAvatarSrc('http://192.168.100.106/storage/' + d.avatar)
+      if (d.avatar) setAvatarSrc('/storage/' + d.avatar)
     }).catch(() => {})
   }, [])
 

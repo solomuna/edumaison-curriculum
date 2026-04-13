@@ -21,6 +21,18 @@ function calcAge(birthDate: string | null | undefined): string {
 }
 
 function MamaJudiHead({ size = 90 }: { size?: number }) {
+  const [src, setSrc] = useState<string | null>(null)
+  useEffect(() => {
+    fetch('/api/mama/profile').then(r => r.json()).then(d => {
+      if (d.avatar) setSrc('/storage/' + d.avatar)
+    }).catch(() => {})
+  }, [])
+  if (src) return (
+    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden',
+      border: '3px solid #1D6B2A', flexShrink: 0 }}>
+      <img src={src} alt="Mama Judi" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    </div>
+  )
   return (
     <svg viewBox="0 0 84 84" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
       <circle cx="42" cy="42" r="42" fill="#C8874A"/>
@@ -133,7 +145,7 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
       setChecking(true)
       const res = await loginChild(selected.id, newPin)
       setChecking(false)
-      if (res.error) { setError('Wrong PIN — try again'); setPin('') }
+      if (res.error || res.detail || !res.id) { setError('Wrong PIN — try again'); setPin('') }
       else onLogin(res)
     }
   }

@@ -17,6 +17,15 @@ import ExamBanner from '../../components/ExamBanner'
 import type { Exercise } from '../../types/exercise'
 import type { Child } from '../../types/child'
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 interface Props { child: Child; onLogout: () => void }
 type Tab = 'home' | 'subjects' | 'progress' | 'profile' | 'bulletin'
 
@@ -92,7 +101,7 @@ function MamaJudiSmall() {
   const [src, setSrc] = React.useState<string | null>(null)
   React.useEffect(() => {
     fetch('/api/mama/profile').then(r => r.json()).then(d => {
-      if (d.avatar) setSrc('http://192.168.100.106/storage/' + d.avatar)
+      if (d.avatar) setSrc('/storage/' + d.avatar)
     }).catch(() => {})
   }, [])
   if (src) return <img src={src} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.3)' }} />
@@ -119,6 +128,9 @@ export default function ChildHome({ child, onLogout }: Props) {
     return (saved && valid.includes(saved) ? saved : 'home') as Tab
   })
   const [exercises, setExercises] = useState<(Exercise & { subject: string })[]>([])
+  const [exPage, setExPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [active, setActive] = useState<(Exercise & { subject: string }) | null>(null)
   const [completed, setCompleted] = useState<number[]>([])
@@ -218,27 +230,52 @@ export default function ChildHome({ child, onLogout }: Props) {
 
   useEffect(() => {
     if (!child.id || !child.level_id) return
-    // Charge la premiere page immediatement
+    // Charge la premiere page uniquement -- lazy loading pour les suivantes
     getExercisesForChild(child.id, child.level_id!)
       .then(first => {
-        setExercises(first)
+        setExercises(shuffleArray(first))
         setLoading(false)
-        // Charge les pages suivantes en arriere-plan
-        let page = 2
-        const loadMore = async () => {
-          const { exercises, hasMore } = await getMoreExercisesForChild(child.id, child.level_id!, page)
-          if (exercises.length > 0) {
-            setExercises(prev => [...prev, ...exercises])
-          }
-          if (hasMore) {
-            page++
-            setTimeout(loadMore, 500) // delai pour ne pas surcharger
-          }
-        }
-        setTimeout(loadMore, 1000) // demarre apres 1s
       })
       .catch(() => setLoading(false))
+    // Verifier s'il y a plus de pages
+    getMoreExercisesForChild(child.id, child.level_id!, 2)
+      .then(({ exercises: more, hasMore: hm }) => {
+        setHasMore(hm || more.length > 0)
+      })
+      .catch(() => {})
   }, [child.id])
+
+  const loadingMoreRef = useRef(false)
+  const hasMoreRef = useRef(false)
+  const exPageRef = useRef(1)
+  useEffect(() => { hasMoreRef.current = hasMore }, [hasMore])
+  useEffect(() => { exPageRef.current = exPage }, [exPage])
+
+  const loadMoreExercises = async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+    const nextPage = exPageRef.current + 1
+    const { exercises: more, hasMore: hm } = await getMoreExercisesForChild(child.id, child.level_id!, nextPage)
+    setExercises(prev => [...prev, ...shuffleArray(more)])
+    setExPage(nextPage)
+    setHasMore(hm)
+    loadingMoreRef.current = false
+    setLoadingMore(false)
+  }
+
+  // IntersectionObserver -- charge plus quand sentinel visible
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) loadMoreExercises() },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasMore])
 
   const handleComplete = async (score: number) => {
     if (!active) return
@@ -426,6 +463,16 @@ export default function ChildHome({ child, onLogout }: Props) {
           </div>
         </>
       )}
+
+      {/* Sentinel infinite scroll */}
+      <div ref={sentinelRef} style={{ height: 20, marginBottom: 80 }}>
+        {loadingMore && (
+          <div style={{ textAlign: 'center' as const, padding: '10px 0',
+            fontSize: 13, color: '#7A6050', fontWeight: 700 }}>
+            Loading more...
+          </div>
+        )}
+      </div>
 
       {/* Bottom nav — always visible */}
       <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, background: 'var(--card)', borderTop: '2px solid var(--border)', padding: '10px 0 14px', display: 'flex', zIndex: 100 }}>

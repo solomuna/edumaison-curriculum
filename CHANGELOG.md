@@ -259,3 +259,17 @@ style: CSS/UI uniquement
 - [ ] Pagination exercices
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+
+## 🔧 SESSION DU 2026-04-12 — CE QUI A ÉTÉ FAIT (suite 2)
+- [x] Lien Mama Judi sur page login (/mama)
+- [x] Back button natif mobile — ChildHome (exercise→home→quit) + ChildLogin
+- [x] Popup Quit EduMaison sur ChildHome et ChildLogin
+- [x] Tab actif persisté après refresh (localStorage edumaison_tab_[id])
+- [x] Session enfant persistée après refresh (localStorage edumaison_session)
+      Plus besoin de reentrer le PIN après actualisation
+
+## 🟡 BACKLOG RESTANT
+- [ ] Seeders C1/C2/Nursery (Reading/Handwriting faibles)
+- [ ] Pagination exercices
+- [ ] Portabilité VPS
+- [ ] APK Capacitor
