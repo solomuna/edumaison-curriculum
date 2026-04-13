@@ -84,6 +84,15 @@ function TreeLine() {
   )
 }
 
+
+function speakText(text: string) {
+  if (!('speechSynthesis' in window)) return
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  u.lang = 'en-GB'
+  u.rate = 0.9
+  window.speechSynthesis.speak(u)
+}
 export default function ChildLogin({ onLogin, onParentMode }: Props) {
   const [children, setChildren] = useState<Child[]>([])
   const [selected, setSelected] = useState<Child | null>(null)
@@ -158,7 +167,8 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
     return (
       <div style={{ background: '#87CEEB', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, system-ui, sans-serif', padding: '24px 20px' }}>
         <MamaJudiHead />
-        <div style={{ background: '#F5EDD8', borderRadius: 16, padding: '12px 24px', margin: '14px 0', textAlign: 'center', border: '2px solid #1D6B2A', maxWidth: 280 }}>
+        <div onClick={() => speakText('Enter your secret PIN')}
+          style={{ background: '#F5EDD8', borderRadius: 16, padding: '12px 24px', margin: '14px 0', textAlign: 'center', border: '2px solid #1D6B2A', maxWidth: 280, cursor: 'pointer' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#3D2B1F' }}>Enter your secret PIN</div>
           <div style={{ fontSize: 12, color: '#7A6050', marginTop: 3 }}>&#128266; tap to hear again</div>
         </div>
@@ -198,7 +208,8 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 6 }}>
         <MamaJudiHead />
-        <div style={{ background: '#F5EDD8', borderRadius: 18, padding: '12px 20px', margin: '10px 18px', border: '2px solid #1D6B2A', textAlign: 'center', maxWidth: 320, width: '100%', boxSizing: 'border-box' }}>
+        <div onClick={() => speakText('Welcome! Who is learning today?')}
+          style={{ background: '#F5EDD8', borderRadius: 18, padding: '12px 20px', margin: '10px 18px', border: '2px solid #1D6B2A', textAlign: 'center', maxWidth: 320, width: '100%', boxSizing: 'border-box', cursor: 'pointer' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#3D2B1F' }}>Welcome! Who is learning today?</div>
           <div style={{ fontSize: 12, color: '#7A6050', marginTop: 3 }}>&#128266; tap to hear again</div>
         </div>

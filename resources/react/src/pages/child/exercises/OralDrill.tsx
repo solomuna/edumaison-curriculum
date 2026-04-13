@@ -56,6 +56,18 @@ export default function OralDrill({ title, instructions, content, onComplete, on
     // Verifier support Web Speech API
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     setSpeechSupported(!!SR)
+    // Demander autorisation micro en avance pour eviter le blocage au premier enregistrement
+    if (SR && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          // Autorisation obtenue -- on coupe le stream immediatement
+          stream.getTracks().forEach(t => t.stop())
+        })
+        .catch(() => {
+          // Autorisation refusee -- le fallback auto-eval sera utilise
+          setSpeechSupported(false)
+        })
+    }
   }, [])
 
   const playItem = () => {
@@ -87,7 +99,7 @@ export default function OralDrill({ title, instructions, content, onComplete, on
     recognition.onerror = (e: any) => {
       setRecording(false)
       if (e.error === 'no-speech') setError('No speech detected. Try again!')
-      else if (e.error === 'not-allowed') setError('Microphone access denied.')
+      else if (e.error === 'not-allowed') { setSpeechSupported(false); setError('') }
       else setError('Could not hear you. Try again!')
     }
     recognition.onresult = (e: any) => {
@@ -150,7 +162,7 @@ export default function OralDrill({ title, instructions, content, onComplete, on
     const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
     return (
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: 'Nunito, sans-serif', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '24px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: 56, marginBottom: 12 }}>{avg >= 80 ? '&#11088;' : avg >= 50 ? '&#128077;' : '\u{1F4AA}'}</div>
+        <div style={{ fontSize: 56, marginBottom: 12 }}>{avg >= 80 ? '⭐' : avg >= 50 ? '👍' : '\u{1F4AA}'}</div>
         <div style={{ fontSize: 26, fontWeight: 900, color: C.dark, marginBottom: 6 }}>
           {avg >= 80 ? 'Excellent!' : avg >= 50 ? 'Good effort!' : 'Keep practising!'}
         </div>
@@ -260,7 +272,7 @@ export default function OralDrill({ title, instructions, content, onComplete, on
             Skip
           </button>
           <button onClick={next} style={{ flex: 2, padding: '12px', borderRadius: 14, border: 'none', background: C.green, color: 'white', fontWeight: 900, cursor: 'pointer', fontSize: 14, fontFamily: 'Nunito, sans-serif' }}>
-            {current < items.length - 1 ? 'Next &#8594;' : 'Finish &#10003;'}
+            {current < items.length - 1 ? 'Next →' : 'Finish ✓'}
           </button>
         </div>
       </div>

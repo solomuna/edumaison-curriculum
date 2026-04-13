@@ -92,6 +92,36 @@ export default function Geometry({ content, onComplete }: Props) {
     setTimeout(() => onComplete(sel === ans), 1200)
   }
 
+  // Si pas d'options (ex: draw exercise) -- skip automatique
+  if (opts.length === 0) {
+    return (
+      <div>
+        {question && <p style={{ fontSize: 14, fontWeight: 800, color: '#2D1B0E', marginBottom: 14, textAlign: 'center' }}>{question}</p>}
+        <div style={{ background: illBg, borderRadius: 20, padding: '16px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <GeometrySVG content={content} />
+        </div>
+        <button onClick={() => onComplete(true)} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+          Next →
+        </button>
+      </div>
+    )
+  }
+
+  // Si pas d'options (ex: draw exercise) -- skip automatique
+  if (opts.length === 0) {
+    return (
+      <div>
+        {question && <p style={{ fontSize: 14, fontWeight: 800, color: '#2D1B0E', marginBottom: 14, textAlign: 'center' }}>{question}</p>}
+        <div style={{ background: illBg, borderRadius: 20, padding: '16px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <GeometrySVG content={content} />
+        </div>
+        <button onClick={() => onComplete(true)} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+          Next →
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div>
       {question && (
@@ -144,7 +174,7 @@ export default function Geometry({ content, onComplete }: Props) {
           fontWeight: 800, fontSize: 13,
           color: sel === ans ? '#065F46' : '#991B1B'
         }}>
-          {sel === ans ? '🎉 Bravo ! Bonne réponse !' : `La bonne réponse est : ${opts[ans]}`}
+          {sel === ans ? '🎉 Correct! Well done!' : `The correct answer is: ${opts[ans]}`}
         </div>
       )}
 

@@ -105,7 +105,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     const stars = starCount(pct)
     const perfect = pct === 100
     const judiMsg = pct >= 80
-      ? 'Excellent travail ! Continue comme ça, ma belle.'
+      ? 'Excellent work! Keep it up!'
       : pct >= 50
         ? 'Bonne tentative, Belle m\u00e8re. Les corrections reviendront en r\u00e9vision SRS.'
         : 'Ne te d\u00e9courage pas ! Revois le cours et r\u00e9essaie.'
@@ -254,7 +254,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
             <span style={{ fontSize: 18, flexShrink: 0 }}>{isCorrectSelected ? '✅' : '\u{1F4A1}'}</span>
             <div style={{ fontSize: 13, fontWeight: 700, color: isCorrectSelected ? '#065F46' : '#991B1B', lineHeight: 1.5 }}>
               {(q as any).explanation
-                ? (isCorrectSelected ? 'Correct ! ' : 'Presque ! ') + (q as any).explanation
+                ? (isCorrectSelected ? 'Correct! ' : 'Almost! ') + (q as any).explanation
                 : isCorrectSelected
                   ? 'Correct ! Bonne r\u00e9ponse !'
                   : `La bonne r\u00e9ponse est : ${shuffledQ.options[shuffledQ.answerIndex]}`

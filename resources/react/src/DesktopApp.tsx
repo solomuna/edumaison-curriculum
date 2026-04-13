@@ -32,8 +32,8 @@ function MamaJudiDesk() {
     }).catch(() => {})
   }, [])
   if (src) return (
-    <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden',
-      border: '3px solid rgba(255,255,255,.35)', flexShrink: 0 }}>
+    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
+      border: '2px solid rgba(255,255,255,.35)', flexShrink: 0 }}>
       <img src={src} alt='Mama Judi' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
     </div>
   )
@@ -136,7 +136,16 @@ export default function DesktopApp({ child, onLogout }: Props) {
       <div style={{ width: 260, background: '#1D6B2A', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
         <div style={{ textAlign: 'center', padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
           <div style={{ fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.6)', letterSpacing: '2px', marginBottom: 12 }}>EDUMAISON</div>
-          <MamaJudiDesk />
+          {(child as any).avatar
+            ? <img src={(child as any).avatar.startsWith('http') ? (child as any).avatar : '/storage/' + (child as any).avatar}
+                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover',
+                  border: '3px solid rgba(255,255,255,.35)', flexShrink: 0 }} />
+            : <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 32, fontWeight: 900, color: 'white', flexShrink: 0 }}>
+                {firstName[0]}
+              </div>
+          }
           <div style={{ fontSize: 20, fontWeight: 900, color: 'white', marginTop: 10 }}>{firstName}</div>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 3 }}>{child.level}</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>MARIO Nursery &amp; Primary</div>
@@ -177,6 +186,24 @@ export default function DesktopApp({ child, onLogout }: Props) {
           </button>
         </nav>
         <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+          <button onClick={() => window.location.href = '/mama'}
+            style={{ width: '100%', padding: '10px 0', borderRadius: 12, border: 'none',
+              background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)',
+              fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8,
+              fontFamily: 'Nunito, system-ui, sans-serif',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <MamaJudiDesk />
+            Mama Judi
+          </button>
+          <button onClick={() => window.location.href = '/mama'}
+            style={{ width: '100%', padding: '10px 0', borderRadius: 12, border: 'none',
+              background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)',
+              fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8,
+              fontFamily: 'Nunito, system-ui, sans-serif',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <MamaJudiDesk />
+            Mama Judi
+          </button>
           <button onClick={onLogout} style={{
             width: '100%', padding: '10px 0', borderRadius: 12,
             border: '1.5px solid rgba(255,255,255,0.3)',

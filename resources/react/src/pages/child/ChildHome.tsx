@@ -85,7 +85,7 @@ function MiniLeaderboard({ child }: { child: Child }) {
           border: e.is_current ? '1.5px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.15)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: 20 }}>{medals[i] || String(i+1)}</div>
+          <div style={{ fontSize: 20 }}>{medals[i] || ''}</div>
           <div style={{ fontSize: 15, fontWeight: 900, color: 'white', marginTop: 2 }}>
             {e.name.split(' ')[0]}
           </div>
@@ -364,7 +364,16 @@ export default function ChildHome({ child, onLogout }: Props) {
               <MamaJudiSmall />
               <div style={{ background: 'var(--card)', borderRadius: 16, borderTopLeftRadius: 4, padding: '12px 14px', flex: 1, border: '2px solid #1D6B2A' }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-dark)', lineHeight: 1.4 }}>{judiMsg}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4 }}>{SPEAKER} tap to hear again</div>
+                <div onClick={() => {
+                  if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel()
+                    const u = new SpeechSynthesisUtterance(judiMsg)
+                    u.lang = 'en-GB'; u.rate = 0.9
+                    window.speechSynthesis.speak(u)
+                  }
+                }} style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, cursor: 'pointer' }}>
+                  {SPEAKER} tap to hear again
+                </div>
               </div>
             </div>
 

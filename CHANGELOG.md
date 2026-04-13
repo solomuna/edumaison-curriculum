@@ -292,3 +292,19 @@ style: CSS/UI uniquement
 - [ ] Seeders C1/C2/Nursery (Reading/Handwriting faibles)
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+## 🔧 SESSION DU 2026-04-13 — CE QUI A ÉTÉ FAIT (suite 3)
+- [x] Seeders Mathematics C1 -- unites 1-4 (counting, shapes, long/short) +30 ex
+- [x] Seeders Mathematics C2 -- unites 2-4 (numbers to 100, add, subtract) +23 ex
+- [x] Seeders English C1+C2 -- unites a 0 exercices (classroom, body, animals, environment, transport) +57 ex
+- [x] Seeders Handwriting C1+C2 -- lessons 210-214 +30 ex
+- [x] Seeders enrichis VennDiagram + NumberLine + Geometry SVG +15 ex
+- [x] Adaptateur MCQ format simplifie (question/options/answer -> questions[])
+- [x] Rendu SVG inline dans MCQ (dangerouslySetInnerHTML)
+- [x] ExamBanner -- masquer examens already_taken
+- [x] Pagination infinite scroll (IntersectionObserver)
+
+## 🟡 BACKLOG RESTANT
+- [ ] Fix SVG centré dans MCQ (reporté)
+- [ ] Seeders Nursery1/Nursery2 complets
+- [ ] Portabilité VPS
+- [ ] APK Capacitor

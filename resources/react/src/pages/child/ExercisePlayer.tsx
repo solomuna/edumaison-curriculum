@@ -101,7 +101,9 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
     const text = exercise.instructions || exercise.title
     if (!text) return
     const lang = isFrench ? 'fr-FR' : 'en-GB'
-    setTimeout(() => MamaJudi.speakLang(text, lang), 500)
+    // Annuler tout TTS en cours avant de lire
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    setTimeout(() => MamaJudi.speakLang(text, lang), 800)
   }, [exercise.id])
 
   const handleBool = (correct: boolean) => onComplete(correct ? 1 : 0)
