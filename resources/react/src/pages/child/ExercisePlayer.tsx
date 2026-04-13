@@ -197,6 +197,29 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
   }
 
 
+  // Fallback intelligent selon contenu
+  if (content.pairs) {
+    return (
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+        <MatchPairs content={content} onComplete={handleBool} />
+      </ExerciseShell>
+    )
+  }
+  if (content.words && content.answer) {
+    return (
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+        <SentenceOrder content={content} onComplete={handleBool} />
+      </ExerciseShell>
+    )
+  }
+  if (content.statement !== undefined) {
+    return (
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+        <TrueFalse content={content} onComplete={handleBool} />
+      </ExerciseShell>
+    )
+  }
+
   return (
     <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
       <div style={{ textAlign: 'center', padding: '60px 20px' }}>

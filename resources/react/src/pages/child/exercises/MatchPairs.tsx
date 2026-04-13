@@ -2,8 +2,10 @@ import { useState } from "react"
 import Confetti from '../../../components/Confetti'
 
 interface Pair {
-  word: string
-  image: string
+  word?: string
+  image?: string
+  left?: string
+  right?: string
 }
 
 interface Props {
@@ -14,7 +16,10 @@ interface Props {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EC4899']
 
 export default function MatchPairs({ content, onComplete }: Props) {
-  const pairs: Pair[] = content.pairs || []
+  const pairs: Pair[] = (content.pairs || []).map((p: any) => ({
+    word:  String(p.word  ?? p.left  ?? ''),
+    image: String(p.image ?? p.right ?? ''),
+  }))
   const [rightOrder] = useState<Pair[]>(() => [...pairs].sort(() => Math.random() - 0.5))
   const [selLeft, setSelLeft] = useState<number | null>(null)
   const [matches, setMatches] = useState<Record<number, number>>({})
@@ -69,7 +74,7 @@ export default function MatchPairs({ content, onComplete }: Props) {
                   cursor: isMatched ? 'default' : 'pointer',
                   border: `2px solid ${isMatched ? col : selLeft === i ? '#3B82F6' : '#E0D4CA'}`,
                   background: isMatched ? col + '22' : selLeft === i ? '#EFF6FF' : '#fff',
-                  textAlign: 'center', fontSize: 14, fontWeight: 800, color: 'var(--text-dark)',
+                  textAlign: 'center', fontSize: 14, fontWeight: 800, color: '#3D2B1F',
                   minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}
               >
@@ -116,7 +121,7 @@ export default function MatchPairs({ content, onComplete }: Props) {
             cursor: allMatched ? 'pointer' : 'default'
           }}
         >
-          Vérifier
+          Check
         </button>
       )}
 
@@ -129,7 +134,7 @@ export default function MatchPairs({ content, onComplete }: Props) {
           fontWeight: 800, fontSize: 14,
           color: result ? '#065F46' : '#991B1B'
         }}>
-          {result ? '🎉 Parfait ! Toutes les paires sont correctes !' : 'Presque ! Réessaie.'}
+          {result ? '🎉 Perfect! All pairs are correct!' : 'Not quite! Try again.'}
         </div>
       )}
     </div>

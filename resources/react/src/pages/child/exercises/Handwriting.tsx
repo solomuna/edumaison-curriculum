@@ -25,7 +25,12 @@ export default function Handwriting({ title, instructions, content, onComplete, 
   const drawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
 
-  const prompts = content.prompts
+  // Adaptateur : word/letter -> prompts[]
+  const rawPrompts = content.prompts
+    || (content.word ? [content.word] : null)
+    || (content.letter ? [content.letter + ' - ' + (content.word || '')] : null)
+    || ['Write here']
+  const prompts: string[] = rawPrompts
   const prompt = prompts[current]
   const pct = Math.round((current / prompts.length) * 100)
 
@@ -112,15 +117,15 @@ export default function Handwriting({ title, instructions, content, onComplete, 
 
   // Messages encouragement Mama Judi par enfant
   const ENCOURAGEMENTS_GOOD = [
-    'Excellent ! Tes lettres sont tres belles !',
-    'Bravo ! Tu as bien travaille ton ecriture !',
-    'Magnifique ! Continue comme ca !',
-    'Tres bien ! Je suis fiere de toi !',
+    'Excellent! Your letters look great!',
+    'Well done! Great handwriting practice!',
+    'Wonderful! Keep it up!',
+    'Very good! I am proud of you!',
   ]
   const ENCOURAGEMENTS_RETRY = [
-    'Pas grave ! Efface et recommence, tu peux le faire !',
-    'Courage ! Prends ton temps et trace bien les lettres.',
-    'Essaie encore ! Je crois en toi !',
+    'No worries! Erase and try again, you can do it!',
+    'Take your time and trace the letters carefully.',
+    'Try again! I believe in you!',
   ]
 
   const handleSelfEval = (val: 'good' | 'retry') => {
@@ -270,7 +275,7 @@ export default function Handwriting({ title, instructions, content, onComplete, 
             flex: 2, padding: '13px 0', borderRadius: 16, border: 'none',
             background: '#1D6B2A', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer'
           }}>
-            {current === prompts.length - 1 ? 'Terminer ✓' : 'Suivant →'}
+            {current === prompts.length - 1 ? 'Finish ✓' : 'Next →'}
           </button>
         </div>
       </div>
