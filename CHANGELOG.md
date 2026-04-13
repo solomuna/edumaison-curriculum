@@ -273,3 +273,22 @@ style: CSS/UI uniquement
 - [ ] Pagination exercices
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+## 🔧 SESSION DU 2026-04-13 — CE QUI A ÉTÉ FAIT
+- [x] Tableau noir Mama Judi — onglet 📝, recherche lecons/units/subjects
+- [x] Révision automatique APScheduler lun-ven 19h (scheduler.py)
+      Carte Auto dans RevisionScreen — toggle, heure configurable, déclencher maintenant
+- [x] Brief vocal TTS fr-FR mobile — phrases courtes Android fix
+- [x] Lien /mama sur ChildLogin
+- [x] Back button natif mobile ChildHome + ChildLogin
+- [x] Popup Quit EduMaison sur ChildHome + ChildLogin
+- [x] Tab actif persisté après refresh (localStorage)
+- [x] Session enfant persistée après refresh (localStorage)
+- [x] Avatar Mama Judi depuis profil sur login + desktop
+- [x] Examens complétés masqués (already_taken filtrés)
+- [x] Pagination infinite scroll (IntersectionObserver, 20 ex/page)
+- [x] URLs /storage/ relatives (fix mobile/TV/desktop)
+
+## 🟡 BACKLOG RESTANT
+- [ ] Seeders C1/C2/Nursery (Reading/Handwriting faibles)
+- [ ] Portabilité VPS
+- [ ] APK Capacitor

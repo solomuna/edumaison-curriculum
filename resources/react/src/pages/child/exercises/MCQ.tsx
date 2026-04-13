@@ -210,6 +210,12 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
               {(q as any).french}
             </div>
           )}
+          {/* SVG illustration par question */}
+          {(q as any).svg && (
+            <div style={{ textAlign: 'center' as const, marginBottom: 10 }}
+              dangerouslySetInnerHTML={{ __html: (q as any).svg.replace('<svg', '<svg style="display:block;margin:auto"') }}
+            />
+          )}
           {/* English question */}
           <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-dark)', lineHeight: 1.4 }}>
             {q.text || q.question}

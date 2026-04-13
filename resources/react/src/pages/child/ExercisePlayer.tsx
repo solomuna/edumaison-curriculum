@@ -110,8 +110,25 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
     return <OralDrill title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
   }
 
+  // Adaptateur format simplifie MCQ -> format questions[]
+  let mcqContent = content
+  if ((type === 'multiple_choice' || type === 'mcq') && !content.questions && content.options) {
+    const opts = content.options
+    const ans = content.answer
+    const answerIndex = typeof ans === 'number' ? ans : opts.indexOf(ans)
+    mcqContent = {
+      ...content,
+      questions: [{
+        text: content.question || exercise.title,
+        question: content.question || exercise.title,
+        svg: content.svg || null,
+        options: opts,
+        answer: answerIndex >= 0 ? answerIndex : 0
+      }]
+    }
+  }
   if (type === 'multiple_choice' || type === 'mcq') {
-    return <MCQ title={exercise.title} instructions={exercise.instructions} content={content} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
+    return <MCQ title={exercise.title} instructions={exercise.instructions} content={mcqContent} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
   }
 
   if (type === 'handwriting') {
