@@ -6,6 +6,7 @@ import ChildLogin from './pages/child/ChildLogin'
 import ChildHome from './pages/child/ChildHome'
 import ParentDashboard from './pages/parent/ParentDashboard'
 import TVApp from './TVApp'
+import AdminApp from './pages/admin/AdminApp'
 import DesktopApp from './DesktopApp'
 import type { Child } from './types/child'
 
@@ -14,6 +15,7 @@ const isTV = window.location.pathname.startsWith('/tv') ||
   navigator.userAgent.toLowerCase().includes('smart-tv')
 const isDesktop = !isTV && window.innerWidth >= 1024
 const isMama = window.location.pathname.startsWith('/mama')
+const isAdmin = window.location.pathname.startsWith('/admin-react')
 
 export default function App() {
   const [child, setChild] = useState<Child | null>(() => {
@@ -27,6 +29,7 @@ export default function App() {
   })
   const [mode, setMode] = useState<'child' | 'parent'>('child')
 
+  if (isAdmin) return <AdminApp />
   if (isTV) return <ThemeProvider><TVApp /></ThemeProvider>
 
   if (isMama) return <ThemeProvider><MamaSpace onExit={() => window.location.href = '/'} /></ThemeProvider>

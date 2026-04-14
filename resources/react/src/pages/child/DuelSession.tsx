@@ -27,6 +27,8 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
   const [done, setDone] = useState(false)
   const [timeLeft, setTimeLeft] = useState(duel.duration_seconds)
   const [submitting, setSubmitting] = useState(false)
+  const [duelResults, setDuelResults] = useState<any[]>([])
+  const [polling, setPolling] = useState(false)
   const [countdown, setCountdown] = useState(3)
   const [started, setStarted] = useState(false)
   const startTime = useRef(Date.now())
@@ -87,7 +89,24 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
       body: JSON.stringify({ child_id: child.id, score, total: exercises.length, duration_seconds: duration })
     }).catch(() => {})
     setSubmitting(false)
+    // Demarrer polling résultats
+    setPolling(true)
   }
+
+  // Polling résultats adversaire
+  useEffect(() => {
+    if (!polling) return
+    const t = setInterval(async () => {
+      const r = await fetch(`/api/duels/${duel.id}/results`).then(r => r.json()).catch(() => [])
+      if (Array.isArray(r) && r.length > 0) {
+        setDuelResults(r)
+        if (r.length >= 2) { clearInterval(t); setPolling(false) }
+      }
+    }, 3000)
+    // Premier appel immediat
+    fetch(`/api/duels/${duel.id}/results`).then(r => r.json()).then(d => { if (Array.isArray(d)) setDuelResults(d) }).catch(() => {})
+    return () => clearInterval(t)
+  }, [polling])
 
   const mm = String(Math.floor(timeLeft / 60)).padStart(2, '0')
   const ss = String(timeLeft % 60).padStart(2, '0')
@@ -115,31 +134,62 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
     </div>
   )
 
-  if (done) return (
-    <div style={{ background: '#E8DCC8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Nunito,system-ui,sans-serif', textAlign: 'center' }}>
-      <div style={{ fontSize: 72, marginBottom: 16 }}>🏆</div>
-      <div style={{ fontSize: 26, fontWeight: 900, color: '#3D2B1F', marginBottom: 8 }}>
-        {finalPct >= 70 ? `Bravo ${firstName} !` : 'Bien joue !'}
-      </div>
-      <div style={{ fontSize: 15, color: '#7A6050', marginBottom: 32 }}>Resultat en attente...</div>
-      <div style={{ display: 'flex', gap: 20, marginBottom: 40 }}>
-        <div style={{ background: '#FEF3C7', borderRadius: 20, padding: '20px 32px', textAlign: 'center' }}>
-          <div style={{ fontSize: 44, fontWeight: 900, color: '#F59E0B' }}>{finalScore}/{exercises.length}</div>
-          <div style={{ fontSize: 13, color: '#D97706', marginTop: 4 }}>Bonnes reponses</div>
+  if (done) {
+    const winner = duelResults.length >= 2 ? duelResults[0] : null
+    const myResult = duelResults.find((r: any) => r.child_id === child.id)
+    const opponent = duelResults.find((r: any) => r.child_id !== child.id)
+    const iWon = myResult && winner && myResult.child_id === winner.child_id
+
+    return (
+      <div style={{ background: '#E8DCC8', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Nunito,system-ui,sans-serif', textAlign: 'center' }}>
+        <div style={{ fontSize: 72, marginBottom: 8 }}>{duelResults.length >= 2 ? (iWon ? '🏆' : '🥇') : '⏳'}</div>
+        <div style={{ fontSize: 26, fontWeight: 900, color: '#3D2B1F', marginBottom: 4 }}>
+          {duelResults.length >= 2 ? (iWon ? `Bravo ${firstName} ! Tu as gagné !` : `Bien joué ${firstName} !`) : 'En attente de l’adversaire...'}
         </div>
-        <div style={{ background: '#D1FAE5', borderRadius: 20, padding: '20px 32px', textAlign: 'center' }}>
-          <div style={{ fontSize: 44, fontWeight: 900, color: '#10B981' }}>{finalPct}%</div>
-          <div style={{ fontSize: 13, color: '#059669', marginTop: 4 }}>Score</div>
+
+        {/* Mon score */}
+        <div style={{ display: 'flex', gap: 12, margin: '20px 0', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ background: '#FEF3C7', borderRadius: 20, padding: '16px 24px', textAlign: 'center', minWidth: 120 }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: '#F59E0B' }}>{finalScore}/{exercises.length}</div>
+            <div style={{ fontSize: 12, color: '#D97706', marginTop: 4 }}>{firstName}</div>
+          </div>
+          {opponent && (
+            <div style={{ background: '#EDE9FE', borderRadius: 20, padding: '16px 24px', textAlign: 'center', minWidth: 120 }}>
+              <div style={{ fontSize: 36, fontWeight: 900, color: '#7C3AED' }}>{opponent.score}/{opponent.total}</div>
+              <div style={{ fontSize: 12, color: '#6D28D9', marginTop: 4 }}>{opponent.first_name || 'Adversaire'}</div>
+            </div>
+          )}
         </div>
+
+        {/* Podium si les 2 résultats sont là */}
+        {duelResults.length >= 2 && (
+          <div style={{ background: '#F0E8D8', borderRadius: 20, padding: '14px 20px', marginBottom: 20, border: '1.5px solid #D0C8B8', width: '100%', maxWidth: 320 }}>
+            {duelResults.map((r: any, i: number) => (
+              <div key={r.child_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < duelResults.length - 1 ? '1px solid #D0C8B8' : 'none' }}>
+                <span style={{ fontSize: 24 }}>{i === 0 ? '🥇' : '🥈'}</span>
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div style={{ fontWeight: 900, color: '#3D2B1F', fontSize: 15 }}>{r.first_name}</div>
+                  <div style={{ fontSize: 12, color: '#7A6050' }}>{r.score}/{r.total} — {r.pct}%</div>
+                </div>
+                {r.child_id === child.id && <span style={{ fontSize: 11, background: '#1D6B2A', color: 'white', borderRadius: 10, padding: '2px 8px', fontWeight: 800 }}>Toi</span>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Dots scores */}
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 24 }}>
+          {scores.map((ok, i) => (<div key={i} style={{ width: 14, height: 14, borderRadius: '50%', background: ok ? '#10B981' : '#EF4444' }}/>))}
+        </div>
+
+        {polling && <div style={{ fontSize: 13, color: '#7A6050', marginBottom: 16 }}>⏳ En attente des résultats...</div>}
+
+        <button onClick={onComplete} style={{ padding: '16px 48px', borderRadius: 18, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 17, fontWeight: 900, cursor: 'pointer' }}>
+          Retour
+        </button>
       </div>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 32 }}>
-        {scores.map((ok, i) => (<div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: ok ? '#10B981' : '#EF4444' }}/>))}
-      </div>
-      <button onClick={onComplete} style={{ padding: '16px 48px', borderRadius: 18, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 17, fontWeight: 900, cursor: 'pointer' }}>
-        Retour
-      </button>
-    </div>
-  )
+    )
+  }
 
   return (
     <div style={{ background: '#E8DCC8', minHeight: '100vh', fontFamily: 'Nunito,system-ui,sans-serif', display: 'flex', flexDirection: 'column' }}>
