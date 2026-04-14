@@ -57,6 +57,8 @@ export default function MatchPairs({ content, onComplete }: Props) {
     setChecked(true)
   }
 
+  const isEmojiMode = pairs.length > 0 && pairs.every(p => (p.image || '').length <= 4)
+
   return (
     <div>
       {content.question && (
@@ -179,3 +181,4 @@ export default function MatchPairs({ content, onComplete }: Props) {
     </div>
   )
 }
+

@@ -586,7 +586,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <OralDrill title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
+    return <OralDrill title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
 
 
 
@@ -738,7 +738,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <Handwriting title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
+    return <Handwriting title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
 
 
 
@@ -754,7 +754,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <FillIn title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
+    return <FillIn title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
 
 
 
@@ -1143,6 +1143,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 }
+
 
 
 

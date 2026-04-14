@@ -30,6 +30,7 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
   const [countdown, setCountdown] = useState(3)
   const [started, setStarted] = useState(false)
   const startTime = useRef(Date.now())
+  const scoresRef = useRef<boolean[]>([])
 
   useEffect(() => {
     const ids = duel.exercise_ids.join(',')
@@ -56,7 +57,7 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
     if (!started || done) return
     const t = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(t); handleFinish(scores); return 0 }
+        if (prev <= 1) { clearInterval(t); handleFinish(scoresRef.current); return 0 }
         if (prev === 30) SoundService.heartLost()
         return prev - 1
       })
@@ -66,7 +67,8 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
 
   const handleComplete = (s: number) => {
     const ok = s > 0
-    const ns = [...scores, ok]
+    const ns = [...scoresRef.current, ok]
+    scoresRef.current = ns
     setScores(ns)
     if (ok) SoundService.correct(); else SoundService.wrong()
     if (cur < exercises.length - 1) { setTimeout(() => setCur(c => c + 1), 300) }
@@ -162,7 +164,7 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
             key={exercises[cur].id}
             exercise={{ ...exercises[cur], content: typeof exercises[cur].content === 'string' ? JSON.parse(exercises[cur].content) : exercises[cur].content }}
             onComplete={handleComplete}
-            onBack={() => {}}
+            onBack={() => { if (cur < exercises.length - 1) { setCur(c => c + 1) } else { handleFinish(scoresRef.current) } }}
           />
         )}
       </div>

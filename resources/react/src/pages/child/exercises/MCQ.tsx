@@ -103,11 +103,12 @@ function starCount(pct: number) {
 
 
 
-function shuffleOptions(options: string[], answerIndex: number) {
+function shuffleOptions(options: any, answerIndex: number) {
 
 
 
-  const indexed = options.map((opt, i) => ({ opt, isCorrect: i === answerIndex }))
+  const safeOptions = Array.isArray(options) ? options : []
+  const indexed = safeOptions.map((opt, i) => ({ opt, isCorrect: i === answerIndex }))
 
 
 
@@ -276,7 +277,17 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-  const questions = Array.isArray(content.questions) ? content.questions : []
+  // Guard complet: string JSON, undefined, ou format sans questions[]
+  const rawContent: any = !content ? {} : typeof content === 'string' ? (() => { try { return JSON.parse(content) } catch { return {} } })() : content
+  // Normaliser format plat {question, options, answer} -> questions[]
+  // Detecter langue selon matiere
+  const FRENCH_SUBJECTS = ['French', 'Francais', 'NLC', 'National Languages']
+  const isFrenchSubject = FRENCH_SUBJECTS.some(s => (subject || '').toLowerCase().includes(s.toLowerCase()))
+  const ttsLang = isFrenchSubject ? 'fr-FR' : 'en-GB'
+
+  const questions: any[] = Array.isArray(rawContent.questions) ? rawContent.questions
+    : rawContent.question && rawContent.options ? [{ text: rawContent.question, question: rawContent.question, options: rawContent.options, answer: rawContent.answer ?? 0 }]
+    : []
 
 
 
@@ -308,11 +319,11 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-  useEffect(() => { MamaJudi.speak(instructions) }, [])
+  useEffect(() => { MamaJudi.speakLang(instructions, ttsLang) }, [])
 
 
 
-  useEffect(() => { if (q) MamaJudi.speak(q.text || q.question || '', 0.85) }, [current])
+  useEffect(() => { if (q) MamaJudi.speakLang(q.text || q.question || '', ttsLang) }, [current])
 
 
 
@@ -1130,6 +1141,8 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 }
+
+
 
 
 

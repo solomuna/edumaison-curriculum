@@ -47,6 +47,12 @@ class MamaJudiClass {
     utter.lang = lang
     utter.rate = 0.9
     utter.pitch = 1.0
+    // Forcer la voix correspondant a la langue si disponible
+    const voices = window.speechSynthesis.getVoices()
+    if (voices.length > 0) {
+      const match = voices.find(v => v.lang.startsWith(lang.split('-')[0]))
+      if (match) utter.voice = match
+    }
     window.speechSynthesis.speak(utter)
   }
 
