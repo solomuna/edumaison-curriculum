@@ -5,7 +5,9 @@ import { MamaJudi } from '../../../services/MamaJudi'
 interface FillInItem {
   prompt?: string
   text?: string
+  sentence?: string
   answer: string
+  alternatives?: string[]
 }
 
 interface FillInContent {
@@ -30,9 +32,12 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
   const [scores, setScores] = useState<boolean[]>([])
   const [done, setDone] = useState(false)
 
-  const items = content.items || content.sentences || []
+  // Gerer format plat {sentence, answer} sans tableau items[]
+  const rawContent = content as any
+  const flatItem = rawContent.sentence ? [{ sentence: rawContent.sentence, answer: rawContent.answer, alternatives: rawContent.alternatives }] : []
+  const items = content.items || content.sentences || flatItem
   const item = items[current]
-  const text = item?.prompt || item?.text || ''
+  const text = item?.prompt || item?.text || item?.sentence || ''
   const parts = text.split('___')
 
   useEffect(() => {
@@ -46,7 +51,11 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
   }, [current])
 
   const check = () => {
-    const correct = input.trim().toLowerCase() === item.answer.toLowerCase()
+    const normalized = (s: string) => s.trim().toLowerCase().replace(/['']/g, "'")
+    const userAns = normalized(input)
+    const correctAns = normalized(item.answer)
+    const alts = (item.alternatives || []).map(normalized)
+    const correct = userAns === correctAns || alts.includes(userAns)
     setFeedback(correct ? 'correct' : 'wrong')
     setScores([...scores, correct])
     if (correct) MamaJudi.speak('Correct! Well done!')

@@ -104,7 +104,10 @@ export default function MatchPairs({ content, onComplete }: Props) {
                   cursor: isMatched ? 'default' : 'pointer',
                   border: `2px solid ${isMatched ? col : '#E0D4CA'}`,
                   background: isMatched ? col + '22' : '#fff',
-                  textAlign: 'center', fontSize: 28,
+                  textAlign: 'center',
+                  fontSize: isEmojiMode ? 28 : 13,
+                  fontWeight: isEmojiMode ? 400 : 800,
+                  lineHeight: 1.3,
                   minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}
               >
