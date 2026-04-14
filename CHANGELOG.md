@@ -308,3 +308,26 @@ style: CSS/UI uniquement
 - [ ] Seeders Nursery1/Nursery2 complets
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+
+
+## 🔧 SESSION DU 2026-04-13 — CE QUI A ÉTÉ FAIT (suite 4)
+- [x] OralDrill -- Next → Finish ✓ (HTML entities fixes)
+- [x] Feedback EN partout -- MCQ, Geometry, Handwriting, MatchPairs, OralDrill
+- [x] Geometry draw -- bouton Next si pas d'options
+- [x] TTS énoncés -- cancel() + délai avant lecture
+- [x] Micro permission -- demande au chargement OralDrill, fallback Good/Retry
+- [x] MatchPairs -- normalisation left/right -> word/image
+- [x] Handwriting -- adaptateur word/letter -> prompts[]
+- [x] ExercisePlayer -- fallback intelligent (pairs/words/statement)
+- [x] Avatar enfant desktop sidebar + bouton Mama Judi footer
+- [x] Tap to hear -- ChildLogin + ChildHome cliquable TTS
+- [x] Rank leaderboard -- suppression chiffre après top 3
+
+## 🟡 BACKLOG RESTANT
+- [ ] MatchPairs texte toujours vide (en cours)
+- [ ] MCQ answer index vs texte DB
+- [ ] TTS tap to hear ne parle pas
+- [ ] Ardoise brouillon
+- [ ] Seeders Nursery1/Nursery2
+- [ ] Portabilité VPS
+- [ ] APK Capacitor

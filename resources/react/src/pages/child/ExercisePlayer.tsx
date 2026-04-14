@@ -13,6 +13,7 @@ import Geometry from './exercises/Geometry'
 import IctIllustration from '../../components/IctIllustration'
 import { MamaJudi } from '../../services/MamaJudi'
 import { useEffect, useState } from 'react'
+import Ardoise from './exercises/Ardoise'
 
 
 interface Props {
@@ -40,19 +41,23 @@ function BookHint({ exerciseId }: { exerciseId: number }) {
   )
 }
 
-function ExerciseShell({ title, onBack, children, category, keyword, exerciseId }: {
+function ExerciseShell({ title, onBack, children, category, keyword, exerciseId, instructions, isFrench }: {
   title: string
   onBack: () => void
   children: React.ReactNode
   category?: string
   keyword?: string
   exerciseId?: number
+  instructions?: string
+  isFrench?: boolean
 }) {
+  const [showArdoise, setShowArdoise] = useState(false)
   return (
     <div style={{
       background: 'var(--bg)', minHeight: '100vh',
       fontFamily: 'Nunito, system-ui, sans-serif'
     }}>
+      {showArdoise && <Ardoise onClose={() => setShowArdoise(false)} />}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '12px 16px', background: '#1D6B2A'
@@ -70,6 +75,22 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId 
         <span style={{ fontSize: 14, fontWeight: 900, color: 'white', flex: 1 }}>
           {title}
         </span>
+        <button
+          onClick={() => {
+            const text = instructions || title
+            const lang = isFrench ? 'fr-FR' : 'en-GB'
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+            setTimeout(() => MamaJudi.speakLang(text, lang), 100)
+          }}
+          style={{
+            background: 'rgba(255,255,255,0.2)', border: 'none',
+            borderRadius: 10, padding: '6px 10px', fontSize: 18,
+            cursor: 'pointer', lineHeight: 1
+          }}
+          title="Listen again"
+        >
+          &#128266;
+        </button>
       </div>
       {exerciseId && <BookHint exerciseId={exerciseId} />}
       {category === 'ict' && keyword && (
@@ -84,6 +105,21 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId 
       <div style={{ padding: '16px' }}>
         {children}
       </div>
+      {/* Bouton ardoise flottant */}
+      <button
+        onClick={() => setShowArdoise(true)}
+        style={{
+          position: 'fixed', bottom: 24, right: 20, zIndex: 100,
+          width: 52, height: 52, borderRadius: '50%',
+          background: '#C47A3C', border: 'none',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+          fontSize: 22, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}
+        title="Ardoise brouillon"
+      >
+        &#9998;
+      </button>
     </div>
   )
 }
@@ -129,6 +165,19 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
       }]
     }
   }
+  // Normaliser answer texte->index dans questions[] existants
+  if ((type === 'multiple_choice' || type === 'mcq') && mcqContent.questions) {
+    mcqContent = {
+      ...mcqContent,
+      questions: mcqContent.questions.map((q: any) => {
+        if (typeof q.answer === 'string') {
+          const idx = (q.options || []).indexOf(q.answer)
+          return { ...q, answer: idx >= 0 ? idx : 0 }
+        }
+        return q
+      })
+    }
+  }
   if (type === 'multiple_choice' || type === 'mcq') {
     return <MCQ title={exercise.title} instructions={exercise.instructions} content={mcqContent} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
   }
@@ -143,7 +192,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   if (type === 'match_pairs') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <MatchPairs content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
@@ -151,7 +200,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   if (type === 'sentence_order') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <SentenceOrder content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
@@ -159,7 +208,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   if (type === 'true_false') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <TrueFalse content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
@@ -167,14 +216,14 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   if (type === 'clock_reading') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <ClockReading content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
   }
   if (type === 'geometry') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <Geometry content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
@@ -182,7 +231,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   if (type === 'venn_diagram') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <VennDiagram content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
@@ -190,7 +239,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   if (type === 'number_line') {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <NumberLine content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
@@ -200,28 +249,28 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
   // Fallback intelligent selon contenu
   if (content.pairs) {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <MatchPairs content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
   }
   if (content.words && content.answer) {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <SentenceOrder content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
   }
   if (content.statement !== undefined) {
     return (
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
         <TrueFalse content={content} onComplete={handleBool} />
       </ExerciseShell>
     )
   }
 
   return (
-    <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title}>
+    <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
       <div style={{ textAlign: 'center', padding: '60px 20px' }}>
         <svg width="64" height="64" viewBox="0 0 64 64" style={{ margin: '0 auto 16px', display: 'block' }}>
           <circle cx="32" cy="32" r="28" fill="#FEF3C7" stroke="#F59E0B" strokeWidth="2"/>

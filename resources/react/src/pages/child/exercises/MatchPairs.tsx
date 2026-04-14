@@ -16,10 +16,17 @@ interface Props {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EC4899']
 
 export default function MatchPairs({ content, onComplete }: Props) {
-  const pairs: Pair[] = (content.pairs || []).map((p: any) => ({
-    word:  String(p.word  ?? p.left  ?? ''),
-    image: String(p.image ?? p.right ?? ''),
-  }))
+  // Guard: content peut arriver comme string JSON depuis FastAPI
+  const raw: any = typeof content === 'string' ? (() => { try { return JSON.parse(content) } catch { return {} } })() : content
+  const pairs: Pair[] = (raw.pairs || []).map((p: any) => {
+    // Format tableau: ["word", "definition"]
+    if (Array.isArray(p)) return { word: String(p[0] ?? ''), image: String(p[1] ?? '') }
+    // Format objet: {word, image} ou {left, right}
+    return {
+      word:  String(p.word  ?? p.left  ?? ''),
+      image: String(p.image ?? p.right ?? p.definition ?? ''),
+    }
+  })
   const [rightOrder] = useState<Pair[]>(() => [...pairs].sort(() => Math.random() - 0.5))
   const [selLeft, setSelLeft] = useState<number | null>(null)
   const [matches, setMatches] = useState<Record<number, number>>({})
@@ -48,7 +55,6 @@ export default function MatchPairs({ content, onComplete }: Props) {
     })
     setResult(ok)
     setChecked(true)
-    setTimeout(() => onComplete(ok), 1200)
   }
 
   return (
@@ -127,14 +133,44 @@ export default function MatchPairs({ content, onComplete }: Props) {
 
       {checked && result === true && <Confetti active={true} />}
       {checked && result !== null && (
-        <div style={{
-          borderRadius: 16, padding: '12px 16px', marginTop: 14,
-          background: result ? '#ECFDF5' : '#FEF2F2',
-          border: `1.5px solid ${result ? '#6EE7B7' : '#FCA5A5'}`,
-          fontWeight: 800, fontSize: 14,
-          color: result ? '#065F46' : '#991B1B'
-        }}>
-          {result ? '🎉 Perfect! All pairs are correct!' : 'Not quite! Try again.'}
+        <div style={{ marginTop: 14 }}>
+          <div style={{
+            borderRadius: 16, padding: '12px 16px',
+            background: result ? '#ECFDF5' : '#FEF2F2',
+            border: `1.5px solid ${result ? '#6EE7B7' : '#FCA5A5'}`,
+            fontWeight: 800, fontSize: 14,
+            color: result ? '#065F46' : '#991B1B',
+            marginBottom: 10
+          }}>
+            {result ? 'Perfect! All pairs are correct!' : 'Not quite! Here are the correct answers:'}
+          </div>
+          {!result && (
+            <div style={{ marginBottom: 10 }}>
+              {pairs.map((p, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  background: '#FFF7ED', borderRadius: 12, padding: '8px 12px', marginBottom: 6,
+                  border: '1.5px solid #FCD34D'
+                }}>
+                  <span style={{ fontWeight: 800, color: '#92400E', flex: 1 }}>{p.word}</span>
+                  <span style={{ color: '#B45309' }}>&#8594;</span>
+                  <span style={{ fontWeight: 700, color: '#1D6B2A', flex: 1, textAlign: 'right' }}>{p.image}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => onComplete(result ?? false)}
+            style={{
+              width: '100%', padding: '13px 0',
+              borderRadius: 16, border: 'none',
+              background: result ? '#10B981' : '#F59E0B',
+              color: 'white', fontSize: 15, fontWeight: 800,
+              cursor: 'pointer'
+            }}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>
