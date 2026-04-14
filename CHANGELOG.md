@@ -374,3 +374,19 @@ style: CSS/UI uniquement
 - [ ] Tour de test 360° (bugs à reporter)
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+
+## 🔧 SESSION DU 2026-04-14 (suite 2) — CE QUI A ÉTÉ FAIT
+- [x] React Admin Phase 2 — UnitsScreen CRUD (filtre matière, add/edit/delete)
+- [x] React Admin Phase 2 — LessonsScreen CRUD (filtre unité, add/edit/delete)
+- [x] React Admin Phase 2 — Exercise edit modal (titre/catégorie/difficulté/actif + JSON content)
+- [x] React Admin Phase 2 — Delete confirmé avec modal (unités/leçons/exercices)
+- [x] React Admin Phase 2 — Navigation drill-down Matières→Unités→Leçons→Exercices
+- [x] React Admin Phase 2 — Dashboard cards cliquables
+- [x] FastAPI — GET /integrated-themes, POST/PUT/DELETE /units, POST/PUT/DELETE /lessons
+- [x] FastAPI — PUT /exercises inclut lesson_id (déplacement d'exercice)
+
+## 🟡 BACKLOG RESTANT
+- [ ] Supprimer Filament (après stabilisation React Admin)
+- [ ] Tour de test 360°
+- [ ] Portabilité VPS
+- [ ] APK Capacitor
