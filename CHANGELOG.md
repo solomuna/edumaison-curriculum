@@ -359,3 +359,18 @@ style: CSS/UI uniquement
 - [ ] Duel live — polling résultats adversaire
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+
+
+## 🔧 SESSION DU 2026-04-14 (suite) — CE QUI A ÉTÉ FAIT
+- [x] React Admin — dashboard stats, liste enfants CRUD, liste exercices paginée, liste matières
+- [x] FastAPI admin routes — /api/admin/stats, children, levels, subjects, units, lessons, exercises
+- [x] Route Nginx /admin-react → http://192.168.100.106/admin-react
+- [x] Duel live — polling résultats adversaire toutes les 3s, podium 🥇🥈 final
+- [x] Brief vocal Mama Judi — TTS fr-FR phrases courtes, fix encodage texte
+
+## 🟡 BACKLOG RESTANT
+- [ ] React Admin Phase 2 — édition exercices, gestion leçons/unités
+- [ ] Supprimer Filament (après stabilisation React Admin)
+- [ ] Tour de test 360° (bugs à reporter)
+- [ ] Portabilité VPS
+- [ ] APK Capacitor
