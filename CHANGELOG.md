@@ -331,3 +331,31 @@ style: CSS/UI uniquement
 - [ ] Seeders Nursery1/Nursery2
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+
+
+
+## 🔧 SESSION DU 2026-04-14 — CE QUI A ÉTÉ FAIT
+- [x] MatchPairs — texte vide corrigé (JSON parsing + formats array/objet)
+- [x] MatchPairs — corrections affichées après mauvaise réponse
+- [x] MatchPairs — font adaptative emoji vs texte
+- [x] MCQ — shuffle robuste par texte (fix réponse correcte)
+- [x] MCQ — guard questions array (plus de crash)
+- [x] MCQ — content JSON guard (ExercisePlayer)
+- [x] MCQ — TTS détection FR/EN selon matière
+- [x] FillIn — champ `sentence` + `alternatives` supportés
+- [x] OralDrill — TTS langue FR/EN selon matière
+- [x] MamaJudi.ts — sélection voix native selon langue
+- [x] Ardoise brouillon — fond noir flottant, 4 tailles, expand/collapse (55vh↔92vh)
+- [x] TTS replay 🔊 dans ExerciseShell + MCQ
+- [x] DuelSession — closure stale scores + onBack bloquant corrigés
+- [x] 236 exercices sans type corrigés (MCQ/TF/FillIn/MatchPairs)
+- [x] Illustrations — 2220 exercices réassignés par matière (psycopg2)
+- [x] asset_library — table + 45 icônes + API FastAPI + hook useAssetLibrary
+- [x] Seeders Nursery 1+2 — +126 exercices (Maths/English/French)
+- [x] Brief vocal Mama Judi — TTS fr-FR, phrases courtes Android
+
+## 🟡 BACKLOG RESTANT
+- [ ] Tour de test 360° (bugs à reporter)
+- [ ] Duel live — polling résultats adversaire
+- [ ] Portabilité VPS
+- [ ] APK Capacitor
