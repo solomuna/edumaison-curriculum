@@ -1,4 +1,4 @@
-// MamaJudiApp.tsx — Interface Mama Judi v3 (Mobile S9+ + Desktop sidebar)
+﻿// MamaJudiApp.tsx — Interface Mama Judi v3 (Mobile S9+ + Desktop sidebar)
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 // ── BREAKPOINT HOOK ───────────────────────────────────────────────────────────
@@ -967,3 +967,4 @@ export default function MamaJudiApp() {
 
   return isDesktop ? <DesktopMama {...props} /> : <MobileMama {...props} />
 }
+
