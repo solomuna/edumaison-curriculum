@@ -438,6 +438,68 @@ function SubjectsScreen() {
 }
 
 // ── EXERCISE EDIT MODAL ───────────────────────────────────────────────────────
+function ExercisePreview({ content, title }: { content: string; title: string }) {
+  let parsed: any = null
+  try { parsed = JSON.parse(content) } catch { return <div style={{color:P.soft,fontSize:13,textAlign:'center' as const,padding:20}}>JSON invalide</div> }
+  const type = (parsed?.type || '').toLowerCase()
+  const PreviewShell = ({ children }: { children: React.ReactNode }) => (
+    <div style={{background:'#F0E8D8',borderRadius:14,padding:14,border:'1.5px solid #D0C8B8',minHeight:180}}>
+      <div style={{fontSize:10,fontWeight:900,color:'#7A6050',marginBottom:8,textTransform:'uppercase' as const,letterSpacing:1}}>Apercu — {type||'?'}</div>
+      <div style={{background:'white',borderRadius:10,padding:'10px 12px',marginBottom:10,fontSize:13,fontWeight:700,color:'#3D2B1F',lineHeight:1.5}}>
+        {title || parsed?.question || parsed?.statement || parsed?.word || '—'}
+      </div>
+      {children}
+    </div>
+  )
+  if (['mcq','multiple_choice'].includes(type)) {
+    const opts = parsed.options || parsed.questions?.[0]?.options || []
+    const ans = parsed.answer ?? parsed.questions?.[0]?.answer
+    return (<PreviewShell>{opts.map((o: string, i: number) => (
+      <div key={i} style={{padding:'6px 10px',borderRadius:8,border:`2px solid ${i===ans?'#1D6B2A':'#D0C8B8'}`,background:i===ans?'#D1FAE5':'white',fontSize:12,fontWeight:i===ans?800:600,color:i===ans?'#065F46':'#3D2B1F',marginBottom:5,display:'flex',alignItems:'center',gap:7}}>
+        <span style={{width:18,height:18,borderRadius:'50%',background:i===ans?'#1D6B2A':'#E8DCC8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'white',flexShrink:0,fontWeight:900}}>{String.fromCharCode(65+i)}</span>{o}
+      </div>
+    ))}</PreviewShell>)
+  }
+  if (['true_false','truefalse'].includes(type)) {
+    return (<PreviewShell><div style={{display:'flex',gap:8}}>
+      {['True','False'].map(opt => {
+        const active = (parsed.answer===true&&opt==='True')||(parsed.answer===false&&opt==='False')||(String(parsed.answer)===opt.toLowerCase())
+        return <div key={opt} style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${active?'#1D6B2A':'#D0C8B8'}`,background:active?'#D1FAE5':'white',textAlign:'center' as const,fontSize:13,fontWeight:800,color:active?'#065F46':'#7A6050'}}>{opt==='True'?'✅':'❌'} {opt}</div>
+      })}
+    </div></PreviewShell>)
+  }
+  if (['fill_in','fillin'].includes(type)) {
+    return (<PreviewShell>
+      <div style={{fontSize:13,color:'#3D2B1F',marginBottom:8}}>{parsed.sentence||parsed.statement||'Completez...'}</div>
+      <div style={{padding:'7px 12px',borderRadius:8,border:'2px dashed #1D6B2A',background:'#D1FAE5',fontSize:12,fontWeight:800,color:'#065F46'}}>Reponse: {parsed.answer||'?'}</div>
+    </PreviewShell>)
+  }
+  if (['match_pairs','matchpairs'].includes(type)) {
+    const pairs = parsed.pairs || []
+    return (<PreviewShell><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+      <div style={{fontSize:10,fontWeight:900,color:'#7A6050',textAlign:'center' as const}}>GAUCHE</div>
+      <div style={{fontSize:10,fontWeight:900,color:'#7A6050',textAlign:'center' as const}}>DROITE</div>
+      {pairs.slice(0,4).map((p: any,i: number) => (
+        <React.Fragment key={i}>
+          <div style={{padding:'5px 8px',borderRadius:7,background:'#E8DCC8',fontSize:11,fontWeight:700,color:'#3D2B1F',textAlign:'center' as const}}>{p.left||p.word||'?'}</div>
+          <div style={{padding:'5px 8px',borderRadius:7,background:'#D1FAE5',fontSize:11,fontWeight:700,color:'#065F46',textAlign:'center' as const}}>{p.right||p.match||'?'}</div>
+        </React.Fragment>
+      ))}
+    </div></PreviewShell>)
+  }
+  if (['oral_drill','oraldrill'].includes(type)) {
+    const prompts = parsed.prompts || []
+    return (<PreviewShell><div style={{display:'grid',gap:5}}>
+      {prompts.slice(0,3).map((p: string,i: number) => (
+        <div key={i} style={{padding:'7px 10px',borderRadius:8,background:'#EFF6FF',border:'1px solid #93C5FD',fontSize:12,fontWeight:700,color:'#1D4ED8'}}>🎤 {p}</div>
+      ))}
+    </div></PreviewShell>)
+  }
+  return (<PreviewShell><div style={{display:'flex',flexWrap:'wrap' as const,gap:5}}>
+    {Object.keys(parsed).map(k => <span key={k} style={{background:'#E8DCC8',borderRadius:6,padding:'2px 7px',fontSize:11,fontWeight:700,color:'#7A6050'}}>{k}</span>)}
+  </div></PreviewShell>)
+}
+
 function ExerciseEditModal({ exerciseId, onClose, onSaved }: { exerciseId: number; onClose: () => void; onSaved: () => void }) {
   const [ex, setEx] = useState<any>(null)
   const [form, setForm] = useState({ title: '', category: 'reading', difficulty: 'easy', is_active: true, lesson_id: 0, content: '' })
@@ -458,38 +520,44 @@ function ExerciseEditModal({ exerciseId, onClose, onSaved }: { exerciseId: numbe
   }
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div style={{ background: P.card, borderRadius: 20, width: '100%', maxWidth: 680, maxHeight: '90vh', overflow: 'auto', padding: 28, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ background: P.card, borderRadius: 20, width: '100%', maxWidth: 1000, maxHeight: '90vh', overflow: 'auto', padding: 28, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontWeight: 900, color: P.dark, fontSize: 17 }}>Modifier exercice #{exerciseId}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: P.soft }}>✕</button>
         </div>
         {!ex ? <div style={{ color: P.soft, textAlign: 'center', padding: 40 }}>Chargement...</div> : (
-          <>
-            <div style={{ marginBottom: 10, fontSize: 12, color: P.soft }}>{ex.level_name} — {ex.subject_name} — {ex.lesson_name}</div>
-            {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontWeight: 700, fontSize: 13 }}>{error}</div>}
-            <div style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
-              <input placeholder="Titre *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
-                  {['reading','writing','listening','speaking','maths','science','citizenship','ict','home_economics','arts','pe'].map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <select value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))} style={inputStyle}>
-                  <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
-                </select>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: P.dark, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} /> Actif
-                </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div>
+              <div style={{ marginBottom: 10, fontSize: 12, color: P.soft }}>{ex.level_name} — {ex.subject_name} — {ex.lesson_name}</div>
+              {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontWeight: 700, fontSize: 13 }}>{error}</div>}
+              <div style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
+                <input placeholder="Titre *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
+                    {['reading','writing','listening','speaking','maths','science','citizenship','ict','home_economics','arts','pe'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <select value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))} style={inputStyle}>
+                    <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+                  </select>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: P.dark, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} /> Actif
+                  </label>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Contenu JSON</div>
+                  <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} style={taStyle} />
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Contenu JSON</div>
-                <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} style={taStyle} />
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={save} disabled={saving} style={btnStyle(P.sidebar)}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
+                <button onClick={onClose} style={btnStyle(P.border, P.dark)}>Annuler</button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={save} disabled={saving} style={btnStyle(P.sidebar)}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
-              <button onClick={onClose} style={btnStyle(P.border, P.dark)}>Annuler</button>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Apercu temps reel</div>
+              <ExercisePreview content={form.content} title={form.title} />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

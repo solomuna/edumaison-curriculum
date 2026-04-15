@@ -295,7 +295,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-    questions.map(q => shuffleOptions(q.options, typeof q.answer === 'number' ? q.answer : 0))
+    questions.map(q => { const idx = typeof q.answer === 'number' ? q.answer : (q.options||[]).indexOf(q.answer); return shuffleOptions(q.options, idx >= 0 ? idx : 0) })
 
 
 
