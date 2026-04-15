@@ -1,6 +1,6 @@
 // AdminApp.tsx — Interface Admin EduMaison Phase 2
 // Curriculum screen: pills cascade Niveau > Matiere > Unite > Lecons + search + CRUD
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 const BASE = 'http://192.168.100.106:8100/api/admin'
 
@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'health'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'logs' | 'health'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -908,6 +908,119 @@ function BulletinScreen() {
   )
 }
 
+
+// ── LOGS SCREEN ──────────────────────────────────────────────────────────────
+function LogsScreen() {
+  const [logs, setLogs] = useState<any[]>([])
+  const [filter, setFilter] = useState<string>('')
+  const [autoScroll, setAutoScroll] = useState(true)
+  const [connected, setConnected] = useState(false)
+  const [search, setSearch] = useState('')
+  const bottomRef = React.useRef<HTMLDivElement>(null)
+  const esRef = React.useRef<EventSource | null>(null)
+
+  // Charge les logs existants
+  useEffect(() => {
+    api('/logs?limit=200').then(d => setLogs(d.logs || []))
+  }, [])
+
+  // SSE stream
+  useEffect(() => {
+    const es = new EventSource('http://192.168.100.106:8100/api/admin/logs/stream')
+    esRef.current = es
+    es.onopen = () => setConnected(true)
+    es.onerror = () => setConnected(false)
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data)
+        if (data.connected) return
+        setLogs(prev => [...prev.slice(-499), data])
+      } catch {}
+    }
+    return () => { es.close(); setConnected(false) }
+  }, [])
+
+  // Auto-scroll
+  useEffect(() => {
+    if (autoScroll) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [logs, autoScroll])
+
+  const levelColor = (l: string) => {
+    if (l === 'ERROR' || l === 'CRITICAL') return P.red
+    if (l === 'WARNING') return '#F59E0B'
+    if (l === 'INFO') return '#10B981'
+    return P.soft
+  }
+  const levelBg = (l: string) => {
+    if (l === 'ERROR' || l === 'CRITICAL') return '#FEE2E2'
+    if (l === 'WARNING') return '#FEF3C7'
+    if (l === 'INFO') return '#D1FAE5'
+    return P.light
+  }
+
+  const filtered = logs.filter(l => {
+    const matchLevel = !filter || l.level === filter
+    const matchSearch = !search || l.msg.toLowerCase().includes(search.toLowerCase())
+    return matchLevel && matchSearch
+  })
+
+  const counts = logs.reduce((acc: any, l) => { acc[l.level] = (acc[l.level]||0)+1; return acc }, {})
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
+          Logs live
+          <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 700, color: connected ? '#10B981' : P.red }}>
+            {connected ? '● Live' : '○ Deconnecte'}
+          </span>
+        </h2>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: P.soft, cursor: 'pointer' }}>
+            <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
+            Auto-scroll
+          </label>
+          <button onClick={() => setLogs([])} style={{ background: P.border, color: P.dark, border: 'none', borderRadius: 8, padding: '7px 14px', fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
+            Vider
+          </button>
+        </div>
+      </div>
+
+      {/* Filtres */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' as const }}>
+        {['', 'INFO', 'WARNING', 'ERROR'].map(l => (
+          <button key={l} onClick={() => setFilter(l)} style={{
+            padding: '5px 14px', borderRadius: 999,
+            border: `1.5px solid ${filter === l ? levelColor(l||'INFO') : P.border}`,
+            background: filter === l ? (levelBg(l||'INFO')) : P.card,
+            color: filter === l ? levelColor(l||'INFO') : P.dark,
+            fontWeight: filter === l ? 800 : 600, fontSize: 12, cursor: 'pointer',
+          }}>
+            {l || 'Tous'} {l && counts[l] ? `(${counts[l]})` : ''}
+          </button>
+        ))}
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrer messages..."
+          style={{ ...inputStyle, flex: 1, fontSize: 13, padding: '6px 12px' }} />
+      </div>
+
+      {/* Logs */}
+      <div style={{ flex: 1, overflow: 'auto', background: '#1A1A2E', borderRadius: 14, padding: 16, fontFamily: 'monospace', fontSize: 12 }}>
+        {filtered.length === 0 && <div style={{ color: '#666', textAlign: 'center', marginTop: 40 }}>Aucun log</div>}
+        {filtered.map((l, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 3, lineHeight: 1.5 }}>
+            <span style={{ color: '#666', flexShrink: 0 }}>{l.ts}</span>
+            <span style={{ color: levelColor(l.level), fontWeight: 800, flexShrink: 0, minWidth: 60 }}>{l.level}</span>
+            <span style={{ color: '#888', flexShrink: 0, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{l.name}</span>
+            <span style={{ color: l.level === 'ERROR' ? '#FF6B6B' : l.level === 'WARNING' ? '#FFD93D' : '#E0E0E0', wordBreak: 'break-all' as const }}>{l.msg}</span>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  )
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function AdminApp() {
   const [screen, setScreen] = useState<Screen>('dashboard')
@@ -920,6 +1033,7 @@ export default function AdminApp() {
     { id: 'curriculum' as Screen, icon: '🗂️', label: 'Curriculum' },
     { id: 'assets' as Screen, icon: '🖼️', label: 'Assets' },
     { id: 'bulletin' as Screen, icon: '📋', label: 'Bulletins' },
+    { id: 'logs' as Screen, icon: '📟', label: 'Logs' },
     { id: 'health' as Screen, icon: '🩺', label: 'Health' },
     { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
   ]
@@ -950,6 +1064,7 @@ export default function AdminApp() {
         {screen === 'exercises' && <ExercisesScreen initParams={screenParams} />}
         {screen === 'assets' && <AssetsScreen />}
         {screen === 'bulletin' && <BulletinScreen />}
+        {screen === 'logs' && <LogsScreen />}
         {screen === 'health' && <HealthScreen />}
       </div>
     </div>
