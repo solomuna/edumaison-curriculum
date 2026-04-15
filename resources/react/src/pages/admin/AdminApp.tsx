@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'health'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -110,6 +110,8 @@ function LessonModal({ lesson, units, onSave, onClose }: { lesson: any; units: a
 // ── CURRICULUM ────────────────────────────────────────────────────────────────
 function CurriculumScreen({ goTo }: { goTo: (s: Screen, p?: any) => void }) {
   const [search, setSearch] = useState('')
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
   const [levels, setLevels] = useState<any[]>([])
   const [subjects, setSubjects] = useState<any[]>([])
   const [units, setUnits] = useState<any[]>([])
@@ -316,11 +318,20 @@ function ChildrenScreen() {
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState({ first_name: '', last_name: '', pin: '', level_id: 5, is_active: true })
   const [search, setSearch] = useState('')
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
   useEffect(() => { api('/children').then(setChildren); api('/levels').then(setLevels) }, [])
   const save = async () => {
     if (editing?.id) await api(`/children/${editing.id}`, { method: 'PUT', body: JSON.stringify(form) })
     else await api('/children', { method: 'POST', body: JSON.stringify(form) })
     setEditing(null); api('/children').then(setChildren)
+  }
+
+  const resetChild = async () => {
+    await api(`/children/${resetTarget.id}/reset`, { method: 'POST' })
+    setResetTarget(null)
+    setResetDone(resetTarget.first_name)
+    setTimeout(() => setResetDone(null), 4000)
   }
   const filtered = children.filter(c => `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase()))
   return (
@@ -359,9 +370,47 @@ function ChildrenScreen() {
             {!c.is_active && <span style={{ background: '#FEE2E2', color: P.red, borderRadius: 8, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>Inactif</span>}
             <button onClick={() => { setEditing(c); setForm({ first_name: c.first_name, last_name: c.last_name||'', pin: c.pin, level_id: c.level_id, is_active: c.is_active }) }}
               style={{ background: P.accent+'22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>Modifier</button>
+            <button onClick={async () => {
+                await api(`/children/${c.id}`, { method: 'PUT', body: JSON.stringify({ first_name: c.first_name, last_name: c.last_name||'', pin: c.pin, level_id: c.level_id, is_active: !c.is_active }) })
+                api('/children').then(setChildren)
+              }}
+              style={{ background: c.is_active ? '#FEE2E222' : '#D1FAE5', color: c.is_active ? P.red : '#065F46', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+              {c.is_active ? 'Masquer' : 'Activer'}
+            </button>
+            <button onClick={() => setResetTarget(c)}
+              style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>Reset</button>
           </div>
         ))}
       </div>
+
+      {resetDone && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: '#D1FAE5', color: '#065F46', borderRadius: 14, padding: '14px 20px', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 999 }}>
+          ✅ {resetDone} remis(e) a zero avec succes
+        </div>
+      )}
+
+      {resetTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: P.card, borderRadius: 18, padding: 28, maxWidth: 400, textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,.15)' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontWeight: 900, color: P.dark, fontSize: 17, marginBottom: 8 }}>Reset {resetTarget.first_name} ?</div>
+            <div style={{ color: P.soft, fontSize: 13, marginBottom: 6 }}>
+              Supprime <strong>toutes les tentatives, examens et duels</strong>.
+            </div>
+            <div style={{ background: '#D1FAE5', color: '#065F46', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, marginBottom: 20 }}>
+              ✅ Le bulletin (school_results) est conserve
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={resetChild} style={{ background: P.red, color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 800, cursor: 'pointer', fontSize: 14 }}>
+                Confirmer le reset
+              </button>
+              <button onClick={() => setResetTarget(null)} style={{ background: P.border, color: P.dark, border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 700, cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -454,6 +503,8 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
   const [levels, setLevels] = useState<any[]>([])
   const [levelFilter, setLevelFilter] = useState('')
   const [search, setSearch] = useState('')
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const [editingId, setEditingId] = useState<number|null>(null)
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
@@ -519,6 +570,224 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
   )
 }
 
+
+// ── ASSETS SCREEN ─────────────────────────────────────────────────────────────
+function AssetsScreen() {
+  const ABASE = 'http://192.168.100.106:8100/assets'
+  const [assets, setAssets] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
+  const [typeFilter, setTypeFilter] = useState('')
+  const [editing, setEditing] = useState<any>(null)
+  const [form, setForm] = useState({ key:'', type:'emoji', value:'', tags:'', description:'' })
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [error, setError] = useState('')
+
+  const reload = () => fetch(ABASE+'/icons').then(r=>r.json()).then(setAssets)
+  useEffect(() => { reload() }, [])
+
+  const openAdd = () => { setError(''); setForm({key:'',type:'emoji',value:'',tags:'',description:''}); setEditing({}) }
+  const openEdit = (a: any) => { setError(''); setForm({key:a.key,type:a.type,value:a.value,tags:(a.tags||[]).join(', '),description:a.description||''}); setEditing(a) }
+
+  const save = async () => {
+    if (!form.key.trim() || !form.value.trim()) return setError('Cle et valeur requises')
+    const payload = { ...form, tags: form.tags.split(',').map((t:string)=>t.trim()).filter(Boolean) }
+    if (editing?.key) {
+      await fetch(ABASE+'/icons/'+editing.key, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    } else {
+      await fetch(ABASE+'/icons', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    }
+    setEditing(null); reload()
+  }
+
+  const confirmDelete = async () => {
+    await fetch(ABASE+'/icons/'+deleteTarget.key, { method:'DELETE' })
+    setDeleteTarget(null); reload()
+  }
+
+  const preview = (a: any) => {
+    if (a.type === 'emoji') return <span style={{fontSize:28}}>{a.value}</span>
+    if (a.type === 'url') return <img src={a.value} style={{width:32,height:32,objectFit:'contain'}} alt={a.key} onError={e=>(e.currentTarget.style.display='none')} />
+    return <span style={{fontSize:11,color:'#8B5CF6',fontWeight:800}}>SVG</span>
+  }
+
+  const filtered = assets.filter(a => {
+    const q = search.toLowerCase()
+    const matchQ = !q || a.key.toLowerCase().includes(q) || (a.description||'?').toLowerCase().includes(q) || (a.tags||[]).some((t:string)=>t.toLowerCase().includes(q))
+    const matchT = !typeFilter || a.type === typeFilter
+    return matchQ && matchT
+  })
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:P.dark}}>Assets / Icones ({assets.length})</h2>
+        <button onClick={openAdd} style={btnStyle(P.sidebar)}>+ Ajouter</button>
+      </div>
+
+      <div style={{display:'flex',gap:10,marginBottom:16}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher cle, tag, description..."
+          style={{...inputStyle,flex:1}} />
+        <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)} style={inputStyle}>
+          <option value="">Tous les types</option>
+          <option value="emoji">Emoji</option>
+          <option value="url">URL Image</option>
+          <option value="svg">SVG</option>
+        </select>
+      </div>
+
+      {editing !== null && (
+        <div style={{background:P.light,borderRadius:18,padding:20,marginBottom:20,border:`1.5px solid ${P.border}`}}>
+          <div style={{fontSize:16,fontWeight:900,color:P.dark,marginBottom:14}}>{editing.key ? 'Modifier' : 'Nouvel asset'}</div>
+          {error && <div style={{background:'#FEE2E2',color:P.red,borderRadius:10,padding:'8px 12px',marginBottom:12,fontSize:13,fontWeight:700}}>{error}</div>}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+            <input placeholder="Cle unique *" value={form.key} onChange={e=>setForm(f=>({...f,key:e.target.value}))}
+              style={inputStyle} disabled={!!editing.key} />
+            <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={inputStyle}>
+              <option value="emoji">Emoji</option>
+              <option value="url">URL Image</option>
+              <option value="svg">SVG inline</option>
+            </select>
+            <input placeholder="Valeur * (emoji, URL ou SVG)" value={form.value} onChange={e=>setForm(f=>({...f,value:e.target.value}))} style={inputStyle} />
+            <input placeholder="Tags (virgule separee)" value={form.tags} onChange={e=>setForm(f=>({...f,tags:e.target.value}))} style={inputStyle} />
+            <input placeholder="Description" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} style={{...inputStyle,gridColumn:'1/-1'}} />
+          </div>
+          {form.value && (
+            <div style={{marginBottom:12,padding:'10px 14px',background:P.card,borderRadius:10,border:`1.5px solid ${P.border}`,display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:11,fontWeight:800,color:P.soft}}>APERCU :</span>
+              {form.type==='emoji' && <span style={{fontSize:32}}>{form.value}</span>}
+              {form.type==='url' && <img src={form.value} style={{width:40,height:40,objectFit:'contain'}} alt="preview" />}
+              {form.type==='svg' && <span style={{fontSize:11,color:'#8B5CF6'}}>SVG inline</span>}
+            </div>
+          )}
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={save} style={btnStyle(P.sidebar)}>Enregistrer</button>
+            <button onClick={()=>setEditing(null)} style={btnStyle(P.border,P.dark)}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:12}}>
+        {filtered.map(a => (
+          <div key={a.key} style={{background:P.card,borderRadius:14,padding:'14px 16px',border:`1.5px solid ${P.border}`,display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:48,height:48,borderRadius:12,background:P.light,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {preview(a)}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:900,color:P.dark,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.key}</div>
+                <div style={{fontSize:11,color:P.soft,marginTop:2}}>{a.description||'—'}</div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              <span style={{background:'#3B82F622',color:'#3B82F6',borderRadius:6,padding:'2px 7px',fontSize:10,fontWeight:800}}>{a.type}</span>
+              {(a.tags||[]).slice(0,3).map((t:string) => (
+                <span key={t} style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 7px',fontSize:10,fontWeight:700}}>{t}</span>
+              ))}
+            </div>
+            <div style={{display:'flex',gap:6,marginTop:2}}>
+              <button onClick={()=>openEdit(a)} style={{flex:1,background:P.accent+'22',color:P.accent,border:'none',borderRadius:8,padding:'5px',fontWeight:800,cursor:'pointer',fontSize:12}}>Modifier</button>
+              <button onClick={()=>setDeleteTarget(a)} style={{background:'#FEE2E222',color:P.red,border:'none',borderRadius:8,padding:'5px 10px',fontWeight:800,cursor:'pointer',fontSize:12}}>✕</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {deleteTarget && (
+        <ConfirmDelete label={`"${deleteTarget.key}" (${deleteTarget.description||deleteTarget.value})`}
+          onConfirm={confirmDelete} onCancel={()=>setDeleteTarget(null)} />
+      )}
+    </div>
+  )
+}
+
+
+// ── HEALTH SCREEN ─────────────────────────────────────────────────────────────
+function HealthScreen() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+
+  const check = async () => {
+    setLoading(true)
+    const res = await api('/health')
+    setData(res)
+    setLoading(false)
+  }
+
+  useEffect(() => { check() }, [])
+
+  const statusColor = (s: string) => s === 'ok' ? '#10B981' : P.red
+  const statusBg = (s: string) => s === 'ok' ? '#D1FAE5' : '#FEE2E2'
+  const msColor = (ms: number) => ms < 100 ? '#10B981' : ms < 300 ? '#F59E0B' : P.red
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
+          Health Check
+          {data && <span style={{ fontSize: 14, fontWeight: 600, color: P.soft, marginLeft: 12 }}>
+            {data.ok}/{data.total} modules OK
+          </span>}
+        </h2>
+        <button onClick={check} disabled={loading} style={{ background: P.sidebar, color: 'white', border: 'none', borderRadius: 10, padding: '9px 18px', fontWeight: 800, cursor: loading ? 'wait' : 'pointer', fontSize: 13, fontFamily: 'Nunito,sans-serif' }}>
+          {loading ? 'Verification...' : 'Tester tout'}
+        </button>
+      </div>
+
+      {data && (
+        <>
+          {/* Summary bar */}
+          <div style={{ background: P.card, borderRadius: 14, padding: '14px 20px', border: `1.5px solid ${P.border}`, marginBottom: 20, display: 'flex', gap: 24 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#10B981' }}>{data.ok}</div>
+              <div style={{ fontSize: 11, color: P.soft, fontWeight: 700 }}>OK</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: P.red }}>{data.total - data.ok}</div>
+              <div style={{ fontSize: 11, color: P.soft, fontWeight: 700 }}>ERREUR</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: P.dark }}>{data.total}</div>
+              <div style={{ fontSize: 11, color: P.soft, fontWeight: 700 }}>TOTAL</div>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <div style={{ flex: 1, height: 10, background: P.border, borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ width: `${(data.ok/data.total)*100}%`, height: '100%', background: '#10B981', borderRadius: 999, transition: 'width .5s' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Modules grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 10 }}>
+            {data.modules.map((m: any) => (
+              <div key={m.name} style={{ background: P.card, borderRadius: 14, padding: '14px 18px', border: `1.5px solid ${m.status==='ok' ? '#D1FAE5' : '#FEE2E2'}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor(m.status), flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 900, color: P.dark, fontSize: 14 }}>{m.name}</div>
+                  {m.error && <div style={{ fontSize: 11, color: P.red, marginTop: 2 }}>{m.error}</div>}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ background: statusBg(m.status), color: statusColor(m.status), borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, display: 'block', marginBottom: 4 }}>
+                    {m.status === 'ok' ? `${m.code}` : `ERR ${m.code}`}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: msColor(m.ms) }}>{m.ms}ms</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 12, fontSize: 11, color: P.soft, textAlign: 'right' }}>
+            Verifie le {new Date(data.checked_at * 1000).toLocaleTimeString('fr-FR')}
+          </div>
+        </>
+      )}
+
+      {!data && !loading && <div style={{ color: P.soft, textAlign: 'center', padding: 40 }}>Cliquez sur "Tester tout"</div>}
+    </div>
+  )
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function AdminApp() {
   const [screen, setScreen] = useState<Screen>('dashboard')
@@ -529,6 +798,8 @@ export default function AdminApp() {
     { id: 'children' as Screen, icon: '👨‍👩‍👧‍👦', label: 'Enfants' },
     { id: 'subjects' as Screen, icon: '🎯', label: 'Matieres' },
     { id: 'curriculum' as Screen, icon: '🗂️', label: 'Curriculum' },
+    { id: 'assets' as Screen, icon: '🖼️', label: 'Assets' },
+    { id: 'health' as Screen, icon: '🩺', label: 'Health' },
     { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
   ]
   return (
@@ -556,6 +827,8 @@ export default function AdminApp() {
         {screen === 'subjects' && <SubjectsScreen />}
         {screen === 'curriculum' && <CurriculumScreen goTo={goTo} />}
         {screen === 'exercises' && <ExercisesScreen initParams={screenParams} />}
+        {screen === 'assets' && <AssetsScreen />}
+        {screen === 'health' && <HealthScreen />}
       </div>
     </div>
   )
