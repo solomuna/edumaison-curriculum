@@ -571,24 +571,54 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
   const [levels, setLevels] = useState<any[]>([])
   const [levelFilter, setLevelFilter] = useState('')
   const [search, setSearch] = useState('')
-  const [resetTarget, setResetTarget] = useState<any>(null)
-  const [resetDone, setResetDone] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const [editingId, setEditingId] = useState<number|null>(null)
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [toast, setToast] = useState<string|null>(null)
   const lessonFilter = initParams?.lesson_id?.toString() || ''
   const limit = 30
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
   useEffect(() => { api('/levels').then(setLevels) }, [])
+
   const reload = () => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(page * limit) })
     if (levelFilter) params.set('level_id', levelFilter)
     if (lessonFilter) params.set('lesson_id', lessonFilter)
     api(`/exercises?${params}`).then(d => { setExercises(d.data||[]); setTotal(d.total||0) })
+    setSelected(new Set())
   }
   useEffect(() => { reload() }, [levelFilter, page, lessonFilter])
-  const confirmDelete = async () => { await api(`/exercises/${deleteTarget.id}`, { method: 'DELETE' }); setDeleteTarget(null); reload() }
+
+  const confirmDelete = async () => {
+    await api(`/exercises/${deleteTarget.id}`, { method: 'DELETE' })
+    setDeleteTarget(null); reload()
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set())
+    else setSelected(new Set(filtered.map(e => e.id)))
+  }
+
+  const bulkAction = async (action: string, label: string) => {
+    if (!selected.size) return
+    setBulkLoading(true)
+    await api('/exercises/bulk', { method: 'POST', body: JSON.stringify({ ids: Array.from(selected), action }) })
+    setBulkLoading(false)
+    showToast(`${label} : ${selected.size} exercice(s)`)
+    reload()
+  }
+
   const filtered = exercises.filter(e => e.title.toLowerCase().includes(search.toLowerCase()))
+  const allSelected = filtered.length > 0 && selected.size === filtered.length
   const tc = (t: string) => ({ mcq:'#3B82F6',multiple_choice:'#3B82F6',true_false:'#10B981',fill_in:'#F59E0B',match_pairs:'#8B5CF6',oral_drill:'#EC4899',handwriting:'#6B7280',sentence_order:'#F97316',clock_reading:'#06B6D4' } as Record<string,string>)[t]||'#9CA3AF'
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -597,28 +627,60 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
           <span style={{ fontSize: 15, marginLeft: 8 }}>({total.toLocaleString()})</span>
         </h2>
       </div>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' as const }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." style={{ ...inputStyle, flex: 1 }} />
         {!lessonFilter && <select value={levelFilter} onChange={e => { setLevelFilter(e.target.value); setPage(0) }} style={inputStyle}>
           <option value="">Tous les niveaux</option>
           {levels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>}
       </div>
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div style={{ background: P.sidebar, borderRadius: 12, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' as const }}>
+          <span style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>{selected.size} selectionne(s)</span>
+          <button onClick={() => bulkAction('activate', 'Actives')} disabled={bulkLoading}
+            style={{ background: '#D1FAE5', color: '#065F46', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+            Activer
+          </button>
+          <button onClick={() => bulkAction('deactivate', 'Desactives')} disabled={bulkLoading}
+            style={{ background: '#FEF3C7', color: '#92400E', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+            Desactiver
+          </button>
+          <button onClick={() => bulkAction('delete', 'Supprimes')} disabled={bulkLoading}
+            style={{ background: '#FEE2E2', color: P.red, border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+            Supprimer
+          </button>
+          <button onClick={() => setSelected(new Set())}
+            style={{ background: 'rgba(255,255,255,.2)', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 700, cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>
+            Deselectionner
+          </button>
+        </div>
+      )}
+
       <div style={{ background: P.card, borderRadius: 14, border: `1.5px solid ${P.border}`, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr style={{ background: P.light }}>
+            <th style={{ padding: '12px 14px', width: 40 }}>
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+            </th>
             {['ID','Titre','Type','Matiere','Niveau','Statut',''].map(h => <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 900, color: P.soft, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{h}</th>)}
           </tr></thead>
           <tbody>
             {filtered.map((e, i) => (
-              <tr key={e.id} style={{ borderTop: `1px solid ${P.border}`, background: i%2===0 ? P.card : '#FAFAF8' }}>
+              <tr key={e.id} onClick={() => toggleSelect(e.id)}
+                style={{ borderTop: `1px solid ${P.border}`, background: selected.has(e.id) ? P.sidebar+'11' : i%2===0 ? P.card : '#FAFAF8', cursor: 'pointer' }}>
+                <td style={{ padding: '10px 14px' }} onClick={ev => ev.stopPropagation()}>
+                  <input type="checkbox" checked={selected.has(e.id)} onChange={() => toggleSelect(e.id)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                </td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: P.soft }}>{e.id}</td>
                 <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 700, color: P.dark, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{e.title}</td>
                 <td style={{ padding: '10px 14px' }}><span style={{ background: tc(e.type)+'22', color: tc(e.type), borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>{e.type||'—'}</span></td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: P.soft }}>{e.subject_name}</td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: P.soft }}>{e.level_name}</td>
                 <td style={{ padding: '10px 14px' }}><span style={{ background: e.is_active ? '#D1FAE5' : '#FEE2E2', color: e.is_active ? '#065F46' : P.red, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>{e.is_active ? 'Actif' : 'Inactif'}</span></td>
-                <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' as const }}>
+                <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' as const }} onClick={ev => ev.stopPropagation()}>
                   <button onClick={() => setEditingId(e.id)} style={{ background: P.accent+'22', color: P.accent, border: 'none', borderRadius: 7, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 11, marginRight: 6 }}>Modifier</button>
                   <button onClick={() => setDeleteTarget(e)} style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 7, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 11 }}>✕</button>
                 </td>
@@ -627,13 +689,21 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
           </tbody>
         </table>
       </div>
+
       <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
         <button disabled={page===0} onClick={() => setPage(p => p-1)} style={{ padding: '8px 16px', borderRadius: 8, border: `1.5px solid ${P.border}`, background: page===0?P.border:P.card, cursor: page===0?'default':'pointer', fontWeight: 700 }}>← Prec.</button>
         <span style={{ padding: '8px 16px', fontSize: 13, color: P.soft }}>{page+1} / {Math.max(1,Math.ceil(total/limit))}</span>
         <button disabled={(page+1)*limit>=total} onClick={() => setPage(p => p+1)} style={{ padding: '8px 16px', borderRadius: 8, border: `1.5px solid ${P.border}`, background: (page+1)*limit>=total?P.border:P.card, cursor: (page+1)*limit>=total?'default':'pointer', fontWeight: 700 }}>Suiv. →</button>
       </div>
+
       {editingId !== null && <ExerciseEditModal exerciseId={editingId} onClose={() => setEditingId(null)} onSaved={() => { setEditingId(null); reload() }} />}
       {deleteTarget && <ConfirmDelete label={`"${deleteTarget.title}"`} onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />}
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: '#D1FAE5', color: '#065F46', borderRadius: 14, padding: '14px 20px', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 999 }}>
+          ✅ {toast}
+        </div>
+      )}
     </div>
   )
 }

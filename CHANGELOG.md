@@ -390,3 +390,43 @@ style: CSS/UI uniquement
 - [ ] Tour de test 360°
 - [ ] Portabilité VPS
 - [ ] APK Capacitor
+
+## SESSION DU 2026-04-15 - CE QUI A ETE FAIT
+
+### React Admin Phase 2 - P1
+- [x] Curriculum screen - pills cascade Niveau > Matiere > Unite > Lecons + search + CRUD
+- [x] Assets CRUD - voir/ajouter/modifier/supprimer icones asset_library + preview
+- [x] Reset enfant partiel - supprime attempts/exams/duels, conserve school_results
+- [x] Toggle actif/masque - bouton direct sur carte enfant
+- [x] Health check - ping 19 modules FastAPI avec latence + barre progression
+- [x] Bulletins MINEDUB - voir bulletin par enfant (pills + tableau competences)
+- [x] Logs live SSE - stream uvicorn temps reel, filtre INFO/WARNING/ERROR + recherche
+
+### React Admin Phase 2 - P2
+- [x] Progression enfant - barres par matiere + evolution 7j + exercices faibles (<60%)
+- [x] Rapport journalier - resume activite du jour par enfant avec selecteur de date
+- [x] Gestion school_years - CRUD annees scolaires, activation, suppression
+- [x] Brief vocal config - apercu brief du soir + declenchement manuel + toggle scheduler
+- [x] Sidebar groupee - sections repliables Contenu / Suivi / Systeme
+
+### React Admin Phase 2 - P3
+- [x] Apercu exercice inline - panneau droit temps reel (MCQ, TrueFalse, FillIn, MatchPairs, OralDrill)
+- [x] Fix bug MCQ answer texte vs index - shuffleOptions normalisation dans MCQ.tsx
+
+### FastAPI
+- [x] Fix doublons main.py (routers enregistres deux fois)
+- [x] Fix GROUP BY subjects (l.id manquant)
+- [x] Fix list_children (colonnes inexistantes supprimees)
+- [x] log_handler.py - intercepte logs Python pour SSE
+- [x] Endpoints: reset enfant, progression, rapport daily, school-years CRUD
+- [x] Endpoints: health check, logs SSE, assets CRUD
+
+## BACKLOG RESTANT
+- [ ] Bulk actions exercices
+- [ ] Remediation Mark
+- [ ] Import/Export CSV
+- [ ] Seeders depuis Admin
+- [ ] Backup DB / vider cache
+- [ ] Portabilite VPS
+- [ ] APK Capacitor
+- [ ] SOLVILO i18n bug dashboard
