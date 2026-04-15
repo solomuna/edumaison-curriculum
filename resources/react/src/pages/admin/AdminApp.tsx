@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'logs' | 'health'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'brief' | 'schoolyears' | 'report' | 'progress' | 'logs' | 'health'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -1021,22 +1021,551 @@ function LogsScreen() {
   )
 }
 
+
+// ── PROGRESS SCREEN ──────────────────────────────────────────────────────────
+function ProgressScreen() {
+  const [children, setChildren] = useState<any[]>([])
+  const [selChild, setSelChild] = useState<number | null>(null)
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => { api('/children').then(setChildren) }, [])
+
+  useEffect(() => {
+    if (!selChild) return
+    setLoading(true); setData(null)
+    api(`/children/${selChild}/progress`).then(d => { setData(d); setLoading(false) })
+  }, [selChild])
+
+  const pctColor = (p: number) => p >= 80 ? '#10B981' : p >= 60 ? '#F59E0B' : P.red
+  const pctBg   = (p: number) => p >= 80 ? '#D1FAE5' : p >= 60 ? '#FEF3C7' : '#FEE2E2'
+
+  return (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:900,color:P.dark,marginBottom:20}}>Progression</h2>
+
+      {/* Sélecteur */}
+      <div style={{display:'flex',gap:10,marginBottom:24,flexWrap:'wrap' as const}}>
+        {children.map(c => (
+          <button key={c.id} onClick={() => setSelChild(c.id)} style={{
+            padding:'8px 18px',borderRadius:999,
+            border:`1.5px solid ${selChild===c.id ? P.sidebar : P.border}`,
+            background:selChild===c.id ? P.sidebar : P.card,
+            color:selChild===c.id ? 'white' : P.dark,
+            fontWeight:selChild===c.id ? 900 : 600,fontSize:14,
+            cursor:'pointer',fontFamily:'Nunito,sans-serif',
+          }}>
+            {c.first_name} <span style={{fontSize:11,opacity:.7}}>({c.level_name})</span>
+          </button>
+        ))}
+      </div>
+
+      {!selChild && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Selectionnez un enfant</div>}
+      {loading && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Chargement...</div>}
+
+      {data && !loading && (
+        <div style={{display:'grid',gap:20}}>
+          {/* Stats globales */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+            {[
+              {label:'Tentatives totales',value:data.total_attempts?.toLocaleString(),color:P.accent,icon:'📝'},
+              {label:'Moyenne globale',value:`${data.global_avg}%`,color:pctColor(data.global_avg),icon:'📊'},
+              {label:'Matieres travaillees',value:data.by_subject?.length,color:'#8B5CF6',icon:'🎯'},
+            ].map((s,i) => (
+              <div key={i} style={{background:P.card,borderRadius:16,padding:'18px 20px',border:`1.5px solid ${P.border}`,display:'flex',alignItems:'center',gap:14}}>
+                <span style={{fontSize:28}}>{s.icon}</span>
+                <div>
+                  <div style={{fontSize:26,fontWeight:900,color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:12,color:P.soft,fontWeight:700}}>{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Par matiere */}
+          <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+            <div style={{padding:'14px 20px',borderBottom:`1px solid ${P.border}`,fontWeight:900,color:P.dark,fontSize:15}}>
+              Progression par matiere
+            </div>
+            <div style={{padding:16,display:'grid',gap:10}}>
+              {data.by_subject?.map((s: any) => (
+                <div key={s.subject} style={{display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{width:120,fontSize:13,fontWeight:700,color:P.dark,flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{s.subject}</div>
+                  <div style={{flex:1,height:12,background:P.border,borderRadius:999,overflow:'hidden'}}>
+                    <div style={{width:`${Math.min(s.avg_pct,100)}%`,height:'100%',background:pctColor(s.avg_pct),borderRadius:999,transition:'width .5s'}} />
+                  </div>
+                  <span style={{background:pctBg(s.avg_pct),color:pctColor(s.avg_pct),borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:900,flexShrink:0,minWidth:48,textAlign:'center' as const}}>{s.avg_pct}%</span>
+                  <span style={{fontSize:11,color:P.soft,flexShrink:0}}>{s.attempts} ex.</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Evolution 7 jours */}
+          {data.daily?.length > 0 && (
+            <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+              <div style={{padding:'14px 20px',borderBottom:`1px solid ${P.border}`,fontWeight:900,color:P.dark,fontSize:15}}>
+                Activite (7 derniers jours)
+              </div>
+              <div style={{padding:16,display:'flex',gap:8,alignItems:'flex-end',height:120}}>
+                {data.daily.map((d: any) => (
+                  <div key={d.day} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                    <div style={{fontSize:11,color:pctColor(d.avg_pct),fontWeight:800}}>{d.avg_pct}%</div>
+                    <div style={{width:'100%',background:pctColor(d.avg_pct),borderRadius:'6px 6px 0 0',height:`${Math.max(d.avg_pct,8)}%`,minHeight:8,transition:'height .3s'}} />
+                    <div style={{fontSize:10,color:P.soft}}>{d.day.slice(5)}</div>
+                    <div style={{fontSize:10,color:P.soft}}>{d.attempts}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Exercices faibles */}
+          {data.weak_exercises?.length > 0 && (
+            <div style={{background:P.card,borderRadius:16,border:`1.5px solid #FEE2E2`,overflow:'hidden'}}>
+              <div style={{padding:'14px 20px',borderBottom:`1px solid #FEE2E2`,fontWeight:900,color:P.red,fontSize:15}}>
+                Exercices a renforcer (&lt;60%)
+              </div>
+              <div style={{display:'grid',gap:0}}>
+                {data.weak_exercises.map((e: any, i: number) => (
+                  <div key={i} style={{padding:'11px 20px',borderTop:i>0?`1px solid ${P.border}`:'none',display:'flex',alignItems:'center',gap:12}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:800,color:P.dark,fontSize:13}}>{e.title}</div>
+                      <div style={{fontSize:11,color:P.soft,marginTop:2}}>{e.subject} • {e.attempts} tentative(s)</div>
+                    </div>
+                    <span style={{background:'#FEE2E2',color:P.red,borderRadius:8,padding:'3px 10px',fontSize:13,fontWeight:900}}>{e.avg_pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+// ── REPORT SCREEN ─────────────────────────────────────────────────────────────
+function ReportScreen() {
+  const [data, setData] = useState<any>(null)
+  const [date, setDate] = useState(new Date().toISOString().slice(0,10))
+  const [loading, setLoading] = useState(false)
+
+  const load = (d: string) => {
+    setLoading(true); setData(null)
+    api(`/report/daily?date=${d}`).then(r => { setData(r); setLoading(false) })
+  }
+
+  useEffect(() => { load(date) }, [])
+
+  const pctColor = (p: number) => p >= 80 ? '#10B981' : p >= 60 ? '#F59E0B' : P.red
+  const pctBg   = (p: number) => p >= 80 ? '#D1FAE5' : p >= 60 ? '#FEF3C7' : '#FEE2E2'
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:P.dark}}>
+          Rapport journalier
+          {data && <span style={{fontSize:14,fontWeight:600,color:P.soft,marginLeft:10}}>{data.date}</span>}
+        </h2>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            style={{...inputStyle,fontSize:13,padding:'8px 12px'}} />
+          <button onClick={() => load(date)} style={{background:P.sidebar,color:'white',border:'none',borderRadius:10,padding:'9px 16px',fontWeight:800,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>
+            Charger
+          </button>
+        </div>
+      </div>
+
+      {loading && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Chargement...</div>}
+
+      {data && !loading && (
+        <div style={{display:'grid',gap:16}}>
+          {/* Résumé du jour */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+            {[
+              {label:'Enfants actifs',value:`${data.active_children}/${data.children?.length}`,color:P.sidebar,icon:'👨‍👩‍👧‍👦'},
+              {label:'Tentatives totales',value:data.total_attempts?.toLocaleString(),color:P.accent,icon:'📝'},
+              {label:'Taux activite',value:`${Math.round((data.active_children/Math.max(data.children?.length,1))*100)}%`,color:'#8B5CF6',icon:'⚡'},
+            ].map((s,i) => (
+              <div key={i} style={{background:P.card,borderRadius:16,padding:'18px 20px',border:`1.5px solid ${P.border}`,display:'flex',alignItems:'center',gap:14}}>
+                <span style={{fontSize:28}}>{s.icon}</span>
+                <div>
+                  <div style={{fontSize:26,fontWeight:900,color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:12,color:P.soft,fontWeight:700}}>{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cartes par enfant */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:14}}>
+            {data.children?.map((c: any) => (
+              <div key={c.child_id} style={{background:P.card,borderRadius:16,border:`1.5px solid ${c.attempts>0 ? P.border : '#FEE2E2'}`,overflow:'hidden'}}>
+                {/* Header enfant */}
+                <div style={{background:c.attempts>0 ? P.sidebar : '#FEE2E2',padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{fontWeight:900,color:c.attempts>0?'white':P.red,fontSize:15}}>{c.first_name}</div>
+                    <div style={{fontSize:11,color:c.attempts>0?'rgba(255,255,255,.7)':P.red,marginTop:2}}>{c.level}</div>
+                  </div>
+                  {c.attempts > 0
+                    ? <span style={{background:'rgba(255,255,255,.2)',color:'white',borderRadius:10,padding:'4px 10px',fontSize:13,fontWeight:900}}>{c.avg_pct}%</span>
+                    : <span style={{fontSize:12,color:P.red,fontWeight:800}}>Inactif</span>
+                  }
+                </div>
+
+                {c.attempts > 0 ? (
+                  <div style={{padding:'14px 18px'}}>
+                    {/* Barre progression */}
+                    <div style={{height:8,background:P.border,borderRadius:999,marginBottom:12,overflow:'hidden'}}>
+                      <div style={{width:`${Math.min(c.avg_pct,100)}%`,height:'100%',background:pctColor(c.avg_pct),borderRadius:999}} />
+                    </div>
+                    {/* Stats */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
+                      {[
+                        {label:'Exercices',value:c.attempts},
+                        {label:'Reussis',value:c.success},
+                        {label:'Temps',value:`${c.total_minutes}min`},
+                      ].map((s,i) => (
+                        <div key={i} style={{textAlign:'center',background:P.light,borderRadius:10,padding:'8px 4px'}}>
+                          <div style={{fontSize:16,fontWeight:900,color:P.dark}}>{s.value}</div>
+                          <div style={{fontSize:10,color:P.soft,fontWeight:700}}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Matieres */}
+                    {c.subjects?.length > 0 && (
+                      <div style={{display:'flex',flexWrap:'wrap' as const,gap:4,marginBottom:8}}>
+                        {c.subjects.map((s: string) => (
+                          <span key={s} style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 8px',fontSize:11,fontWeight:700}}>{s}</span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Dernier exercice */}
+                    {c.last_exercise && (
+                      <div style={{fontSize:11,color:P.soft,borderTop:`1px solid ${P.border}`,paddingTop:8}}>
+                        Dernier: <span style={{fontWeight:700,color:P.dark}}>{c.last_exercise.title}</span>
+                        <span style={{marginLeft:6,color:pctColor((c.last_exercise.score/Math.max(c.last_exercise.max_score,1))*100),fontWeight:800}}>
+                          {c.last_exercise.score}/{c.last_exercise.max_score}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{padding:'20px 18px',textAlign:'center',color:P.soft,fontSize:13}}>
+                    Aucune activite ce jour
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+// ── SCHOOL YEARS SCREEN ───────────────────────────────────────────────────────
+function SchoolYearsScreen() {
+  const [years, setYears] = useState<any[]>([])
+  const [adding, setAdding] = useState(false)
+  const [form, setForm] = useState({ label: '', start_date: '', end_date: '' })
+  const [error, setError] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
+
+  const reload = () => api('/school-years').then(setYears)
+  useEffect(() => { reload() }, [])
+
+  const save = async () => {
+    if (!form.label || !form.start_date || !form.end_date) return setError('Tous les champs sont requis')
+    await api('/school-years', { method: 'POST', body: JSON.stringify(form) })
+    setAdding(false); reload()
+  }
+
+  const activate = async (id: number) => {
+    await api(`/school-years/${id}/activate`, { method: 'PUT' })
+    reload()
+  }
+
+  const confirmDelete = async () => {
+    const res = await api(`/school-years/${deleteTarget.id}`, { method: 'DELETE' })
+    if (res.detail) { setError(res.detail); setDeleteTarget(null); return }
+    setDeleteTarget(null); reload()
+  }
+
+  return (
+    <div style={{maxWidth:600}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:P.dark}}>Annees scolaires</h2>
+        <button onClick={() => { setAdding(true); setForm({label:'',start_date:'',end_date:''}); setError('') }}
+          style={{background:P.sidebar,color:'white',border:'none',borderRadius:10,padding:'9px 18px',fontWeight:800,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>
+          + Nouvelle annee
+        </button>
+      </div>
+
+      {error && <div style={{background:'#FEE2E2',color:P.red,borderRadius:10,padding:'10px 14px',marginBottom:14,fontWeight:700,fontSize:13}}>{error}</div>}
+
+      {adding && (
+        <div style={{background:P.light,borderRadius:18,padding:20,marginBottom:20,border:`1.5px solid ${P.border}`}}>
+          <div style={{fontWeight:900,color:P.dark,fontSize:15,marginBottom:14}}>Nouvelle annee scolaire</div>
+          <div style={{display:'grid',gap:12,marginBottom:14}}>
+            <input placeholder="Label (ex: 2026-2027) *" value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))} style={inputStyle} />
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:800,color:P.soft,marginBottom:4}}>DATE DEBUT</div>
+                <input type="date" value={form.start_date} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} style={inputStyle} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:800,color:P.soft,marginBottom:4}}>DATE FIN</div>
+                <input type="date" value={form.end_date} onChange={e=>setForm(f=>({...f,end_date:e.target.value}))} style={inputStyle} />
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={save} style={{background:P.sidebar,color:'white',border:'none',borderRadius:10,padding:'9px 18px',fontWeight:800,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>Enregistrer</button>
+            <button onClick={()=>setAdding(false)} style={{background:P.border,color:P.dark,border:'none',borderRadius:10,padding:'9px 18px',fontWeight:700,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{display:'grid',gap:10}}>
+        {years.map(y => (
+          <div key={y.id} style={{background:P.card,borderRadius:14,padding:'16px 20px',border:`2px solid ${y.is_current ? P.sidebar : P.border}`,display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:40,height:40,borderRadius:12,background:y.is_current?P.sidebar:P.border,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>
+              {y.is_current ? '✅' : '📅'}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:900,color:P.dark,fontSize:16,display:'flex',alignItems:'center',gap:8}}>
+                {y.label}
+                {y.is_current && <span style={{background:'#D1FAE5',color:'#065F46',borderRadius:8,padding:'2px 8px',fontSize:11,fontWeight:800}}>ACTIVE</span>}
+              </div>
+              <div style={{fontSize:12,color:P.soft,marginTop:3}}>
+                {y.start_date} → {y.end_date}
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              {!y.is_current && (
+                <button onClick={() => activate(y.id)}
+                  style={{background:'#D1FAE5',color:'#065F46',border:'none',borderRadius:8,padding:'6px 12px',fontWeight:800,cursor:'pointer',fontSize:12}}>
+                  Activer
+                </button>
+              )}
+              <button onClick={() => setDeleteTarget(y)}
+                style={{background:'#FEE2E222',color:P.red,border:'none',borderRadius:8,padding:'6px 12px',fontWeight:800,cursor:'pointer',fontSize:12}}>
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {deleteTarget && (
+        <ConfirmDelete label={`Annee "${deleteTarget.label}"`}
+          onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />
+      )}
+    </div>
+  )
+}
+
+
+// ── BRIEF SCREEN ──────────────────────────────────────────────────────────────
+function BriefScreen() {
+  const MBASE = 'http://192.168.100.106:8100/api'
+  const [brief, setBrief] = useState<any>(null)
+  const [config, setConfig] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [triggering, setTriggering] = useState(false)
+  const [toast, setToast] = useState<string|null>(null)
+  const [schedHour, setSchedHour] = useState('19')
+  const [schedMin, setSchedMin] = useState('00')
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
+
+  useEffect(() => {
+    // Charge le brief
+    setLoading(true)
+    fetch(`${MBASE}/mama/brief`).then(r=>r.json()).then(d => { setBrief(d); setLoading(false) })
+    // Charge la config scheduler
+    fetch(`${MBASE}/evening-sessions/scheduler-config`).then(r=>r.json()).then(d => {
+      setConfig(d)
+      if (d.time) { const [h,m] = d.time.split(':'); setSchedHour(h); setSchedMin(m) }
+    })
+  }, [])
+
+  const triggerBrief = async () => {
+    setTriggering(true)
+    await fetch(`${MBASE}/evening-sessions/trigger-auto`, { method: 'POST' })
+    setTriggering(false)
+    showToast('Brief vocal declenche sur les tablettes')
+  }
+
+  const saveScheduler = async () => {
+    await fetch(`${MBASE}/evening-sessions/scheduler-config`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ...config, time: `${schedHour}:${schedMin}` })
+    })
+    showToast('Heure mise a jour')
+  }
+
+  const toggleScheduler = async () => {
+    const newConfig = { ...config, enabled: !config?.enabled }
+    await fetch(`${MBASE}/evening-sessions/scheduler-config`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(newConfig)
+    })
+    setConfig(newConfig)
+    showToast(newConfig.enabled ? 'Scheduler active' : 'Scheduler desactive')
+  }
+
+  const pctColor = (p: number) => p >= 70 ? '#10B981' : p >= 50 ? '#F59E0B' : P.red
+
+  return (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:900,color:P.dark,marginBottom:20}}>Brief vocal Mama Judi</h2>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
+        {/* Config scheduler */}
+        <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,padding:'18px 20px'}}>
+          <div style={{fontWeight:900,color:P.dark,fontSize:15,marginBottom:14}}>Programmation automatique</div>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+            <span style={{fontSize:13,fontWeight:700,color:P.soft}}>Heure :</span>
+            <select value={schedHour} onChange={e=>setSchedHour(e.target.value)} style={{...inputStyle,padding:'6px 10px',width:70}}>
+              {Array.from({length:24},(_,i)=>String(i).padStart(2,'0')).map(h=><option key={h} value={h}>{h}</option>)}
+            </select>
+            <span style={{fontWeight:900,color:P.dark}}>:</span>
+            <select value={schedMin} onChange={e=>setSchedMin(e.target.value)} style={{...inputStyle,padding:'6px 10px',width:70}}>
+              {['00','15','30','45'].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <button onClick={saveScheduler} style={{background:P.sidebar,color:'white',border:'none',borderRadius:8,padding:'7px 14px',fontWeight:800,cursor:'pointer',fontSize:12,fontFamily:'Nunito,sans-serif'}}>
+              Sauver
+            </button>
+          </div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontSize:13,fontWeight:700,color:P.soft}}>
+              Statut : <span style={{color:config?.enabled?'#10B981':P.red,fontWeight:900}}>{config?.enabled?'Actif':'Inactif'}</span>
+            </span>
+            <button onClick={toggleScheduler} style={{background:config?.enabled?'#FEE2E2':'#D1FAE5',color:config?.enabled?P.red:'#065F46',border:'none',borderRadius:8,padding:'7px 14px',fontWeight:800,cursor:'pointer',fontSize:12}}>
+              {config?.enabled ? 'Desactiver' : 'Activer'}
+            </button>
+          </div>
+        </div>
+
+        {/* Declenchement manuel */}
+        <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,padding:'18px 20px',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+          <div>
+            <div style={{fontWeight:900,color:P.dark,fontSize:15,marginBottom:8}}>Declenchement manuel</div>
+            <div style={{fontSize:13,color:P.soft,marginBottom:16}}>
+              Envoie immediatement le brief vocal sur toutes les tablettes actives.
+            </div>
+          </div>
+          <button onClick={triggerBrief} disabled={triggering}
+            style={{background:P.accent,color:'white',border:'none',borderRadius:12,padding:'12px',fontWeight:900,cursor:triggering?'wait':'pointer',fontSize:14,fontFamily:'Nunito,sans-serif',width:'100%'}}>
+            {triggering ? 'Envoi en cours...' : '🔊 Declencher le brief maintenant'}
+          </button>
+        </div>
+      </div>
+
+      {/* Apercu du brief */}
+      <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+        <div style={{padding:'14px 20px',borderBottom:`1px solid ${P.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontWeight:900,color:P.dark,fontSize:15}}>Apercu du brief ce soir</div>
+          <button onClick={() => { setLoading(true); fetch(`${MBASE}/mama/brief`).then(r=>r.json()).then(d=>{setBrief(d);setLoading(false)}) }}
+            style={{background:P.light,color:P.dark,border:'none',borderRadius:8,padding:'6px 12px',fontWeight:700,cursor:'pointer',fontSize:12}}>
+            Rafraichir
+          </button>
+        </div>
+
+        {loading && <div style={{padding:'30px',textAlign:'center',color:P.soft}}>Chargement...</div>}
+
+        {brief && !loading && (
+          <div style={{padding:16,display:'grid',gap:10}}>
+            {brief.children?.map((c: any) => (
+              <div key={c.child_id} style={{background:P.light,borderRadius:14,padding:'14px 16px',border:`1px solid ${P.border}`}}>
+                <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:P.sidebar,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:900,color:'white'}}>
+                    {c.first_name?.[0]}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:900,color:P.dark}}>{c.first_name}</div>
+                    <div style={{fontSize:11,color:P.soft}}>{c.level}</div>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontSize:18,fontWeight:900,color:pctColor(c.today_avg)}}>{Math.round(c.today_avg)}%</div>
+                    <div style={{fontSize:11,color:P.soft}}>{c.today_count} exercice(s)</div>
+                  </div>
+                </div>
+                {c.message && (
+                  <div style={{background:'white',borderRadius:10,padding:'10px 14px',fontSize:13,color:P.dark,fontStyle:'italic',borderLeft:`3px solid ${P.sidebar}`}}>
+                    "{c.message}"
+                  </div>
+                )}
+                {c.subjects_today?.length > 0 && (
+                  <div style={{display:'flex',gap:4,flexWrap:'wrap' as const,marginTop:8}}>
+                    {c.subjects_today.map((s: string) => (
+                      <span key={s} style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 7px',fontSize:11,fontWeight:700}}>{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {toast && (
+        <div style={{position:'fixed',bottom:24,right:24,background:'#D1FAE5',color:'#065F46',borderRadius:14,padding:'14px 20px',fontWeight:800,fontSize:14,boxShadow:'0 4px 16px rgba(0,0,0,.12)',zIndex:999}}>
+          ✅ {toast}
+        </div>
+      )}
+    </div>
+  )
+
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function AdminApp() {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [screenParams, setScreenParams] = useState<any>(null)
   const goTo = (s: Screen, params?: any) => { setScreenParams(params||null); setScreen(s) }
-  const NAV = [
-    { id: 'dashboard' as Screen, icon: '📊', label: 'Dashboard' },
-    { id: 'children' as Screen, icon: '👨‍👩‍👧‍👦', label: 'Enfants' },
-    { id: 'subjects' as Screen, icon: '🎯', label: 'Matieres' },
-    { id: 'curriculum' as Screen, icon: '🗂️', label: 'Curriculum' },
-    { id: 'assets' as Screen, icon: '🖼️', label: 'Assets' },
-    { id: 'bulletin' as Screen, icon: '📋', label: 'Bulletins' },
-    { id: 'logs' as Screen, icon: '📟', label: 'Logs' },
-    { id: 'health' as Screen, icon: '🩺', label: 'Health' },
-    { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
+  const NAV_GROUPS = [
+    {
+      label: null,
+      items: [
+        { id: 'dashboard' as Screen, icon: '📊', label: 'Dashboard' },
+        { id: 'children' as Screen, icon: '👪', label: 'Enfants' },
+      ]
+    },
+    {
+      label: 'Contenu',
+      items: [
+        { id: 'subjects' as Screen, icon: '🎯', label: 'Matieres' },
+        { id: 'curriculum' as Screen, icon: '🗂', label: 'Curriculum' },
+        { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
+        { id: 'assets' as Screen, icon: '🖼', label: 'Assets' },
+      ]
+    },
+    {
+      label: 'Suivi',
+      items: [
+        { id: 'bulletin' as Screen, icon: '📋', label: 'Bulletins' },
+        { id: 'progress' as Screen, icon: '📈', label: 'Progression' },
+        { id: 'report' as Screen, icon: '📅', label: 'Rapport' },
+        { id: 'brief' as Screen, icon: '🔊', label: 'Brief vocal' },
+        { id: 'schoolyears' as Screen, icon: '🗓', label: 'Annees' },
+      ]
+    },
+    {
+      label: 'Systeme',
+      items: [
+        { id: 'health' as Screen, icon: '🩺', label: 'Health' },
+        { id: 'logs' as Screen, icon: '📟', label: 'Logs' },
+      ]
+    },
   ]
+  const [collapsed, setCollapsed] = React.useState<Record<string,boolean>>({})
+  const toggleGroup = (label: string) => setCollapsed(c => ({...c, [label]: !c[label]}))
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Nunito,system-ui,sans-serif', background: P.bg }}>
       <div style={{ width: 220, background: P.sidebar, display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', left: 0, top: 0 }}>
@@ -1044,12 +1573,23 @@ export default function AdminApp() {
           <div style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,.5)', letterSpacing: 2 }}>EDUMAISON</div>
           <div style={{ fontSize: 18, fontWeight: 900, color: 'white', marginTop: 4 }}>Admin</div>
         </div>
-        <nav style={{ padding: '12px 10px', flex: 1 }}>
-          {NAV.map(item => (
-            <button key={item.id} onClick={() => goTo(item.id)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', marginBottom: 4, background: screen===item.id ? 'rgba(255,255,255,.2)' : 'transparent', color: screen===item.id ? 'white' : 'rgba(255,255,255,.6)', fontWeight: screen===item.id ? 900 : 600, fontSize: 14, fontFamily: 'Nunito,sans-serif', textAlign: 'left' as const }}>
-              <span style={{ fontSize: 18 }}>{item.icon}</span>{item.label}
-            </button>
+        <nav style={{ padding: '8px 10px', flex: 1, overflowY: 'auto' as const }}>
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={gi} style={{ marginBottom: 4 }}>
+              {group.label && (
+                <button onClick={() => toggleGroup(group.label!)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.4)', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: 'Nunito,sans-serif', marginTop: 6 }}>
+                  {group.label}
+                  <span>{collapsed[group.label] ? '▸' : '▾'}</span>
+                </button>
+              )}
+              {!collapsed[group.label!] && group.items.map(item => (
+                <button key={item.id} onClick={() => goTo(item.id)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', marginBottom: 2, background: screen===item.id ? 'rgba(255,255,255,.2)' : 'transparent', color: screen===item.id ? 'white' : 'rgba(255,255,255,.6)', fontWeight: screen===item.id ? 900 : 600, fontSize: 14, fontFamily: 'Nunito,sans-serif', textAlign: 'left' as const }}>
+                  <span style={{ fontSize: 16 }}>{item.icon}</span>{item.label}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
         <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,.15)' }}>
@@ -1064,6 +1604,10 @@ export default function AdminApp() {
         {screen === 'exercises' && <ExercisesScreen initParams={screenParams} />}
         {screen === 'assets' && <AssetsScreen />}
         {screen === 'bulletin' && <BulletinScreen />}
+        {screen === 'brief' && <BriefScreen />}
+        {screen === 'schoolyears' && <SchoolYearsScreen />}
+        {screen === 'report' && <ReportScreen />}
+        {screen === 'progress' && <ProgressScreen />}
         {screen === 'logs' && <LogsScreen />}
         {screen === 'health' && <HealthScreen />}
       </div>
