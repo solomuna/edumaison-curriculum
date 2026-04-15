@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'health'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'health'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -788,6 +788,126 @@ function HealthScreen() {
   )
 }
 
+
+// ── BULLETIN SCREEN ──────────────────────────────────────────────────────────
+function BulletinScreen() {
+  const BBASE = 'http://192.168.100.106:8100/api'
+  const [children, setChildren] = useState<any[]>([])
+  const [selChild, setSelChild] = useState<number | null>(null)
+  const [bulletin, setBulletin] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => { api('/children').then(setChildren) }, [])
+
+  useEffect(() => {
+    if (!selChild) return
+    setLoading(true); setBulletin(null)
+    fetch(`${BBASE}/bulletin/child/${selChild}`)
+      .then(r => r.json()).then(d => { setBulletin(d); setLoading(false) })
+  }, [selChild])
+
+  const appColor = (a: string) => {
+    const m: Record<string,string> = { 'Excellent':'#10B981','Very Good':'#3B82F6','Good':'#8B5CF6','Pass':'#F59E0B' }
+    return m[a] || P.red
+  }
+
+  const compLabel = (subj: string) => {
+    const s = subj.toLowerCase()
+    if (['english','french','nlc','reading','handwriting'].some(x=>s.includes(x))) return 'C1'
+    if (['mathematics','science'].some(x=>s.includes(x))) return 'C2'
+    if (['citizenship','social'].some(x=>s.includes(x))) return 'C3'
+    if (['home'].some(x=>s.includes(x))) return 'C4'
+    if (['ict'].some(x=>s.includes(x))) return 'C5'
+    if (['arts','pe','physical'].some(x=>s.includes(x))) return 'C6'
+    return '—'
+  }
+
+  return (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:900,color:P.dark,marginBottom:20}}>Bulletins MINEDUB</h2>
+
+      <div style={{display:'flex',gap:10,marginBottom:24,flexWrap:'wrap' as const}}>
+        {children.map(c => (
+          <button key={c.id} onClick={() => setSelChild(c.id)} style={{
+            padding:'8px 18px',borderRadius:999,
+            border:`1.5px solid ${selChild===c.id ? P.sidebar : P.border}`,
+            background:selChild===c.id ? P.sidebar : P.card,
+            color:selChild===c.id ? 'white' : P.dark,
+            fontWeight:selChild===c.id ? 900 : 600,fontSize:14,
+            cursor:'pointer',fontFamily:'Nunito,sans-serif',
+          }}>
+            {c.first_name} <span style={{fontSize:11,opacity:.7}}>({c.level_name})</span>
+          </button>
+        ))}
+      </div>
+
+      {!selChild && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Selectionnez un enfant</div>}
+      {loading && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Chargement...</div>}
+
+      {bulletin && !loading && (
+        <div style={{background:P.card,borderRadius:18,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+          <div style={{background:P.sidebar,padding:'20px 28px',color:'white'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,opacity:.7,letterSpacing:1.5,textTransform:'uppercase' as const}}>EDUMAISON — MINEDUB</div>
+                <div style={{fontSize:22,fontWeight:900,marginTop:4}}>{bulletin.child.name}</div>
+                <div style={{fontSize:13,opacity:.8,marginTop:4}}>{bulletin.child.level} • {bulletin.year}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:36,fontWeight:900}}>{bulletin.average?.toFixed(1)}</div>
+                <div style={{fontSize:11,opacity:.7}}>Moyenne</div>
+                {bulletin.rank && <div style={{fontSize:13,fontWeight:700,marginTop:4}}>Rang {bulletin.rank}/{bulletin.class_size}</div>}
+              </div>
+            </div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',borderBottom:`1px solid ${P.border}`}}>
+            {[
+              {label:'XP Total',value:bulletin.total_xp?.toLocaleString(),color:P.accent},
+              {label:'Rang',value:bulletin.rank ? `${bulletin.rank}/${bulletin.class_size}` : '—',color:'#3B82F6'},
+              {label:'Moy. classe',value:bulletin.class_average?.toFixed(1)||'—',color:'#8B5CF6'},
+              {label:'Matieres',value:bulletin.results?.length,color:'#10B981'},
+            ].map((s,i) => (
+              <div key={i} style={{padding:'16px 20px',borderRight:i<3?`1px solid ${P.border}`:'none',textAlign:'center'}}>
+                <div style={{fontSize:24,fontWeight:900,color:s.color}}>{s.value}</div>
+                <div style={{fontSize:11,color:P.soft,fontWeight:700,marginTop:2}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:P.light}}>
+              {['Comp','Matiere','Note','/Max','Appreciation','Commentaire'].map(h => (
+                <th key={h} style={{padding:'11px 16px',textAlign:'left',fontSize:11,fontWeight:900,color:P.soft,textTransform:'uppercase' as const,letterSpacing:1}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {bulletin.results?.map((r: any, i: number) => (
+                <tr key={r.subject_id} style={{borderTop:`1px solid ${P.border}`,background:i%2===0?P.card:'#FAFAF8'}}>
+                  <td style={{padding:'10px 16px'}}><span style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 7px',fontSize:11,fontWeight:800}}>{compLabel(r.subject)}</span></td>
+                  <td style={{padding:'10px 16px',fontWeight:800,color:P.dark,fontSize:14}}>{r.subject}</td>
+                  <td style={{padding:'10px 16px'}}><span style={{fontSize:18,fontWeight:900,color:r.average_score>=10?'#10B981':P.red}}>{r.average_score?.toFixed(1)}</span></td>
+                  <td style={{padding:'10px 16px',fontSize:13,color:P.soft}}>{r.max_score}</td>
+                  <td style={{padding:'10px 16px'}}><span style={{color:appColor(r.appreciation),fontWeight:800,fontSize:12}}>{r.appreciation||'—'}</span></td>
+                  <td style={{padding:'10px 16px',fontSize:12,color:P.soft,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{r.teacher_comment||'—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {!bulletin.results?.length && (
+            <div style={{padding:'32px',textAlign:'center',color:P.soft,fontSize:14}}>Aucun resultat disponible.</div>
+          )}
+        </div>
+      )}
+
+      {bulletin === null && selChild && !loading && (
+        <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Aucun bulletin disponible.</div>
+      )}
+    </div>
+  )
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function AdminApp() {
   const [screen, setScreen] = useState<Screen>('dashboard')
@@ -799,6 +919,7 @@ export default function AdminApp() {
     { id: 'subjects' as Screen, icon: '🎯', label: 'Matieres' },
     { id: 'curriculum' as Screen, icon: '🗂️', label: 'Curriculum' },
     { id: 'assets' as Screen, icon: '🖼️', label: 'Assets' },
+    { id: 'bulletin' as Screen, icon: '📋', label: 'Bulletins' },
     { id: 'health' as Screen, icon: '🩺', label: 'Health' },
     { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
   ]
@@ -828,6 +949,7 @@ export default function AdminApp() {
         {screen === 'curriculum' && <CurriculumScreen goTo={goTo} />}
         {screen === 'exercises' && <ExercisesScreen initParams={screenParams} />}
         {screen === 'assets' && <AssetsScreen />}
+        {screen === 'bulletin' && <BulletinScreen />}
         {screen === 'health' && <HealthScreen />}
       </div>
     </div>
