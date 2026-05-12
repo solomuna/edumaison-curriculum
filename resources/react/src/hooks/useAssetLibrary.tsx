@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
-const BASE = 'http://192.168.100.106:8100'
+// Relatif : nginx proxy /assets -> FastAPI:8100 (voir edumaison.test.conf)
+const BASE = ''
 
 // Cache en mémoire
 let _cache: Record<string, string> | null = null

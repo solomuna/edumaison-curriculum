@@ -6,7 +6,10 @@
 /resources/react/node_modules
 /public/react/assets
 .env
+.env.bak*
 *.log
 *.bak
 *.bak.*
+*.bak[0-9]*
+/backups/
 __pycache__

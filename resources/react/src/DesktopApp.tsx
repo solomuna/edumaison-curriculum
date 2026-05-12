@@ -195,15 +195,6 @@ export default function DesktopApp({ child, onLogout }: Props) {
             <MamaJudiDesk />
             Mama Judi
           </button>
-          <button onClick={() => window.location.href = '/mama'}
-            style={{ width: '100%', padding: '10px 0', borderRadius: 12, border: 'none',
-              background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.75)',
-              fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8,
-              fontFamily: 'Nunito, system-ui, sans-serif',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <MamaJudiDesk />
-            Mama Judi
-          </button>
           <button onClick={onLogout} style={{
             width: '100%', padding: '10px 0', borderRadius: 12,
             border: '1.5px solid rgba(255,255,255,0.3)',

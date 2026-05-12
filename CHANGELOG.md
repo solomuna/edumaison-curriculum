@@ -430,3 +430,21 @@ style: CSS/UI uniquement
 - [ ] Portabilite VPS
 - [ ] APK Capacitor
 - [ ] SOLVILO i18n bug dashboard
+- [x] Bulk actions exercices — Activer/Désactiver/Difficulté/Déplacer/Supprimer avec confirmation
+- [x] Bulk actions exercices
+
+## 🔧 SESSION DU 2026-04-15 (suite 3) — CE QUI A ÉTÉ FAIT
+- [x] Bulk actions exercices — Activer/Désactiver/Difficulté/Déplacer/Supprimer avec confirmation
+- [x] Import/Export CSV exercices
+- [x] Remédiation Mark — RemediationPage.tsx réécrite (encodage corrigé)
+- [x] Vocational Studies ajouté C1→C6 (Crafts, Agriculture, Home Ec, outils métiers)
+- [x] Social Studies C3/C4 enrichi (Moral Ed, Elections, UNICEF, Histoire coloniale)
+- [x] NLC C3→C6 — famille, mariage, dot, polygamie, traditions orales, rites
+- [x] Outils métiers C3→C6 — menuisier, maçon, électricien, plombier, tisserand, musicien
+- [x] Icônes subjects alignées sur asset_library
+- [x] Backup DB + vider cache (backup_edumaison.py)
+- [x] Filament supprimé définitivement
+
+## BACKLOG RESTANT
+- [ ] Portabilité VPS
+- [ ] APK Capacitor

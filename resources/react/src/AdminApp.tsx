@@ -1,6 +1,6 @@
 // AdminApp.tsx — Interface Admin EduMaison Phase 2
-// Units CRUD + Lessons CRUD + Exercise editing
-import { useState, useEffect } from 'react'
+// Curriculum screen: pills cascade Niveau > Matiere > Unite > Lecons + search + CRUD
+import React, { useState, useEffect } from 'react'
 
 const BASE = 'http://192.168.100.106:8100/api/admin'
 
@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'units' | 'lessons' | 'exercises'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'brief' | 'schoolyears' | 'report' | 'progress' | 'logs' | 'health'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -49,25 +49,254 @@ function ConfirmDelete({ label, onConfirm, onCancel }: { label: string; onConfir
   )
 }
 
+// ── UNIT MODAL ────────────────────────────────────────────────────────────────
+function UnitModal({ unit, themes, onSave, onClose }: { unit: any; themes: any[]; onSave: (d: any) => void; onClose: () => void }) {
+  const [form, setForm] = useState({ name: unit.name || '', integrated_theme_id: unit.integrated_theme_id || (themes[0]?.id || 0) })
+  const [error, setError] = useState('')
+  const save = () => { if (!form.name.trim()) return setError('Nom requis'); onSave(form) }
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ background: P.card, borderRadius: 20, padding: 28, width: 440, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ fontWeight: 900, color: P.dark, fontSize: 16 }}>{unit.id ? "Modifier l'unite" : 'Nouvelle unite'}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: P.soft }}>✕</button>
+        </div>
+        {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '8px 12px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>{error}</div>}
+        <div style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
+          <input placeholder="Nom de l'unite *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} />
+          <select value={form.integrated_theme_id} onChange={e => setForm(f => ({ ...f, integrated_theme_id: Number(e.target.value) }))} style={inputStyle}>
+            {themes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={save} style={btnStyle(P.sidebar)}>Enregistrer</button>
+          <button onClick={onClose} style={btnStyle(P.border, P.dark)}>Annuler</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── LESSON MODAL ──────────────────────────────────────────────────────────────
+function LessonModal({ lesson, units, onSave, onClose }: { lesson: any; units: any[]; onSave: (d: any) => void; onClose: () => void }) {
+  const [form, setForm] = useState({ name: lesson.name || '', unit_id: lesson.unit_id || (units[0]?.id || 0) })
+  const [error, setError] = useState('')
+  const save = () => { if (!form.name.trim()) return setError('Nom requis'); onSave(form) }
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ background: P.card, borderRadius: 20, padding: 28, width: 440, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ fontWeight: 900, color: P.dark, fontSize: 16 }}>{lesson.id ? 'Modifier la lecon' : 'Nouvelle lecon'}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: P.soft }}>✕</button>
+        </div>
+        {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '8px 12px', marginBottom: 12, fontSize: 13, fontWeight: 700 }}>{error}</div>}
+        <div style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
+          <input placeholder="Nom de la lecon *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} />
+          <select value={form.unit_id} onChange={e => setForm(f => ({ ...f, unit_id: Number(e.target.value) }))} style={inputStyle}>
+            {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={save} style={btnStyle(P.sidebar)}>Enregistrer</button>
+          <button onClick={onClose} style={btnStyle(P.border, P.dark)}>Annuler</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── CURRICULUM ────────────────────────────────────────────────────────────────
+function CurriculumScreen({ goTo }: { goTo: (s: Screen, p?: any) => void }) {
+  const [search, setSearch] = useState('')
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
+  const [levels, setLevels] = useState<any[]>([])
+  const [subjects, setSubjects] = useState<any[]>([])
+  const [units, setUnits] = useState<any[]>([])
+  const [lessons, setLessons] = useState<any[]>([])
+  const [themes, setThemes] = useState<any[]>([])
+  const [selLevel, setSelLevel] = useState<number|null>(null)
+  const [selSubject, setSelSubject] = useState<number|null>(null)
+  const [selUnit, setSelUnit] = useState<number|null>(null)
+  const [unitModal, setUnitModal] = useState<any>(null)
+  const [lessonModal, setLessonModal] = useState<any>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{type:'unit'|'lesson';item:any}|null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => { api('/levels').then(setLevels) }, [])
+
+  useEffect(() => {
+    if (selLevel) {
+      api('/subjects').then(data => {
+        setSubjects(data.filter((s: any) => s.level_id === selLevel))
+        setSelSubject(null); setUnits([]); setSelUnit(null); setLessons([])
+      })
+    }
+  }, [selLevel])
+
+  useEffect(() => {
+    if (selSubject) {
+      api(`/units?subject_id=${selSubject}`).then(setUnits)
+      api(`/integrated-themes?subject_id=${selSubject}`).then(setThemes)
+      setSelUnit(null); setLessons([])
+    }
+  }, [selSubject])
+
+  useEffect(() => {
+    if (selUnit) api(`/lessons?unit_id=${selUnit}`).then(setLessons)
+  }, [selUnit])
+
+  const q = search.toLowerCase()
+  const fUnits = units.filter(u => !q || u.name.toLowerCase().includes(q))
+  const fLessons = lessons.filter(l => !q || l.name.toLowerCase().includes(q))
+
+  const saveUnit = async (data: any) => {
+    if (unitModal?.id) await api(`/units/${unitModal.id}`, { method: 'PUT', body: JSON.stringify(data) })
+    else await api('/units', { method: 'POST', body: JSON.stringify(data) })
+    setUnitModal(null)
+    if (selSubject) api(`/units?subject_id=${selSubject}`).then(setUnits)
+  }
+
+  const saveLesson = async (data: any) => {
+    if (lessonModal?.id) await api(`/lessons/${lessonModal.id}`, { method: 'PUT', body: JSON.stringify(data) })
+    else await api('/lessons', { method: 'POST', body: JSON.stringify(data) })
+    setLessonModal(null)
+    if (selUnit) api(`/lessons?unit_id=${selUnit}`).then(setLessons)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setError('')
+    const { type, item } = deleteTarget
+    const res = await api(`/${type === 'unit' ? 'units' : 'lessons'}/${item.id}`, { method: 'DELETE' })
+    if (res.detail) { setError(res.detail); setDeleteTarget(null); return }
+    setDeleteTarget(null)
+    if (type === 'unit') { if (selSubject) api(`/units?subject_id=${selSubject}`).then(setUnits); setSelUnit(null); setLessons([]) }
+    else { if (selUnit) api(`/lessons?unit_id=${selUnit}`).then(setLessons) }
+  }
+
+  const pill = (label: string, active: boolean, onClick: () => void, activeColor = P.sidebar) => (
+    <button onClick={onClick} style={{ padding: '7px 16px', borderRadius: 999, border: `1.5px solid ${active ? activeColor : P.border}`, background: active ? activeColor : P.card, color: active ? 'white' : P.dark, fontWeight: active ? 800 : 600, fontSize: 13, cursor: 'pointer', fontFamily: 'Nunito,sans-serif', transition: 'all .15s' }}>
+      {label}
+    </button>
+  )
+
+  const secLabel = (txt: string) => <div style={{ fontSize: 10, fontWeight: 900, color: P.soft, letterSpacing: 1.5, textTransform: 'uppercase' as const, marginBottom: 8 }}>{txt}</div>
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
+          Curriculum
+          {selLevel && <span style={{ color: P.soft, fontWeight: 600, fontSize: 15 }}> &rsaquo; {levels.find(l => l.id === selLevel)?.name}</span>}
+          {selSubject && <span style={{ color: P.soft, fontWeight: 600, fontSize: 15 }}> &rsaquo; {subjects.find(s => s.id === selSubject)?.name}</span>}
+          {selUnit && <span style={{ color: P.soft, fontWeight: 600, fontSize: 15 }}> &rsaquo; {units.find(u => u.id === selUnit)?.name}</span>}
+        </h2>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {selSubject && <button onClick={() => setUnitModal({})} style={btnStyle(P.sidebar)}>+ Unite</button>}
+          {selUnit && <button onClick={() => setLessonModal({ unit_id: selUnit })} style={btnStyle(P.accent)}>+ Lecon</button>}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div style={{ position: 'relative', marginBottom: 20 }}>
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: P.soft }}>🔍</span>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher unites, lecons..."
+          style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const, paddingLeft: 40 }} />
+        {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: P.soft, fontSize: 18 }}>✕</button>}
+      </div>
+
+      {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontWeight: 700, fontSize: 13 }}>{error}</div>}
+
+      {/* Niveau */}
+      <div style={{ marginBottom: 16 }}>
+        {secLabel('Niveau')}
+        <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
+          {levels.map(l => <span key={l.id}>{pill(l.name, selLevel === l.id, () => { setSelLevel(l.id); setSearch('') })}</span>)}
+        </div>
+      </div>
+
+      {/* Matiere */}
+      {selLevel && subjects.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          {secLabel('Matiere')}
+          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
+            {subjects.map(s => <span key={s.id}>{pill(s.name, selSubject === s.id, () => { setSelSubject(s.id); setSearch('') }, '#8B5CF6')}</span>)}
+          </div>
+        </div>
+      )}
+
+      {/* Unite */}
+      {selSubject && fUnits.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          {secLabel('Unite')}
+          <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
+            {fUnits.map(u => (
+              <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <button onClick={() => setSelUnit(u.id)} style={{ padding: '7px 14px', borderRadius: 999, border: `1.5px solid ${selUnit === u.id ? '#3B82F6' : P.border}`, background: selUnit === u.id ? '#3B82F6' : P.card, color: selUnit === u.id ? 'white' : P.dark, fontWeight: selUnit === u.id ? 800 : 600, fontSize: 13, cursor: 'pointer', fontFamily: 'Nunito,sans-serif' }}>
+                  {u.name} <span style={{ fontSize: 11, opacity: .65, marginLeft: 4 }}>({u.lesson_count})</span>
+                </button>
+                <button onClick={() => setUnitModal(u)} title="Modifier" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: P.accent, padding: '3px 5px' }}>✏️</button>
+                <button onClick={() => setDeleteTarget({ type: 'unit', item: u })} title="Supprimer" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: P.red, padding: '3px 5px' }}>✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Lecons */}
+      {selUnit && (
+        <div>
+          {secLabel(`Lecons (${fLessons.length})`)}
+          {fLessons.length === 0
+            ? <div style={{ color: P.soft, fontSize: 13, paddingTop: 12 }}>Aucune lecon.</div>
+            : <div style={{ display: 'grid', gap: 8 }}>
+              {fLessons.map(l => (
+                <div key={l.id} style={{ background: P.card, borderRadius: 14, padding: '13px 18px', border: `1.5px solid ${P.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#8B5CF622', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, color: '#8B5CF6' }}>{l.id}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: P.dark, fontSize: 14 }}>{l.name}</div>
+                    <div style={{ fontSize: 11, color: P.soft, marginTop: 2 }}>{l.exercise_count} exercice(s)</div>
+                  </div>
+                  <button onClick={() => goTo('exercises', { lesson_id: l.id, lesson_name: l.name })} style={{ background: P.accent+'22', color: P.accent, border: 'none', borderRadius: 8, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>Exercices →</button>
+                  <button onClick={() => setLessonModal(l)} style={{ background: P.sidebar+'22', color: P.sidebar, border: 'none', borderRadius: 8, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>Modifier</button>
+                  <button onClick={() => setDeleteTarget({ type: 'lesson', item: l })} style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 8, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          }
+        </div>
+      )}
+
+      {!selLevel && <div style={{ textAlign: 'center', padding: '60px 0', color: P.soft, fontSize: 14 }}>Selectionnez un niveau pour commencer</div>}
+      {selLevel && subjects.length === 0 && <div style={{ color: P.soft, fontSize: 13 }}>Aucune matiere pour ce niveau.</div>}
+      {selSubject && fUnits.length === 0 && !search && <div style={{ color: P.soft, fontSize: 13 }}>Aucune unite pour cette matiere.</div>}
+
+      {unitModal !== null && <UnitModal unit={unitModal} themes={themes} onSave={saveUnit} onClose={() => setUnitModal(null)} />}
+      {lessonModal !== null && <LessonModal lesson={lessonModal} units={units} onSave={saveLesson} onClose={() => setLessonModal(null)} />}
+      {deleteTarget && <ConfirmDelete label={`"${deleteTarget.item.name}"`} onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />}
+    </div>
+  )
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function Dashboard({ goTo }: { goTo: (s: Screen) => void }) {
   const [stats, setStats] = useState<any>(null)
-
   useEffect(() => { api('/stats').then(setStats) }, [])
-
   const cards = stats ? [
     { label: 'Enfants actifs', value: stats.children, icon: '👨‍👩‍👧‍👦', color: '#1D6B2A', screen: 'children' as Screen },
     { label: 'Exercices', value: stats.exercises, icon: '📝', color: '#C47A3C', screen: 'exercises' as Screen },
-    { label: 'Leçons', value: stats.lessons, icon: '📖', color: '#3B82F6', screen: 'lessons' as Screen },
-    { label: 'Matières', value: stats.subjects, icon: '🎯', color: '#8B5CF6', screen: 'subjects' as Screen },
+    { label: 'Lecons', value: stats.lessons, icon: '📖', color: '#3B82F6', screen: 'curriculum' as Screen },
+    { label: 'Matieres', value: stats.subjects, icon: '🎯', color: '#8B5CF6', screen: 'subjects' as Screen },
     { label: "Tentatives aujourd'hui", value: stats.attempts_today, icon: '⚡', color: '#F59E0B', screen: null },
   ] : []
-
   return (
     <div>
       <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark, marginBottom: 24 }}>Tableau de bord</h2>
       {!stats ? <div style={{ color: P.soft }}>Chargement...</div> : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 16 }}>
           {cards.map((c, i) => (
             <div key={i} onClick={() => c.screen && goTo(c.screen)}
               style={{ background: P.card, borderRadius: 18, padding: '20px 18px', border: `1.5px solid ${P.border}`, boxShadow: '0 2px 8px rgba(0,0,0,.05)', cursor: c.screen ? 'pointer' : 'default' }}>
@@ -89,41 +318,35 @@ function ChildrenScreen() {
   const [editing, setEditing] = useState<any>(null)
   const [form, setForm] = useState({ first_name: '', last_name: '', pin: '', level_id: 5, is_active: true })
   const [search, setSearch] = useState('')
-
-  useEffect(() => {
-    api('/children').then(setChildren)
-    api('/levels').then(setLevels)
-  }, [])
-
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
+  useEffect(() => { api('/children').then(setChildren); api('/levels').then(setLevels) }, [])
   const save = async () => {
     if (editing?.id) await api(`/children/${editing.id}`, { method: 'PUT', body: JSON.stringify(form) })
     else await api('/children', { method: 'POST', body: JSON.stringify(form) })
-    setEditing(null)
-    api('/children').then(setChildren)
+    setEditing(null); api('/children').then(setChildren)
   }
 
-  const filtered = children.filter(c =>
-    `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase())
-  )
-
+  const resetChild = async () => {
+    await api(`/children/${resetTarget.id}/reset`, { method: 'POST' })
+    setResetTarget(null)
+    setResetDone(resetTarget.first_name)
+    setTimeout(() => setResetDone(null), 4000)
+  }
+  const filtered = children.filter(c => `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase()))
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>Enfants ({children.length})</h2>
-        <button onClick={() => { setEditing({}); setForm({ first_name: '', last_name: '', pin: '', level_id: 5, is_active: true }) }}
-          style={btnStyle(P.sidebar)}>+ Ajouter</button>
+        <button onClick={() => { setEditing({}); setForm({ first_name: '', last_name: '', pin: '', level_id: 5, is_active: true }) }} style={btnStyle(P.sidebar)}>+ Ajouter</button>
       </div>
-
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..."
         style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const, marginBottom: 16 }} />
-
       {editing !== null && (
         <div style={{ background: P.light, borderRadius: 18, padding: 20, marginBottom: 20, border: `1.5px solid ${P.border}` }}>
-          <div style={{ fontSize: 16, fontWeight: 900, color: P.dark, marginBottom: 14 }}>
-            {editing.id ? 'Modifier l\'enfant' : 'Nouvel enfant'}
-          </div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: P.dark, marginBottom: 14 }}>{editing.id ? 'Modifier' : 'Nouvel enfant'}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            <input placeholder="Prénom *" value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} style={inputStyle} />
+            <input placeholder="Prenom *" value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} style={inputStyle} />
             <input placeholder="Nom" value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} style={inputStyle} />
             <input placeholder="PIN (4 chiffres) *" value={form.pin} onChange={e => setForm(f => ({ ...f, pin: e.target.value }))} style={inputStyle} maxLength={4} />
             <select value={form.level_id} onChange={e => setForm(f => ({ ...f, level_id: Number(e.target.value) }))} style={inputStyle}>
@@ -136,38 +359,69 @@ function ChildrenScreen() {
           </div>
         </div>
       )}
-
       <div style={{ display: 'grid', gap: 10 }}>
         {filtered.map(c => (
           <div key={c.id} style={{ background: P.card, borderRadius: 14, padding: '14px 18px', border: `1.5px solid ${P.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 42, height: 42, borderRadius: '50%', background: P.sidebar + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: P.sidebar }}>
-              {c.first_name[0]}
-            </div>
+            <div style={{ width: 42, height: 42, borderRadius: '50%', background: P.sidebar+'22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: P.sidebar }}>{c.first_name[0]}</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 900, color: P.dark, fontSize: 15 }}>{c.first_name} {c.last_name}</div>
               <div style={{ fontSize: 12, color: P.soft, marginTop: 2 }}>{c.level_name} • PIN: {c.pin}</div>
             </div>
             {!c.is_active && <span style={{ background: '#FEE2E2', color: P.red, borderRadius: 8, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>Inactif</span>}
-            <button onClick={() => { setEditing(c); setForm({ first_name: c.first_name, last_name: c.last_name || '', pin: c.pin, level_id: c.level_id, is_active: c.is_active }) }}
-              style={{ background: P.accent + '22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              Modifier
+            <button onClick={() => { setEditing(c); setForm({ first_name: c.first_name, last_name: c.last_name||'', pin: c.pin, level_id: c.level_id, is_active: c.is_active }) }}
+              style={{ background: P.accent+'22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>Modifier</button>
+            <button onClick={async () => {
+                await api(`/children/${c.id}`, { method: 'PUT', body: JSON.stringify({ first_name: c.first_name, last_name: c.last_name||'', pin: c.pin, level_id: c.level_id, is_active: !c.is_active }) })
+                api('/children').then(setChildren)
+              }}
+              style={{ background: c.is_active ? '#FEE2E222' : '#D1FAE5', color: c.is_active ? P.red : '#065F46', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+              {c.is_active ? 'Masquer' : 'Activer'}
             </button>
+            <button onClick={() => setResetTarget(c)}
+              style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>Reset</button>
           </div>
         ))}
       </div>
+
+      {resetDone && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: '#D1FAE5', color: '#065F46', borderRadius: 14, padding: '14px 20px', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 999 }}>
+          ✅ {resetDone} remis(e) a zero avec succes
+        </div>
+      )}
+
+      {resetTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: P.card, borderRadius: 18, padding: 28, maxWidth: 400, textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,.15)' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontWeight: 900, color: P.dark, fontSize: 17, marginBottom: 8 }}>Reset {resetTarget.first_name} ?</div>
+            <div style={{ color: P.soft, fontSize: 13, marginBottom: 6 }}>
+              Supprime <strong>toutes les tentatives, examens et duels</strong>.
+            </div>
+            <div style={{ background: '#D1FAE5', color: '#065F46', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, marginBottom: 20 }}>
+              ✅ Le bulletin (school_results) est conserve
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={resetChild} style={{ background: P.red, color: 'white', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 800, cursor: 'pointer', fontSize: 14 }}>
+                Confirmer le reset
+              </button>
+              <button onClick={() => setResetTarget(null)} style={{ background: P.border, color: P.dark, border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 700, cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// ── SUBJECTS (read-only) ──────────────────────────────────────────────────────
-function SubjectsScreen({ goTo }: { goTo: (s: Screen, params?: any) => void }) {
+// ── SUBJECTS ──────────────────────────────────────────────────────────────────
+function SubjectsScreen() {
   const [subjects, setSubjects] = useState<any[]>([])
-
   useEffect(() => { api('/subjects').then(setSubjects) }, [])
-
   return (
     <div>
-      <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark, marginBottom: 20 }}>Matières ({subjects.length})</h2>
+      <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark, marginBottom: 20 }}>Matieres ({subjects.length})</h2>
       <div style={{ display: 'grid', gap: 10 }}>
         {subjects.map(s => (
           <div key={s.id} style={{ background: P.card, borderRadius: 14, padding: '14px 18px', border: `1.5px solid ${P.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -175,344 +429,135 @@ function SubjectsScreen({ goTo }: { goTo: (s: Screen, params?: any) => void }) {
               <div style={{ fontWeight: 900, color: P.dark }}>{s.name}</div>
               <div style={{ fontSize: 12, color: P.soft, marginTop: 2 }}>{s.level_name}</div>
             </div>
-            <span style={{ background: P.sidebar + '22', color: P.sidebar, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 800 }}>
-              {s.exercise_count} ex.
-            </span>
-            <button onClick={() => goTo('units', { subject_id: s.id, subject_name: s.name })}
-              style={{ background: P.accent + '22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              Voir unités →
-            </button>
+            <span style={{ background: P.sidebar+'22', color: P.sidebar, borderRadius: 8, padding: '4px 10px', fontSize: 12, fontWeight: 800 }}>{s.exercise_count} ex.</span>
           </div>
         ))}
       </div>
-    </div>
-  )
-}
-
-// ── UNITS ─────────────────────────────────────────────────────────────────────
-function UnitsScreen({ initParams, goTo }: { initParams?: any; goTo: (s: Screen, params?: any) => void }) {
-  const [units, setUnits] = useState<any[]>([])
-  const [subjects, setSubjects] = useState<any[]>([])
-  const [themes, setThemes] = useState<any[]>([])
-  const [subjectFilter, setSubjectFilter] = useState<string>(initParams?.subject_id?.toString() || '')
-  const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ name: '', integrated_theme_id: 0 })
-  const [deleteTarget, setDeleteTarget] = useState<any>(null)
-  const [error, setError] = useState('')
-
-  const reload = () => {
-    const q = subjectFilter ? `?subject_id=${subjectFilter}` : ''
-    api(`/units${q}`).then(setUnits)
-  }
-
-  useEffect(() => { api('/subjects').then(setSubjects) }, [])
-  useEffect(() => { reload() }, [subjectFilter])
-  useEffect(() => {
-    if (editing !== null && subjectFilter) {
-      api(`/integrated-themes?subject_id=${subjectFilter}`).then(data => {
-        setThemes(data)
-        if (!form.integrated_theme_id && data.length > 0) {
-          setForm(f => ({ ...f, integrated_theme_id: data[0].id }))
-        }
-      })
-    }
-  }, [editing, subjectFilter])
-
-  const openAdd = () => {
-    setError('')
-    setForm({ name: '', integrated_theme_id: themes[0]?.id || 0 })
-    setEditing({})
-  }
-  const openEdit = (u: any) => {
-    setError('')
-    setForm({ name: u.name, integrated_theme_id: u.integrated_theme_id })
-    setEditing(u)
-  }
-
-  const save = async () => {
-    if (!form.name.trim()) return setError('Le nom est requis')
-    if (!form.integrated_theme_id) return setError('Sélectionnez un thème intégré')
-    if (editing?.id) await api(`/units/${editing.id}`, { method: 'PUT', body: JSON.stringify(form) })
-    else await api('/units', { method: 'POST', body: JSON.stringify(form) })
-    setEditing(null)
-    reload()
-  }
-
-  const confirmDelete = async () => {
-    const res = await api(`/units/${deleteTarget.id}`, { method: 'DELETE' })
-    if (res.detail) setError(res.detail)
-    setDeleteTarget(null)
-    reload()
-  }
-
-  const subjectLabel = initParams?.subject_name || subjects.find(s => s.id === Number(subjectFilter))?.name || ''
-
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
-          Unités {subjectLabel && <span style={{ color: P.soft, fontWeight: 700 }}>— {subjectLabel}</span>}
-          <span style={{ fontSize: 15, marginLeft: 8 }}>({units.length})</span>
-        </h2>
-        <button onClick={openAdd} style={btnStyle(P.sidebar)} disabled={!subjectFilter}>+ Ajouter</button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <select value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)} style={{ ...inputStyle, minWidth: 200 }}>
-          <option value="">— Toutes les matières —</option>
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name} ({s.level_name})</option>)}
-        </select>
-        {!subjectFilter && <span style={{ alignSelf: 'center', fontSize: 12, color: P.soft }}>Sélectionnez une matière pour ajouter/modifier</span>}
-      </div>
-
-      {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontWeight: 700, fontSize: 13 }}>{error}</div>}
-
-      {editing !== null && (
-        <div style={{ background: P.light, borderRadius: 18, padding: 20, marginBottom: 20, border: `1.5px solid ${P.border}` }}>
-          <div style={{ fontSize: 16, fontWeight: 900, color: P.dark, marginBottom: 14 }}>
-            {editing.id ? 'Modifier l\'unité' : 'Nouvelle unité'}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-            <input placeholder="Nom de l'unité *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={inputStyle} />
-            <select value={form.integrated_theme_id} onChange={e => setForm(f => ({ ...f, integrated_theme_id: Number(e.target.value) }))} style={inputStyle}>
-              {themes.length === 0 && <option value={0}>— Aucun thème trouvé —</option>}
-              {themes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={save} style={btnStyle(P.sidebar)}>Enregistrer</button>
-            <button onClick={() => setEditing(null)} style={btnStyle(P.border, P.dark)}>Annuler</button>
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gap: 8 }}>
-        {units.map(u => (
-          <div key={u.id} style={{ background: P.card, borderRadius: 14, padding: '14px 18px', border: `1.5px solid ${P.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#3B82F622', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#3B82F6' }}>
-              {u.id}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 900, color: P.dark }}>{u.name}</div>
-              <div style={{ fontSize: 12, color: P.soft, marginTop: 2 }}>{u.subject_name} • {u.lesson_count} leçon(s)</div>
-            </div>
-            <button onClick={() => goTo('lessons', { unit_id: u.id, unit_name: u.name })}
-              style={{ background: '#3B82F622', color: '#3B82F6', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              Leçons →
-            </button>
-            <button onClick={() => openEdit(u)} style={{ background: P.accent + '22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              Modifier
-            </button>
-            <button onClick={() => setDeleteTarget(u)} style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {deleteTarget && (
-        <ConfirmDelete label={`Unité "${deleteTarget.name}"`}
-          onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />
-      )}
-    </div>
-  )
-}
-
-// ── LESSONS ───────────────────────────────────────────────────────────────────
-function LessonsScreen({ initParams, goTo }: { initParams?: any; goTo: (s: Screen, params?: any) => void }) {
-  const [lessons, setLessons] = useState<any[]>([])
-  const [units, setUnits] = useState<any[]>([])
-  const [unitFilter, setUnitFilter] = useState<string>(initParams?.unit_id?.toString() || '')
-  const [editing, setEditing] = useState<any>(null)
-  const [form, setForm] = useState({ name: '', unit_id: 0 })
-  const [deleteTarget, setDeleteTarget] = useState<any>(null)
-  const [error, setError] = useState('')
-
-  const reload = () => {
-    const q = unitFilter ? `?unit_id=${unitFilter}` : ''
-    api(`/lessons${q}`).then(setLessons)
-  }
-
-  useEffect(() => { api('/units').then(setUnits) }, [])
-  useEffect(() => { reload() }, [unitFilter])
-
-  const openAdd = () => {
-    setError('')
-    setForm({ name: '', unit_id: unitFilter ? Number(unitFilter) : (units[0]?.id || 0) })
-    setEditing({})
-  }
-  const openEdit = (l: any) => {
-    setError('')
-    setForm({ name: l.name, unit_id: l.unit_id })
-    setEditing(l)
-  }
-
-  const save = async () => {
-    if (!form.name.trim()) return setError('Le nom est requis')
-    if (!form.unit_id) return setError('Sélectionnez une unité')
-    if (editing?.id) await api(`/lessons/${editing.id}`, { method: 'PUT', body: JSON.stringify(form) })
-    else await api('/lessons', { method: 'POST', body: JSON.stringify(form) })
-    setEditing(null)
-    reload()
-  }
-
-  const confirmDelete = async () => {
-    const res = await api(`/lessons/${deleteTarget.id}`, { method: 'DELETE' })
-    if (res.detail) setError(res.detail)
-    setDeleteTarget(null)
-    reload()
-  }
-
-  const unitLabel = initParams?.unit_name || units.find(u => u.id === Number(unitFilter))?.name || ''
-
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
-          Leçons {unitLabel && <span style={{ color: P.soft, fontWeight: 700 }}>— {unitLabel}</span>}
-          <span style={{ fontSize: 15, marginLeft: 8 }}>({lessons.length})</span>
-        </h2>
-        <button onClick={openAdd} style={btnStyle(P.sidebar)}>+ Ajouter</button>
-      </div>
-
-      <select value={unitFilter} onChange={e => setUnitFilter(e.target.value)} style={{ ...inputStyle, minWidth: 260, marginBottom: 16, display: 'block' }}>
-        <option value="">— Toutes les unités —</option>
-        {units.map(u => <option key={u.id} value={u.id}>{u.name} ({u.subject_name})</option>)}
-      </select>
-
-      {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontWeight: 700, fontSize: 13 }}>{error}</div>}
-
-      {editing !== null && (
-        <div style={{ background: P.light, borderRadius: 18, padding: 20, marginBottom: 20, border: `1.5px solid ${P.border}` }}>
-          <div style={{ fontSize: 16, fontWeight: 900, color: P.dark, marginBottom: 14 }}>
-            {editing.id ? 'Modifier la leçon' : 'Nouvelle leçon'}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 12 }}>
-            <input placeholder="Nom de la leçon *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={inputStyle} />
-            <select value={form.unit_id} onChange={e => setForm(f => ({ ...f, unit_id: Number(e.target.value) }))} style={inputStyle}>
-              <option value={0}>— Unité —</option>
-              {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={save} style={btnStyle(P.sidebar)}>Enregistrer</button>
-            <button onClick={() => setEditing(null)} style={btnStyle(P.border, P.dark)}>Annuler</button>
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gap: 8 }}>
-        {lessons.map(l => (
-          <div key={l.id} style={{ background: P.card, borderRadius: 14, padding: '14px 18px', border: `1.5px solid ${P.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#8B5CF622', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#8B5CF6' }}>
-              {l.id}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 900, color: P.dark }}>{l.name}</div>
-              <div style={{ fontSize: 12, color: P.soft, marginTop: 2 }}>{l.unit_name} • {l.exercise_count} exercice(s)</div>
-            </div>
-            <button onClick={() => goTo('exercises', { lesson_id: l.id, lesson_name: l.name })}
-              style={{ background: '#C47A3C22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              Exercices →
-            </button>
-            <button onClick={() => openEdit(l)} style={{ background: P.accent + '22', color: P.accent, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              Modifier
-            </button>
-            <button onClick={() => setDeleteTarget(l)} style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {deleteTarget && (
-        <ConfirmDelete label={`Leçon "${deleteTarget.name}"`}
-          onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />
-      )}
     </div>
   )
 }
 
 // ── EXERCISE EDIT MODAL ───────────────────────────────────────────────────────
+function ExercisePreview({ content, title }: { content: string; title: string }) {
+  let parsed: any = null
+  try { parsed = JSON.parse(content) } catch { return <div style={{color:P.soft,fontSize:13,textAlign:'center' as const,padding:20}}>JSON invalide</div> }
+  const type = (parsed?.type || '').toLowerCase()
+  const PreviewShell = ({ children }: { children: React.ReactNode }) => (
+    <div style={{background:'#F0E8D8',borderRadius:14,padding:14,border:'1.5px solid #D0C8B8',minHeight:180}}>
+      <div style={{fontSize:10,fontWeight:900,color:'#7A6050',marginBottom:8,textTransform:'uppercase' as const,letterSpacing:1}}>Apercu — {type||'?'}</div>
+      <div style={{background:'white',borderRadius:10,padding:'10px 12px',marginBottom:10,fontSize:13,fontWeight:700,color:'#3D2B1F',lineHeight:1.5}}>
+        {title || parsed?.question || parsed?.statement || parsed?.word || '—'}
+      </div>
+      {children}
+    </div>
+  )
+  if (['mcq','multiple_choice'].includes(type)) {
+    const opts = parsed.options || parsed.questions?.[0]?.options || []
+    const ans = parsed.answer ?? parsed.questions?.[0]?.answer
+    return (<PreviewShell>{opts.map((o: string, i: number) => (
+      <div key={i} style={{padding:'6px 10px',borderRadius:8,border:`2px solid ${i===ans?'#1D6B2A':'#D0C8B8'}`,background:i===ans?'#D1FAE5':'white',fontSize:12,fontWeight:i===ans?800:600,color:i===ans?'#065F46':'#3D2B1F',marginBottom:5,display:'flex',alignItems:'center',gap:7}}>
+        <span style={{width:18,height:18,borderRadius:'50%',background:i===ans?'#1D6B2A':'#E8DCC8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'white',flexShrink:0,fontWeight:900}}>{String.fromCharCode(65+i)}</span>{o}
+      </div>
+    ))}</PreviewShell>)
+  }
+  if (['true_false','truefalse'].includes(type)) {
+    return (<PreviewShell><div style={{display:'flex',gap:8}}>
+      {['True','False'].map(opt => {
+        const active = (parsed.answer===true&&opt==='True')||(parsed.answer===false&&opt==='False')||(String(parsed.answer)===opt.toLowerCase())
+        return <div key={opt} style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${active?'#1D6B2A':'#D0C8B8'}`,background:active?'#D1FAE5':'white',textAlign:'center' as const,fontSize:13,fontWeight:800,color:active?'#065F46':'#7A6050'}}>{opt==='True'?'✅':'❌'} {opt}</div>
+      })}
+    </div></PreviewShell>)
+  }
+  if (['fill_in','fillin'].includes(type)) {
+    return (<PreviewShell>
+      <div style={{fontSize:13,color:'#3D2B1F',marginBottom:8}}>{parsed.sentence||parsed.statement||'Completez...'}</div>
+      <div style={{padding:'7px 12px',borderRadius:8,border:'2px dashed #1D6B2A',background:'#D1FAE5',fontSize:12,fontWeight:800,color:'#065F46'}}>Reponse: {parsed.answer||'?'}</div>
+    </PreviewShell>)
+  }
+  if (['match_pairs','matchpairs'].includes(type)) {
+    const pairs = parsed.pairs || []
+    return (<PreviewShell><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
+      <div style={{fontSize:10,fontWeight:900,color:'#7A6050',textAlign:'center' as const}}>GAUCHE</div>
+      <div style={{fontSize:10,fontWeight:900,color:'#7A6050',textAlign:'center' as const}}>DROITE</div>
+      {pairs.slice(0,4).map((p: any,i: number) => (
+        <React.Fragment key={i}>
+          <div style={{padding:'5px 8px',borderRadius:7,background:'#E8DCC8',fontSize:11,fontWeight:700,color:'#3D2B1F',textAlign:'center' as const}}>{p.left||p.word||'?'}</div>
+          <div style={{padding:'5px 8px',borderRadius:7,background:'#D1FAE5',fontSize:11,fontWeight:700,color:'#065F46',textAlign:'center' as const}}>{p.right||p.match||'?'}</div>
+        </React.Fragment>
+      ))}
+    </div></PreviewShell>)
+  }
+  if (['oral_drill','oraldrill'].includes(type)) {
+    const prompts = parsed.prompts || []
+    return (<PreviewShell><div style={{display:'grid',gap:5}}>
+      {prompts.slice(0,3).map((p: string,i: number) => (
+        <div key={i} style={{padding:'7px 10px',borderRadius:8,background:'#EFF6FF',border:'1px solid #93C5FD',fontSize:12,fontWeight:700,color:'#1D4ED8'}}>🎤 {p}</div>
+      ))}
+    </div></PreviewShell>)
+  }
+  return (<PreviewShell><div style={{display:'flex',flexWrap:'wrap' as const,gap:5}}>
+    {Object.keys(parsed).map(k => <span key={k} style={{background:'#E8DCC8',borderRadius:6,padding:'2px 7px',fontSize:11,fontWeight:700,color:'#7A6050'}}>{k}</span>)}
+  </div></PreviewShell>)
+}
+
 function ExerciseEditModal({ exerciseId, onClose, onSaved }: { exerciseId: number; onClose: () => void; onSaved: () => void }) {
   const [ex, setEx] = useState<any>(null)
   const [form, setForm] = useState({ title: '', category: 'reading', difficulty: 'easy', is_active: true, lesson_id: 0, content: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
-
   useEffect(() => {
     api(`/exercises/${exerciseId}`).then(data => {
       setEx(data)
-      setForm({
-        title: data.title || '',
-        category: data.category || 'reading',
-        difficulty: data.difficulty || 'easy',
-        is_active: data.is_active ?? true,
-        lesson_id: data.lesson_id || 0,
-        content: typeof data.content === 'object' ? JSON.stringify(data.content, null, 2) : (data.content || '{}'),
-      })
+      setForm({ title: data.title||'', category: data.category||'reading', difficulty: data.difficulty||'easy', is_active: data.is_active??true, lesson_id: data.lesson_id||0, content: typeof data.content==='object' ? JSON.stringify(data.content,null,2) : (data.content||'{}') })
     })
   }, [exerciseId])
-
   const save = async () => {
-    setError('')
-    let content: any
-    try { content = JSON.parse(form.content) } catch { return setError('JSON invalide dans le contenu') }
+    setError(''); let content: any
+    try { content = JSON.parse(form.content) } catch { return setError('JSON invalide') }
     setSaving(true)
     await api(`/exercises/${exerciseId}`, { method: 'PUT', body: JSON.stringify({ ...form, content }) })
-    setSaving(false)
-    onSaved()
+    setSaving(false); onSaved()
   }
-
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div style={{ background: P.card, borderRadius: 20, width: '100%', maxWidth: 680, maxHeight: '90vh', overflow: 'auto', padding: 28, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div style={{ fontWeight: 900, color: P.dark, fontSize: 17 }}>Modifier l'exercice #{exerciseId}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: P.soft }}>✕</button>
+      <div style={{ background: P.card, borderRadius: 20, width: '100%', maxWidth: 1000, maxHeight: '90vh', overflow: 'auto', padding: 28, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ fontWeight: 900, color: P.dark, fontSize: 17 }}>Modifier exercice #{exerciseId}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: P.soft }}>✕</button>
         </div>
-
         {!ex ? <div style={{ color: P.soft, textAlign: 'center', padding: 40 }}>Chargement...</div> : (
-          <>
-            <div style={{ marginBottom: 10, fontSize: 12, color: P.soft }}>
-              {ex.level_name} → {ex.subject_name} → {ex.lesson_name}
-            </div>
-
-            {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontWeight: 700, fontSize: 13 }}>{error}</div>}
-
-            <div style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
-              <input placeholder="Titre *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} />
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
-                  {['reading', 'writing', 'listening', 'speaking', 'maths', 'science', 'citizenship', 'ict', 'home_economics', 'arts', 'pe'].map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <select value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))} style={inputStyle}>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: P.dark, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-                  Actif
-                </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div>
+              <div style={{ marginBottom: 10, fontSize: 12, color: P.soft }}>{ex.level_name} — {ex.subject_name} — {ex.lesson_name}</div>
+              {error && <div style={{ background: '#FEE2E2', color: P.red, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontWeight: 700, fontSize: 13 }}>{error}</div>}
+              <div style={{ display: 'grid', gap: 12, marginBottom: 16 }}>
+                <input placeholder="Titre *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} style={inputStyle}>
+                    {['reading','writing','listening','speaking','maths','science','citizenship','ict','home_economics','arts','pe'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <select value={form.difficulty} onChange={e => setForm(f => ({ ...f, difficulty: e.target.value }))} style={inputStyle}>
+                    <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+                  </select>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: P.dark, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} /> Actif
+                  </label>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Contenu JSON</div>
+                  <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} style={taStyle} />
+                </div>
               </div>
-
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Contenu JSON</div>
-                <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} style={taStyle} />
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={save} disabled={saving} style={btnStyle(P.sidebar)}>{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
+                <button onClick={onClose} style={btnStyle(P.border, P.dark)}>Annuler</button>
               </div>
             </div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={save} disabled={saving} style={btnStyle(P.sidebar)}>
-                {saving ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
-              <button onClick={onClose} style={btnStyle(P.border, P.dark)}>Annuler</button>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Apercu temps reel</div>
+              <ExercisePreview content={form.content} title={form.title} />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -525,12 +570,20 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
   const [total, setTotal] = useState(0)
   const [levels, setLevels] = useState<any[]>([])
   const [levelFilter, setLevelFilter] = useState('')
-  const [lessonFilter] = useState<string>(initParams?.lesson_id?.toString() || '')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<number|null>(null)
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)  // confirmation modale bulk delete
+  const [bulkDifficulty, setBulkDifficulty] = useState('easy')       // difficulté sélectionnée pour bulk
+  const [bulkLessonId, setBulkLessonId] = useState('')               // lesson_id cible pour bulk move
+  const [toast, setToast] = useState<string|null>(null)
+  const lessonFilter = initParams?.lesson_id?.toString() || ''
   const limit = 30
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   useEffect(() => { api('/levels').then(setLevels) }, [])
 
@@ -538,82 +591,177 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
     const params = new URLSearchParams({ limit: String(limit), offset: String(page * limit) })
     if (levelFilter) params.set('level_id', levelFilter)
     if (lessonFilter) params.set('lesson_id', lessonFilter)
-    api(`/exercises?${params}`).then(d => { setExercises(d.data || []); setTotal(d.total || 0) })
+    api(`/exercises?${params}`).then(d => { setExercises(d.data||[]); setTotal(d.total||0) })
+    setSelected(new Set())
   }
-
   useEffect(() => { reload() }, [levelFilter, page, lessonFilter])
 
   const confirmDelete = async () => {
     await api(`/exercises/${deleteTarget.id}`, { method: 'DELETE' })
-    setDeleteTarget(null)
+    setDeleteTarget(null); reload()
+  }
+
+  const toggleSelect = (id: number) => {
+    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set())
+    else setSelected(new Set(filtered.map(e => e.id)))
+  }
+
+  // Action bulk simple (activate / deactivate)
+  const bulkAction = async (action: string, label: string) => {
+    if (!selected.size) return
+    setBulkLoading(true)
+    await api('/exercises/bulk', { method: 'POST', body: JSON.stringify({ ids: Array.from(selected), action }) })
+    setBulkLoading(false)
+    showToast(`${label} : ${selected.size} exercice(s)`)
+    reload()
+  }
+
+  // Action bulk avec payload extra (set_difficulty, move_lesson, delete confirme)
+  const bulkActionWithPayload = async (action: string, label: string, extra: Record<string, any> = {}) => {
+    if (!selected.size) return
+    setBulkLoading(true)
+    const res = await api('/exercises/bulk', { method: 'POST', body: JSON.stringify({ ids: Array.from(selected), action, ...extra }) })
+    setBulkLoading(false)
+    if (res.success === false) {
+      showToast(`Erreur : ${res.detail}`)
+    } else {
+      showToast(`${label} : ${selected.size} exercice(s)`)
+    }
     reload()
   }
 
   const filtered = exercises.filter(e => e.title.toLowerCase().includes(search.toLowerCase()))
-
-  const typeColor = (t: string) => {
-    const m: Record<string, string> = {
-      mcq: '#3B82F6', multiple_choice: '#3B82F6', true_false: '#10B981',
-      fill_in: '#F59E0B', match_pairs: '#8B5CF6', oral_drill: '#EC4899',
-      handwriting: '#6B7280', sentence_order: '#F97316', clock_reading: '#06B6D4',
-    }
-    return m[t] || '#9CA3AF'
-  }
+  const allSelected = filtered.length > 0 && selected.size === filtered.length
+  const tc = (t: string) => ({ mcq:'#3B82F6',multiple_choice:'#3B82F6',true_false:'#10B981',fill_in:'#F59E0B',match_pairs:'#8B5CF6',oral_drill:'#EC4899',handwriting:'#6B7280',sentence_order:'#F97316',clock_reading:'#06B6D4' } as Record<string,string>)[t]||'#9CA3AF'
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
-          Exercices
-          {initParams?.lesson_name && <span style={{ color: P.soft, fontWeight: 700 }}> — {initParams.lesson_name}</span>}
+          Exercices{initParams?.lesson_name && <span style={{ color: P.soft, fontWeight: 700 }}> — {initParams.lesson_name}</span>}
           <span style={{ fontSize: 15, marginLeft: 8 }}>({total.toLocaleString()})</span>
         </h2>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..."
-          style={{ ...inputStyle, flex: 1 }} />
-        {!lessonFilter && (
-          <select value={levelFilter} onChange={e => { setLevelFilter(e.target.value); setPage(0) }} style={inputStyle}>
-            <option value="">Tous les niveaux</option>
-            {levels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-        )}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' as const }}>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." style={{ ...inputStyle, flex: 1 }} />
+        {!lessonFilter && <select value={levelFilter} onChange={e => { setLevelFilter(e.target.value); setPage(0) }} style={inputStyle}>
+          <option value="">Tous les niveaux</option>
+          {levels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+        </select>}
       </div>
+
+      {/* Bulk action bar — activate / deactivate / difficulty / move / delete */}
+      {selected.size > 0 && (
+        <div style={{ background: P.sidebar, borderRadius: 12, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+
+          {/* Compteur */}
+          <span style={{ color: 'white', fontWeight: 900, fontSize: 14, marginRight: 4 }}>
+            {selected.size} selectionne(s)
+          </span>
+
+          {/* Activer / Desactiver */}
+          <button onClick={() => bulkAction('activate', 'Actives')} disabled={bulkLoading}
+            style={{ background: '#D1FAE5', color: '#065F46', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+            Activer
+          </button>
+          <button onClick={() => bulkAction('deactivate', 'Desactives')} disabled={bulkLoading}
+            style={{ background: '#FEF3C7', color: '#92400E', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+            Desactiver
+          </button>
+
+          {/* Separateur visuel */}
+          <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,.25)', flexShrink: 0 }} />
+
+          {/* Changer difficulte */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: 700 }}>Diff:</span>
+            <select
+              value={bulkDifficulty}
+              onChange={e => setBulkDifficulty(e.target.value)}
+              style={{ padding: '5px 8px', borderRadius: 7, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'white', color: P.dark }}
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button
+              onClick={() => bulkActionWithPayload('set_difficulty', `Difficulte → ${bulkDifficulty}`, { difficulty: bulkDifficulty })}
+              disabled={bulkLoading}
+              style={{ background: '#EDE9FE', color: '#5B21B6', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+              Appliquer
+            </button>
+          </div>
+
+          {/* Separateur visuel */}
+          <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,.25)', flexShrink: 0 }} />
+
+          {/* Deplacer vers lecon */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: 700 }}>Lecon #</span>
+            <input
+              type="number"
+              value={bulkLessonId}
+              onChange={e => setBulkLessonId(e.target.value)}
+              placeholder="ID"
+              style={{ width: 64, padding: '5px 8px', borderRadius: 7, border: 'none', fontSize: 12, fontWeight: 700, color: P.dark }}
+            />
+            <button
+              onClick={() => {
+                if (!bulkLessonId) return
+                bulkActionWithPayload('move_lesson', `Deplace → lecon #${bulkLessonId}`, { lesson_id: Number(bulkLessonId) })
+                setBulkLessonId('')
+              }}
+              disabled={bulkLoading || !bulkLessonId}
+              style={{ background: '#DBEAFE', color: '#1D4ED8', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: bulkLessonId ? 'pointer' : 'default', fontSize: 12, opacity: bulkLessonId ? 1 : .5 }}>
+              Deplacer
+            </button>
+          </div>
+
+          {/* Separateur visuel */}
+          <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,.25)', flexShrink: 0 }} />
+
+          {/* Supprimer (avec confirmation) */}
+          <button onClick={() => setBulkDeleteConfirm(true)} disabled={bulkLoading}
+            style={{ background: '#FEE2E2', color: P.red, border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+            Supprimer
+          </button>
+
+          {/* Deselectionner */}
+          <button onClick={() => setSelected(new Set())}
+            style={{ background: 'rgba(255,255,255,.15)', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 700, cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>
+            Deselectionner
+          </button>
+        </div>
+      )}
 
       <div style={{ background: P.card, borderRadius: 14, border: `1.5px solid ${P.border}`, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: P.light }}>
-              {['ID', 'Titre', 'Type', 'Matière', 'Niveau', 'Statut', ''].map(h => (
-                <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 900, color: P.soft, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
+          <thead><tr style={{ background: P.light }}>
+            <th style={{ padding: '12px 14px', width: 40 }}>
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+            </th>
+            {['ID','Titre','Type','Matiere','Niveau','Statut',''].map(h => <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 900, color: P.soft, textTransform: 'uppercase' as const, letterSpacing: 1 }}>{h}</th>)}
+          </tr></thead>
           <tbody>
             {filtered.map((e, i) => (
-              <tr key={e.id} style={{ borderTop: `1px solid ${P.border}`, background: i % 2 === 0 ? P.card : '#FAFAF8' }}>
+              <tr key={e.id} onClick={() => toggleSelect(e.id)}
+                style={{ borderTop: `1px solid ${P.border}`, background: selected.has(e.id) ? P.sidebar+'11' : i%2===0 ? P.card : '#FAFAF8', cursor: 'pointer' }}>
+                <td style={{ padding: '10px 14px' }} onClick={ev => ev.stopPropagation()}>
+                  <input type="checkbox" checked={selected.has(e.id)} onChange={() => toggleSelect(e.id)} style={{ cursor: 'pointer', width: 16, height: 16 }} />
+                </td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: P.soft }}>{e.id}</td>
                 <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 700, color: P.dark, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{e.title}</td>
-                <td style={{ padding: '10px 14px' }}>
-                  <span style={{ background: typeColor(e.type) + '22', color: typeColor(e.type), borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>{e.type || '—'}</span>
-                </td>
+                <td style={{ padding: '10px 14px' }}><span style={{ background: tc(e.type)+'22', color: tc(e.type), borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>{e.type||'—'}</span></td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: P.soft }}>{e.subject_name}</td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: P.soft }}>{e.level_name}</td>
-                <td style={{ padding: '10px 14px' }}>
-                  <span style={{ background: e.is_active ? '#D1FAE5' : '#FEE2E2', color: e.is_active ? '#065F46' : P.red, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>
-                    {e.is_active ? 'Actif' : 'Inactif'}
-                  </span>
-                </td>
-                <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' as const }}>
-                  <button onClick={() => setEditingId(e.id)}
-                    style={{ background: P.accent + '22', color: P.accent, border: 'none', borderRadius: 7, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 11, marginRight: 6 }}>
-                    Modifier
-                  </button>
-                  <button onClick={() => setDeleteTarget(e)}
-                    style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 7, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 11 }}>
-                    ✕
-                  </button>
+                <td style={{ padding: '10px 14px' }}><span style={{ background: e.is_active ? '#D1FAE5' : '#FEE2E2', color: e.is_active ? '#065F46' : P.red, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>{e.is_active ? 'Actif' : 'Inactif'}</span></td>
+                <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' as const }} onClick={ev => ev.stopPropagation()}>
+                  <button onClick={() => setEditingId(e.id)} style={{ background: P.accent+'22', color: P.accent, border: 'none', borderRadius: 7, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 11, marginRight: 6 }}>Modifier</button>
+                  <button onClick={() => setDeleteTarget(e)} style={{ background: '#FEE2E222', color: P.red, border: 'none', borderRadius: 7, padding: '5px 10px', fontWeight: 800, cursor: 'pointer', fontSize: 11 }}>✕</button>
                 </td>
               </tr>
             ))}
@@ -622,85 +770,1096 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-        <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
-          style={{ padding: '8px 16px', borderRadius: 8, border: `1.5px solid ${P.border}`, background: page === 0 ? P.border : P.card, cursor: page === 0 ? 'default' : 'pointer', fontWeight: 700 }}>
-          ← Préc.
-        </button>
-        <span style={{ padding: '8px 16px', fontSize: 13, color: P.soft }}>
-          {page + 1} / {Math.max(1, Math.ceil(total / limit))}
-        </span>
-        <button disabled={(page + 1) * limit >= total} onClick={() => setPage(p => p + 1)}
-          style={{ padding: '8px 16px', borderRadius: 8, border: `1.5px solid ${P.border}`, background: (page + 1) * limit >= total ? P.border : P.card, cursor: (page + 1) * limit >= total ? 'default' : 'pointer', fontWeight: 700 }}>
-          Suiv. →
-        </button>
+        <button disabled={page===0} onClick={() => setPage(p => p-1)} style={{ padding: '8px 16px', borderRadius: 8, border: `1.5px solid ${P.border}`, background: page===0?P.border:P.card, cursor: page===0?'default':'pointer', fontWeight: 700 }}>← Prec.</button>
+        <span style={{ padding: '8px 16px', fontSize: 13, color: P.soft }}>{page+1} / {Math.max(1,Math.ceil(total/limit))}</span>
+        <button disabled={(page+1)*limit>=total} onClick={() => setPage(p => p+1)} style={{ padding: '8px 16px', borderRadius: 8, border: `1.5px solid ${P.border}`, background: (page+1)*limit>=total?P.border:P.card, cursor: (page+1)*limit>=total?'default':'pointer', fontWeight: 700 }}>Suiv. →</button>
       </div>
 
-      {editingId !== null && (
-        <ExerciseEditModal exerciseId={editingId} onClose={() => setEditingId(null)} onSaved={() => { setEditingId(null); reload() }} />
+      {editingId !== null && <ExerciseEditModal exerciseId={editingId} onClose={() => setEditingId(null)} onSaved={() => { setEditingId(null); reload() }} />}
+      {deleteTarget && <ConfirmDelete label={`"${deleteTarget.title}"`} onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />}
+
+      {/* Confirmation suppression bulk */}
+      {bulkDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: P.card, borderRadius: 20, padding: 32, maxWidth: 400, textAlign: 'center', boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontWeight: 900, color: P.dark, fontSize: 17, marginBottom: 8 }}>
+              Supprimer {selected.size} exercice(s) ?
+            </div>
+            <div style={{ color: P.soft, fontSize: 13, marginBottom: 8 }}>
+              Cette action est irreversible.
+            </div>
+            <div style={{ color: '#92400E', background: '#FEF3C7', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, marginBottom: 20 }}>
+              Les tentatives associees seront egalement supprimees.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={async () => {
+                  setBulkDeleteConfirm(false)
+                  await bulkActionWithPayload('delete', 'Supprimes')
+                }}
+                disabled={bulkLoading}
+                style={{ background: P.red, color: 'white', border: 'none', borderRadius: 10, padding: '10px 24px', fontWeight: 900, cursor: 'pointer', fontSize: 14, fontFamily: 'Nunito,sans-serif' }}>
+                Supprimer definitivement
+              </button>
+              <button onClick={() => setBulkDeleteConfirm(false)}
+                style={{ background: P.border, color: P.dark, border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 800, cursor: 'pointer', fontSize: 14, fontFamily: 'Nunito,sans-serif' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {deleteTarget && (
-        <ConfirmDelete label={`"${deleteTarget.title}"`} onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: '#D1FAE5', color: '#065F46', borderRadius: 14, padding: '14px 20px', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 999 }}>
+          ✅ {toast}
+        </div>
       )}
     </div>
   )
+}
+
+
+// ── ASSETS SCREEN ─────────────────────────────────────────────────────────────
+function AssetsScreen() {
+  const ABASE = 'http://192.168.100.106:8100/assets'
+  const [assets, setAssets] = useState<any[]>([])
+  const [search, setSearch] = useState('')
+  const [resetTarget, setResetTarget] = useState<any>(null)
+  const [resetDone, setResetDone] = useState<string | null>(null)
+  const [typeFilter, setTypeFilter] = useState('')
+  const [editing, setEditing] = useState<any>(null)
+  const [form, setForm] = useState({ key:'', type:'emoji', value:'', tags:'', description:'' })
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
+  const [error, setError] = useState('')
+
+  const reload = () => fetch(ABASE+'/icons').then(r=>r.json()).then(setAssets)
+  useEffect(() => { reload() }, [])
+
+  const openAdd = () => { setError(''); setForm({key:'',type:'emoji',value:'',tags:'',description:''}); setEditing({}) }
+  const openEdit = (a: any) => { setError(''); setForm({key:a.key,type:a.type,value:a.value,tags:(a.tags||[]).join(', '),description:a.description||''}); setEditing(a) }
+
+  const save = async () => {
+    if (!form.key.trim() || !form.value.trim()) return setError('Cle et valeur requises')
+    const payload = { ...form, tags: form.tags.split(',').map((t:string)=>t.trim()).filter(Boolean) }
+    if (editing?.key) {
+      await fetch(ABASE+'/icons/'+editing.key, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    } else {
+      await fetch(ABASE+'/icons', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+    }
+    setEditing(null); reload()
+  }
+
+  const confirmDelete = async () => {
+    await fetch(ABASE+'/icons/'+deleteTarget.key, { method:'DELETE' })
+    setDeleteTarget(null); reload()
+  }
+
+  const preview = (a: any) => {
+    if (a.type === 'emoji') return <span style={{fontSize:28}}>{a.value}</span>
+    if (a.type === 'url') return <img src={a.value} style={{width:32,height:32,objectFit:'contain'}} alt={a.key} onError={e=>(e.currentTarget.style.display='none')} />
+    return <span style={{fontSize:11,color:'#8B5CF6',fontWeight:800}}>SVG</span>
+  }
+
+  const filtered = assets.filter(a => {
+    const q = search.toLowerCase()
+    const matchQ = !q || a.key.toLowerCase().includes(q) || (a.description||'?').toLowerCase().includes(q) || (a.tags||[]).some((t:string)=>t.toLowerCase().includes(q))
+    const matchT = !typeFilter || a.type === typeFilter
+    return matchQ && matchT
+  })
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:P.dark}}>Assets / Icones ({assets.length})</h2>
+        <button onClick={openAdd} style={btnStyle(P.sidebar)}>+ Ajouter</button>
+      </div>
+
+      <div style={{display:'flex',gap:10,marginBottom:16}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher cle, tag, description..."
+          style={{...inputStyle,flex:1}} />
+        <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)} style={inputStyle}>
+          <option value="">Tous les types</option>
+          <option value="emoji">Emoji</option>
+          <option value="url">URL Image</option>
+          <option value="svg">SVG</option>
+        </select>
+      </div>
+
+      {editing !== null && (
+        <div style={{background:P.light,borderRadius:18,padding:20,marginBottom:20,border:`1.5px solid ${P.border}`}}>
+          <div style={{fontSize:16,fontWeight:900,color:P.dark,marginBottom:14}}>{editing.key ? 'Modifier' : 'Nouvel asset'}</div>
+          {error && <div style={{background:'#FEE2E2',color:P.red,borderRadius:10,padding:'8px 12px',marginBottom:12,fontSize:13,fontWeight:700}}>{error}</div>}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+            <input placeholder="Cle unique *" value={form.key} onChange={e=>setForm(f=>({...f,key:e.target.value}))}
+              style={inputStyle} disabled={!!editing.key} />
+            <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={inputStyle}>
+              <option value="emoji">Emoji</option>
+              <option value="url">URL Image</option>
+              <option value="svg">SVG inline</option>
+            </select>
+            <input placeholder="Valeur * (emoji, URL ou SVG)" value={form.value} onChange={e=>setForm(f=>({...f,value:e.target.value}))} style={inputStyle} />
+            <input placeholder="Tags (virgule separee)" value={form.tags} onChange={e=>setForm(f=>({...f,tags:e.target.value}))} style={inputStyle} />
+            <input placeholder="Description" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} style={{...inputStyle,gridColumn:'1/-1'}} />
+          </div>
+          {form.value && (
+            <div style={{marginBottom:12,padding:'10px 14px',background:P.card,borderRadius:10,border:`1.5px solid ${P.border}`,display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:11,fontWeight:800,color:P.soft}}>APERCU :</span>
+              {form.type==='emoji' && <span style={{fontSize:32}}>{form.value}</span>}
+              {form.type==='url' && <img src={form.value} style={{width:40,height:40,objectFit:'contain'}} alt="preview" />}
+              {form.type==='svg' && <span style={{fontSize:11,color:'#8B5CF6'}}>SVG inline</span>}
+            </div>
+          )}
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={save} style={btnStyle(P.sidebar)}>Enregistrer</button>
+            <button onClick={()=>setEditing(null)} style={btnStyle(P.border,P.dark)}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:12}}>
+        {filtered.map(a => (
+          <div key={a.key} style={{background:P.card,borderRadius:14,padding:'14px 16px',border:`1.5px solid ${P.border}`,display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:48,height:48,borderRadius:12,background:P.light,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {preview(a)}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:900,color:P.dark,fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.key}</div>
+                <div style={{fontSize:11,color:P.soft,marginTop:2}}>{a.description||'—'}</div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              <span style={{background:'#3B82F622',color:'#3B82F6',borderRadius:6,padding:'2px 7px',fontSize:10,fontWeight:800}}>{a.type}</span>
+              {(a.tags||[]).slice(0,3).map((t:string) => (
+                <span key={t} style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 7px',fontSize:10,fontWeight:700}}>{t}</span>
+              ))}
+            </div>
+            <div style={{display:'flex',gap:6,marginTop:2}}>
+              <button onClick={()=>openEdit(a)} style={{flex:1,background:P.accent+'22',color:P.accent,border:'none',borderRadius:8,padding:'5px',fontWeight:800,cursor:'pointer',fontSize:12}}>Modifier</button>
+              <button onClick={()=>setDeleteTarget(a)} style={{background:'#FEE2E222',color:P.red,border:'none',borderRadius:8,padding:'5px 10px',fontWeight:800,cursor:'pointer',fontSize:12}}>✕</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {deleteTarget && (
+        <ConfirmDelete label={`"${deleteTarget.key}" (${deleteTarget.description||deleteTarget.value})`}
+          onConfirm={confirmDelete} onCancel={()=>setDeleteTarget(null)} />
+      )}
+    </div>
+  )
+}
+
+
+// ── HEALTH SCREEN ─────────────────────────────────────────────────────────────
+function HealthScreen() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+
+  const check = async () => {
+    setLoading(true)
+    const res = await api('/health')
+    setData(res)
+    setLoading(false)
+  }
+
+  useEffect(() => { check() }, [])
+
+  const statusColor = (s: string) => s === 'ok' ? '#10B981' : P.red
+  const statusBg = (s: string) => s === 'ok' ? '#D1FAE5' : '#FEE2E2'
+  const msColor = (ms: number) => ms < 100 ? '#10B981' : ms < 300 ? '#F59E0B' : P.red
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
+          Health Check
+          {data && <span style={{ fontSize: 14, fontWeight: 600, color: P.soft, marginLeft: 12 }}>
+            {data.ok}/{data.total} modules OK
+          </span>}
+        </h2>
+        <button onClick={check} disabled={loading} style={{ background: P.sidebar, color: 'white', border: 'none', borderRadius: 10, padding: '9px 18px', fontWeight: 800, cursor: loading ? 'wait' : 'pointer', fontSize: 13, fontFamily: 'Nunito,sans-serif' }}>
+          {loading ? 'Verification...' : 'Tester tout'}
+        </button>
+      </div>
+
+      {data && (
+        <>
+          {/* Summary bar */}
+          <div style={{ background: P.card, borderRadius: 14, padding: '14px 20px', border: `1.5px solid ${P.border}`, marginBottom: 20, display: 'flex', gap: 24 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#10B981' }}>{data.ok}</div>
+              <div style={{ fontSize: 11, color: P.soft, fontWeight: 700 }}>OK</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: P.red }}>{data.total - data.ok}</div>
+              <div style={{ fontSize: 11, color: P.soft, fontWeight: 700 }}>ERREUR</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: P.dark }}>{data.total}</div>
+              <div style={{ fontSize: 11, color: P.soft, fontWeight: 700 }}>TOTAL</div>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <div style={{ flex: 1, height: 10, background: P.border, borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ width: `${(data.ok/data.total)*100}%`, height: '100%', background: '#10B981', borderRadius: 999, transition: 'width .5s' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Modules grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 10 }}>
+            {data.modules.map((m: any) => (
+              <div key={m.name} style={{ background: P.card, borderRadius: 14, padding: '14px 18px', border: `1.5px solid ${m.status==='ok' ? '#D1FAE5' : '#FEE2E2'}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor(m.status), flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 900, color: P.dark, fontSize: 14 }}>{m.name}</div>
+                  {m.error && <div style={{ fontSize: 11, color: P.red, marginTop: 2 }}>{m.error}</div>}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ background: statusBg(m.status), color: statusColor(m.status), borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 800, display: 'block', marginBottom: 4 }}>
+                    {m.status === 'ok' ? `${m.code}` : `ERR ${m.code}`}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: msColor(m.ms) }}>{m.ms}ms</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 12, fontSize: 11, color: P.soft, textAlign: 'right' }}>
+            Verifie le {new Date(data.checked_at * 1000).toLocaleTimeString('fr-FR')}
+          </div>
+        </>
+      )}
+
+      {!data && !loading && <div style={{ color: P.soft, textAlign: 'center', padding: 40 }}>Cliquez sur "Tester tout"</div>}
+    </div>
+  )
+}
+
+
+// ── BULLETIN SCREEN ──────────────────────────────────────────────────────────
+function BulletinScreen() {
+  const BBASE = 'http://192.168.100.106:8100/api'
+  const [children, setChildren] = useState<any[]>([])
+  const [selChild, setSelChild] = useState<number | null>(null)
+  const [bulletin, setBulletin] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => { api('/children').then(setChildren) }, [])
+
+  useEffect(() => {
+    if (!selChild) return
+    setLoading(true); setBulletin(null)
+    fetch(`${BBASE}/bulletin/child/${selChild}`)
+      .then(r => r.json()).then(d => { setBulletin(d); setLoading(false) })
+  }, [selChild])
+
+  const appColor = (a: string) => {
+    const m: Record<string,string> = { 'Excellent':'#10B981','Very Good':'#3B82F6','Good':'#8B5CF6','Pass':'#F59E0B' }
+    return m[a] || P.red
+  }
+
+  const compLabel = (subj: string) => {
+    const s = subj.toLowerCase()
+    if (['english','french','nlc','reading','handwriting'].some(x=>s.includes(x))) return 'C1'
+    if (['mathematics','science'].some(x=>s.includes(x))) return 'C2'
+    if (['citizenship','social'].some(x=>s.includes(x))) return 'C3'
+    if (['home'].some(x=>s.includes(x))) return 'C4'
+    if (['ict'].some(x=>s.includes(x))) return 'C5'
+    if (['arts','pe','physical'].some(x=>s.includes(x))) return 'C6'
+    return '—'
+  }
+
+  return (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:900,color:P.dark,marginBottom:20}}>Bulletins MINEDUB</h2>
+
+      <div style={{display:'flex',gap:10,marginBottom:24,flexWrap:'wrap' as const}}>
+        {children.map(c => (
+          <button key={c.id} onClick={() => setSelChild(c.id)} style={{
+            padding:'8px 18px',borderRadius:999,
+            border:`1.5px solid ${selChild===c.id ? P.sidebar : P.border}`,
+            background:selChild===c.id ? P.sidebar : P.card,
+            color:selChild===c.id ? 'white' : P.dark,
+            fontWeight:selChild===c.id ? 900 : 600,fontSize:14,
+            cursor:'pointer',fontFamily:'Nunito,sans-serif',
+          }}>
+            {c.first_name} <span style={{fontSize:11,opacity:.7}}>({c.level_name})</span>
+          </button>
+        ))}
+      </div>
+
+      {!selChild && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Selectionnez un enfant</div>}
+      {loading && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Chargement...</div>}
+
+      {bulletin && !loading && (
+        <div style={{background:P.card,borderRadius:18,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+          <div style={{background:P.sidebar,padding:'20px 28px',color:'white'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,opacity:.7,letterSpacing:1.5,textTransform:'uppercase' as const}}>EDUMAISON — MINEDUB</div>
+                <div style={{fontSize:22,fontWeight:900,marginTop:4}}>{bulletin.child.name}</div>
+                <div style={{fontSize:13,opacity:.8,marginTop:4}}>{bulletin.child.level} • {bulletin.year}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:36,fontWeight:900}}>{bulletin.average?.toFixed(1)}</div>
+                <div style={{fontSize:11,opacity:.7}}>Moyenne</div>
+                {bulletin.rank && <div style={{fontSize:13,fontWeight:700,marginTop:4}}>Rang {bulletin.rank}/{bulletin.class_size}</div>}
+              </div>
+            </div>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',borderBottom:`1px solid ${P.border}`}}>
+            {[
+              {label:'XP Total',value:bulletin.total_xp?.toLocaleString(),color:P.accent},
+              {label:'Rang',value:bulletin.rank ? `${bulletin.rank}/${bulletin.class_size}` : '—',color:'#3B82F6'},
+              {label:'Moy. classe',value:bulletin.class_average?.toFixed(1)||'—',color:'#8B5CF6'},
+              {label:'Matieres',value:bulletin.results?.length,color:'#10B981'},
+            ].map((s,i) => (
+              <div key={i} style={{padding:'16px 20px',borderRight:i<3?`1px solid ${P.border}`:'none',textAlign:'center'}}>
+                <div style={{fontSize:24,fontWeight:900,color:s.color}}>{s.value}</div>
+                <div style={{fontSize:11,color:P.soft,fontWeight:700,marginTop:2}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:P.light}}>
+              {['Comp','Matiere','Note','/Max','Appreciation','Commentaire'].map(h => (
+                <th key={h} style={{padding:'11px 16px',textAlign:'left',fontSize:11,fontWeight:900,color:P.soft,textTransform:'uppercase' as const,letterSpacing:1}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {bulletin.results?.map((r: any, i: number) => (
+                <tr key={r.subject_id} style={{borderTop:`1px solid ${P.border}`,background:i%2===0?P.card:'#FAFAF8'}}>
+                  <td style={{padding:'10px 16px'}}><span style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 7px',fontSize:11,fontWeight:800}}>{compLabel(r.subject)}</span></td>
+                  <td style={{padding:'10px 16px',fontWeight:800,color:P.dark,fontSize:14}}>{r.subject}</td>
+                  <td style={{padding:'10px 16px'}}><span style={{fontSize:18,fontWeight:900,color:r.average_score>=10?'#10B981':P.red}}>{r.average_score?.toFixed(1)}</span></td>
+                  <td style={{padding:'10px 16px',fontSize:13,color:P.soft}}>{r.max_score}</td>
+                  <td style={{padding:'10px 16px'}}><span style={{color:appColor(r.appreciation),fontWeight:800,fontSize:12}}>{r.appreciation||'—'}</span></td>
+                  <td style={{padding:'10px 16px',fontSize:12,color:P.soft,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{r.teacher_comment||'—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {!bulletin.results?.length && (
+            <div style={{padding:'32px',textAlign:'center',color:P.soft,fontSize:14}}>Aucun resultat disponible.</div>
+          )}
+        </div>
+      )}
+
+      {bulletin === null && selChild && !loading && (
+        <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Aucun bulletin disponible.</div>
+      )}
+    </div>
+  )
+}
+
+
+// ── LOGS SCREEN ──────────────────────────────────────────────────────────────
+function LogsScreen() {
+  const [logs, setLogs] = useState<any[]>([])
+  const [filter, setFilter] = useState<string>('')
+  const [autoScroll, setAutoScroll] = useState(true)
+  const [connected, setConnected] = useState(false)
+  const [search, setSearch] = useState('')
+  const bottomRef = React.useRef<HTMLDivElement>(null)
+  const esRef = React.useRef<EventSource | null>(null)
+
+  // Charge les logs existants
+  useEffect(() => {
+    api('/logs?limit=200').then(d => setLogs(d.logs || []))
+  }, [])
+
+  // SSE stream
+  useEffect(() => {
+    const es = new EventSource('http://192.168.100.106:8100/api/admin/logs/stream')
+    esRef.current = es
+    es.onopen = () => setConnected(true)
+    es.onerror = () => setConnected(false)
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data)
+        if (data.connected) return
+        setLogs(prev => [...prev.slice(-499), data])
+      } catch {}
+    }
+    return () => { es.close(); setConnected(false) }
+  }, [])
+
+  // Auto-scroll
+  useEffect(() => {
+    if (autoScroll) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [logs, autoScroll])
+
+  const levelColor = (l: string) => {
+    if (l === 'ERROR' || l === 'CRITICAL') return P.red
+    if (l === 'WARNING') return '#F59E0B'
+    if (l === 'INFO') return '#10B981'
+    return P.soft
+  }
+  const levelBg = (l: string) => {
+    if (l === 'ERROR' || l === 'CRITICAL') return '#FEE2E2'
+    if (l === 'WARNING') return '#FEF3C7'
+    if (l === 'INFO') return '#D1FAE5'
+    return P.light
+  }
+
+  const filtered = logs.filter(l => {
+    const matchLevel = !filter || l.level === filter
+    const matchSearch = !search || l.msg.toLowerCase().includes(search.toLowerCase())
+    return matchLevel && matchSearch
+  })
+
+  const counts = logs.reduce((acc: any, l) => { acc[l.level] = (acc[l.level]||0)+1; return acc }, {})
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
+          Logs live
+          <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 700, color: connected ? '#10B981' : P.red }}>
+            {connected ? '● Live' : '○ Deconnecte'}
+          </span>
+        </h2>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: P.soft, cursor: 'pointer' }}>
+            <input type="checkbox" checked={autoScroll} onChange={e => setAutoScroll(e.target.checked)} />
+            Auto-scroll
+          </label>
+          <button onClick={() => setLogs([])} style={{ background: P.border, color: P.dark, border: 'none', borderRadius: 8, padding: '7px 14px', fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>
+            Vider
+          </button>
+        </div>
+      </div>
+
+      {/* Filtres */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' as const }}>
+        {['', 'INFO', 'WARNING', 'ERROR'].map(l => (
+          <button key={l} onClick={() => setFilter(l)} style={{
+            padding: '5px 14px', borderRadius: 999,
+            border: `1.5px solid ${filter === l ? levelColor(l||'INFO') : P.border}`,
+            background: filter === l ? (levelBg(l||'INFO')) : P.card,
+            color: filter === l ? levelColor(l||'INFO') : P.dark,
+            fontWeight: filter === l ? 800 : 600, fontSize: 12, cursor: 'pointer',
+          }}>
+            {l || 'Tous'} {l && counts[l] ? `(${counts[l]})` : ''}
+          </button>
+        ))}
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrer messages..."
+          style={{ ...inputStyle, flex: 1, fontSize: 13, padding: '6px 12px' }} />
+      </div>
+
+      {/* Logs */}
+      <div style={{ flex: 1, overflow: 'auto', background: '#1A1A2E', borderRadius: 14, padding: 16, fontFamily: 'monospace', fontSize: 12 }}>
+        {filtered.length === 0 && <div style={{ color: '#666', textAlign: 'center', marginTop: 40 }}>Aucun log</div>}
+        {filtered.map((l, i) => (
+          <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 3, lineHeight: 1.5 }}>
+            <span style={{ color: '#666', flexShrink: 0 }}>{l.ts}</span>
+            <span style={{ color: levelColor(l.level), fontWeight: 800, flexShrink: 0, minWidth: 60 }}>{l.level}</span>
+            <span style={{ color: '#888', flexShrink: 0, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{l.name}</span>
+            <span style={{ color: l.level === 'ERROR' ? '#FF6B6B' : l.level === 'WARNING' ? '#FFD93D' : '#E0E0E0', wordBreak: 'break-all' as const }}>{l.msg}</span>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  )
+}
+
+
+// ── PROGRESS SCREEN ──────────────────────────────────────────────────────────
+function ProgressScreen() {
+  const [children, setChildren] = useState<any[]>([])
+  const [selChild, setSelChild] = useState<number | null>(null)
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => { api('/children').then(setChildren) }, [])
+
+  useEffect(() => {
+    if (!selChild) return
+    setLoading(true); setData(null)
+    api(`/children/${selChild}/progress`).then(d => { setData(d); setLoading(false) })
+  }, [selChild])
+
+  const pctColor = (p: number) => p >= 80 ? '#10B981' : p >= 60 ? '#F59E0B' : P.red
+  const pctBg   = (p: number) => p >= 80 ? '#D1FAE5' : p >= 60 ? '#FEF3C7' : '#FEE2E2'
+
+  return (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:900,color:P.dark,marginBottom:20}}>Progression</h2>
+
+      {/* Sélecteur */}
+      <div style={{display:'flex',gap:10,marginBottom:24,flexWrap:'wrap' as const}}>
+        {children.map(c => (
+          <button key={c.id} onClick={() => setSelChild(c.id)} style={{
+            padding:'8px 18px',borderRadius:999,
+            border:`1.5px solid ${selChild===c.id ? P.sidebar : P.border}`,
+            background:selChild===c.id ? P.sidebar : P.card,
+            color:selChild===c.id ? 'white' : P.dark,
+            fontWeight:selChild===c.id ? 900 : 600,fontSize:14,
+            cursor:'pointer',fontFamily:'Nunito,sans-serif',
+          }}>
+            {c.first_name} <span style={{fontSize:11,opacity:.7}}>({c.level_name})</span>
+          </button>
+        ))}
+      </div>
+
+      {!selChild && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Selectionnez un enfant</div>}
+      {loading && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Chargement...</div>}
+
+      {data && !loading && (
+        <div style={{display:'grid',gap:20}}>
+          {/* Stats globales */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+            {[
+              {label:'Tentatives totales',value:data.total_attempts?.toLocaleString(),color:P.accent,icon:'📝'},
+              {label:'Moyenne globale',value:`${data.global_avg}%`,color:pctColor(data.global_avg),icon:'📊'},
+              {label:'Matieres travaillees',value:data.by_subject?.length,color:'#8B5CF6',icon:'🎯'},
+            ].map((s,i) => (
+              <div key={i} style={{background:P.card,borderRadius:16,padding:'18px 20px',border:`1.5px solid ${P.border}`,display:'flex',alignItems:'center',gap:14}}>
+                <span style={{fontSize:28}}>{s.icon}</span>
+                <div>
+                  <div style={{fontSize:26,fontWeight:900,color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:12,color:P.soft,fontWeight:700}}>{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Par matiere */}
+          <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+            <div style={{padding:'14px 20px',borderBottom:`1px solid ${P.border}`,fontWeight:900,color:P.dark,fontSize:15}}>
+              Progression par matiere
+            </div>
+            <div style={{padding:16,display:'grid',gap:10}}>
+              {data.by_subject?.map((s: any) => (
+                <div key={s.subject} style={{display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{width:120,fontSize:13,fontWeight:700,color:P.dark,flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{s.subject}</div>
+                  <div style={{flex:1,height:12,background:P.border,borderRadius:999,overflow:'hidden'}}>
+                    <div style={{width:`${Math.min(s.avg_pct,100)}%`,height:'100%',background:pctColor(s.avg_pct),borderRadius:999,transition:'width .5s'}} />
+                  </div>
+                  <span style={{background:pctBg(s.avg_pct),color:pctColor(s.avg_pct),borderRadius:8,padding:'2px 10px',fontSize:12,fontWeight:900,flexShrink:0,minWidth:48,textAlign:'center' as const}}>{s.avg_pct}%</span>
+                  <span style={{fontSize:11,color:P.soft,flexShrink:0}}>{s.attempts} ex.</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Evolution 7 jours */}
+          {data.daily?.length > 0 && (
+            <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+              <div style={{padding:'14px 20px',borderBottom:`1px solid ${P.border}`,fontWeight:900,color:P.dark,fontSize:15}}>
+                Activite (7 derniers jours)
+              </div>
+              <div style={{padding:16,display:'flex',gap:8,alignItems:'flex-end',height:120}}>
+                {data.daily.map((d: any) => (
+                  <div key={d.day} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                    <div style={{fontSize:11,color:pctColor(d.avg_pct),fontWeight:800}}>{d.avg_pct}%</div>
+                    <div style={{width:'100%',background:pctColor(d.avg_pct),borderRadius:'6px 6px 0 0',height:`${Math.max(d.avg_pct,8)}%`,minHeight:8,transition:'height .3s'}} />
+                    <div style={{fontSize:10,color:P.soft}}>{d.day.slice(5)}</div>
+                    <div style={{fontSize:10,color:P.soft}}>{d.attempts}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Exercices faibles */}
+          {data.weak_exercises?.length > 0 && (
+            <div style={{background:P.card,borderRadius:16,border:`1.5px solid #FEE2E2`,overflow:'hidden'}}>
+              <div style={{padding:'14px 20px',borderBottom:`1px solid #FEE2E2`,fontWeight:900,color:P.red,fontSize:15}}>
+                Exercices a renforcer (&lt;60%)
+              </div>
+              <div style={{display:'grid',gap:0}}>
+                {data.weak_exercises.map((e: any, i: number) => (
+                  <div key={i} style={{padding:'11px 20px',borderTop:i>0?`1px solid ${P.border}`:'none',display:'flex',alignItems:'center',gap:12}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:800,color:P.dark,fontSize:13}}>{e.title}</div>
+                      <div style={{fontSize:11,color:P.soft,marginTop:2}}>{e.subject} • {e.attempts} tentative(s)</div>
+                    </div>
+                    <span style={{background:'#FEE2E2',color:P.red,borderRadius:8,padding:'3px 10px',fontSize:13,fontWeight:900}}>{e.avg_pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+// ── REPORT SCREEN ─────────────────────────────────────────────────────────────
+function ReportScreen() {
+  const [data, setData] = useState<any>(null)
+  const [date, setDate] = useState(new Date().toISOString().slice(0,10))
+  const [loading, setLoading] = useState(false)
+
+  const load = (d: string) => {
+    setLoading(true); setData(null)
+    api(`/report/daily?date=${d}`).then(r => { setData(r); setLoading(false) })
+  }
+
+  useEffect(() => { load(date) }, [])
+
+  const pctColor = (p: number) => p >= 80 ? '#10B981' : p >= 60 ? '#F59E0B' : P.red
+  const pctBg   = (p: number) => p >= 80 ? '#D1FAE5' : p >= 60 ? '#FEF3C7' : '#FEE2E2'
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:P.dark}}>
+          Rapport journalier
+          {data && <span style={{fontSize:14,fontWeight:600,color:P.soft,marginLeft:10}}>{data.date}</span>}
+        </h2>
+        <div style={{display:'flex',gap:10,alignItems:'center'}}>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            style={{...inputStyle,fontSize:13,padding:'8px 12px'}} />
+          <button onClick={() => load(date)} style={{background:P.sidebar,color:'white',border:'none',borderRadius:10,padding:'9px 16px',fontWeight:800,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>
+            Charger
+          </button>
+        </div>
+      </div>
+
+      {loading && <div style={{textAlign:'center',padding:'40px 0',color:P.soft}}>Chargement...</div>}
+
+      {data && !loading && (
+        <div style={{display:'grid',gap:16}}>
+          {/* Résumé du jour */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+            {[
+              {label:'Enfants actifs',value:`${data.active_children}/${data.children?.length}`,color:P.sidebar,icon:'👨‍👩‍👧‍👦'},
+              {label:'Tentatives totales',value:data.total_attempts?.toLocaleString(),color:P.accent,icon:'📝'},
+              {label:'Taux activite',value:`${Math.round((data.active_children/Math.max(data.children?.length,1))*100)}%`,color:'#8B5CF6',icon:'⚡'},
+            ].map((s,i) => (
+              <div key={i} style={{background:P.card,borderRadius:16,padding:'18px 20px',border:`1.5px solid ${P.border}`,display:'flex',alignItems:'center',gap:14}}>
+                <span style={{fontSize:28}}>{s.icon}</span>
+                <div>
+                  <div style={{fontSize:26,fontWeight:900,color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:12,color:P.soft,fontWeight:700}}>{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cartes par enfant */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:14}}>
+            {data.children?.map((c: any) => (
+              <div key={c.child_id} style={{background:P.card,borderRadius:16,border:`1.5px solid ${c.attempts>0 ? P.border : '#FEE2E2'}`,overflow:'hidden'}}>
+                {/* Header enfant */}
+                <div style={{background:c.attempts>0 ? P.sidebar : '#FEE2E2',padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    <div style={{fontWeight:900,color:c.attempts>0?'white':P.red,fontSize:15}}>{c.first_name}</div>
+                    <div style={{fontSize:11,color:c.attempts>0?'rgba(255,255,255,.7)':P.red,marginTop:2}}>{c.level}</div>
+                  </div>
+                  {c.attempts > 0
+                    ? <span style={{background:'rgba(255,255,255,.2)',color:'white',borderRadius:10,padding:'4px 10px',fontSize:13,fontWeight:900}}>{c.avg_pct}%</span>
+                    : <span style={{fontSize:12,color:P.red,fontWeight:800}}>Inactif</span>
+                  }
+                </div>
+
+                {c.attempts > 0 ? (
+                  <div style={{padding:'14px 18px'}}>
+                    {/* Barre progression */}
+                    <div style={{height:8,background:P.border,borderRadius:999,marginBottom:12,overflow:'hidden'}}>
+                      <div style={{width:`${Math.min(c.avg_pct,100)}%`,height:'100%',background:pctColor(c.avg_pct),borderRadius:999}} />
+                    </div>
+                    {/* Stats */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginBottom:12}}>
+                      {[
+                        {label:'Exercices',value:c.attempts},
+                        {label:'Reussis',value:c.success},
+                        {label:'Temps',value:`${c.total_minutes}min`},
+                      ].map((s,i) => (
+                        <div key={i} style={{textAlign:'center',background:P.light,borderRadius:10,padding:'8px 4px'}}>
+                          <div style={{fontSize:16,fontWeight:900,color:P.dark}}>{s.value}</div>
+                          <div style={{fontSize:10,color:P.soft,fontWeight:700}}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Matieres */}
+                    {c.subjects?.length > 0 && (
+                      <div style={{display:'flex',flexWrap:'wrap' as const,gap:4,marginBottom:8}}>
+                        {c.subjects.map((s: string) => (
+                          <span key={s} style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 8px',fontSize:11,fontWeight:700}}>{s}</span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Dernier exercice */}
+                    {c.last_exercise && (
+                      <div style={{fontSize:11,color:P.soft,borderTop:`1px solid ${P.border}`,paddingTop:8}}>
+                        Dernier: <span style={{fontWeight:700,color:P.dark}}>{c.last_exercise.title}</span>
+                        <span style={{marginLeft:6,color:pctColor((c.last_exercise.score/Math.max(c.last_exercise.max_score,1))*100),fontWeight:800}}>
+                          {c.last_exercise.score}/{c.last_exercise.max_score}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{padding:'20px 18px',textAlign:'center',color:P.soft,fontSize:13}}>
+                    Aucune activite ce jour
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+// ── SCHOOL YEARS SCREEN ───────────────────────────────────────────────────────
+function SchoolYearsScreen() {
+  const [years, setYears] = useState<any[]>([])
+  const [adding, setAdding] = useState(false)
+  const [form, setForm] = useState({ label: '', start_date: '', end_date: '' })
+  const [error, setError] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<any>(null)
+
+  const reload = () => api('/school-years').then(setYears)
+  useEffect(() => { reload() }, [])
+
+  const save = async () => {
+    if (!form.label || !form.start_date || !form.end_date) return setError('Tous les champs sont requis')
+    await api('/school-years', { method: 'POST', body: JSON.stringify(form) })
+    setAdding(false); reload()
+  }
+
+  const activate = async (id: number) => {
+    await api(`/school-years/${id}/activate`, { method: 'PUT' })
+    reload()
+  }
+
+  const confirmDelete = async () => {
+    const res = await api(`/school-years/${deleteTarget.id}`, { method: 'DELETE' })
+    if (res.detail) { setError(res.detail); setDeleteTarget(null); return }
+    setDeleteTarget(null); reload()
+  }
+
+  return (
+    <div style={{maxWidth:600}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:P.dark}}>Annees scolaires</h2>
+        <button onClick={() => { setAdding(true); setForm({label:'',start_date:'',end_date:''}); setError('') }}
+          style={{background:P.sidebar,color:'white',border:'none',borderRadius:10,padding:'9px 18px',fontWeight:800,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>
+          + Nouvelle annee
+        </button>
+      </div>
+
+      {error && <div style={{background:'#FEE2E2',color:P.red,borderRadius:10,padding:'10px 14px',marginBottom:14,fontWeight:700,fontSize:13}}>{error}</div>}
+
+      {adding && (
+        <div style={{background:P.light,borderRadius:18,padding:20,marginBottom:20,border:`1.5px solid ${P.border}`}}>
+          <div style={{fontWeight:900,color:P.dark,fontSize:15,marginBottom:14}}>Nouvelle annee scolaire</div>
+          <div style={{display:'grid',gap:12,marginBottom:14}}>
+            <input placeholder="Label (ex: 2026-2027) *" value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))} style={inputStyle} />
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <div>
+                <div style={{fontSize:11,fontWeight:800,color:P.soft,marginBottom:4}}>DATE DEBUT</div>
+                <input type="date" value={form.start_date} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} style={inputStyle} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:800,color:P.soft,marginBottom:4}}>DATE FIN</div>
+                <input type="date" value={form.end_date} onChange={e=>setForm(f=>({...f,end_date:e.target.value}))} style={inputStyle} />
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={save} style={{background:P.sidebar,color:'white',border:'none',borderRadius:10,padding:'9px 18px',fontWeight:800,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>Enregistrer</button>
+            <button onClick={()=>setAdding(false)} style={{background:P.border,color:P.dark,border:'none',borderRadius:10,padding:'9px 18px',fontWeight:700,cursor:'pointer',fontSize:13,fontFamily:'Nunito,sans-serif'}}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{display:'grid',gap:10}}>
+        {years.map(y => (
+          <div key={y.id} style={{background:P.card,borderRadius:14,padding:'16px 20px',border:`2px solid ${y.is_current ? P.sidebar : P.border}`,display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:40,height:40,borderRadius:12,background:y.is_current?P.sidebar:P.border,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>
+              {y.is_current ? '✅' : '📅'}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:900,color:P.dark,fontSize:16,display:'flex',alignItems:'center',gap:8}}>
+                {y.label}
+                {y.is_current && <span style={{background:'#D1FAE5',color:'#065F46',borderRadius:8,padding:'2px 8px',fontSize:11,fontWeight:800}}>ACTIVE</span>}
+              </div>
+              <div style={{fontSize:12,color:P.soft,marginTop:3}}>
+                {y.start_date} → {y.end_date}
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              {!y.is_current && (
+                <button onClick={() => activate(y.id)}
+                  style={{background:'#D1FAE5',color:'#065F46',border:'none',borderRadius:8,padding:'6px 12px',fontWeight:800,cursor:'pointer',fontSize:12}}>
+                  Activer
+                </button>
+              )}
+              <button onClick={() => setDeleteTarget(y)}
+                style={{background:'#FEE2E222',color:P.red,border:'none',borderRadius:8,padding:'6px 12px',fontWeight:800,cursor:'pointer',fontSize:12}}>
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {deleteTarget && (
+        <ConfirmDelete label={`Annee "${deleteTarget.label}"`}
+          onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />
+      )}
+    </div>
+  )
+}
+
+
+// ── BRIEF SCREEN ──────────────────────────────────────────────────────────────
+function BriefScreen() {
+  const MBASE = 'http://192.168.100.106:8100/api'
+  const [brief, setBrief] = useState<any>(null)
+  const [config, setConfig] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [triggering, setTriggering] = useState(false)
+  const [toast, setToast] = useState<string|null>(null)
+  const [schedHour, setSchedHour] = useState('19')
+  const [schedMin, setSchedMin] = useState('00')
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
+
+  useEffect(() => {
+    // Charge le brief
+    setLoading(true)
+    fetch(`${MBASE}/mama/brief`).then(r=>r.json()).then(d => { setBrief(d); setLoading(false) })
+    // Charge la config scheduler
+    fetch(`${MBASE}/evening-sessions/scheduler-config`).then(r=>r.json()).then(d => {
+      setConfig(d)
+      if (d.time) { const [h,m] = d.time.split(':'); setSchedHour(h); setSchedMin(m) }
+    })
+  }, [])
+
+  const triggerBrief = async () => {
+    setTriggering(true)
+    await fetch(`${MBASE}/evening-sessions/trigger-auto`, { method: 'POST' })
+    setTriggering(false)
+    showToast('Brief vocal declenche sur les tablettes')
+  }
+
+  const saveScheduler = async () => {
+    await fetch(`${MBASE}/evening-sessions/scheduler-config`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ...config, time: `${schedHour}:${schedMin}` })
+    })
+    showToast('Heure mise a jour')
+  }
+
+  const toggleScheduler = async () => {
+    const newConfig = { ...config, enabled: !config?.enabled }
+    await fetch(`${MBASE}/evening-sessions/scheduler-config`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(newConfig)
+    })
+    setConfig(newConfig)
+    showToast(newConfig.enabled ? 'Scheduler active' : 'Scheduler desactive')
+  }
+
+  const pctColor = (p: number) => p >= 70 ? '#10B981' : p >= 50 ? '#F59E0B' : P.red
+
+  return (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:900,color:P.dark,marginBottom:20}}>Brief vocal Mama Judi</h2>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:20}}>
+        {/* Config scheduler */}
+        <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,padding:'18px 20px'}}>
+          <div style={{fontWeight:900,color:P.dark,fontSize:15,marginBottom:14}}>Programmation automatique</div>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+            <span style={{fontSize:13,fontWeight:700,color:P.soft}}>Heure :</span>
+            <select value={schedHour} onChange={e=>setSchedHour(e.target.value)} style={{...inputStyle,padding:'6px 10px',width:70}}>
+              {Array.from({length:24},(_,i)=>String(i).padStart(2,'0')).map(h=><option key={h} value={h}>{h}</option>)}
+            </select>
+            <span style={{fontWeight:900,color:P.dark}}>:</span>
+            <select value={schedMin} onChange={e=>setSchedMin(e.target.value)} style={{...inputStyle,padding:'6px 10px',width:70}}>
+              {['00','15','30','45'].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <button onClick={saveScheduler} style={{background:P.sidebar,color:'white',border:'none',borderRadius:8,padding:'7px 14px',fontWeight:800,cursor:'pointer',fontSize:12,fontFamily:'Nunito,sans-serif'}}>
+              Sauver
+            </button>
+          </div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontSize:13,fontWeight:700,color:P.soft}}>
+              Statut : <span style={{color:config?.enabled?'#10B981':P.red,fontWeight:900}}>{config?.enabled?'Actif':'Inactif'}</span>
+            </span>
+            <button onClick={toggleScheduler} style={{background:config?.enabled?'#FEE2E2':'#D1FAE5',color:config?.enabled?P.red:'#065F46',border:'none',borderRadius:8,padding:'7px 14px',fontWeight:800,cursor:'pointer',fontSize:12}}>
+              {config?.enabled ? 'Desactiver' : 'Activer'}
+            </button>
+          </div>
+        </div>
+
+        {/* Declenchement manuel */}
+        <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,padding:'18px 20px',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+          <div>
+            <div style={{fontWeight:900,color:P.dark,fontSize:15,marginBottom:8}}>Declenchement manuel</div>
+            <div style={{fontSize:13,color:P.soft,marginBottom:16}}>
+              Envoie immediatement le brief vocal sur toutes les tablettes actives.
+            </div>
+          </div>
+          <button onClick={triggerBrief} disabled={triggering}
+            style={{background:P.accent,color:'white',border:'none',borderRadius:12,padding:'12px',fontWeight:900,cursor:triggering?'wait':'pointer',fontSize:14,fontFamily:'Nunito,sans-serif',width:'100%'}}>
+            {triggering ? 'Envoi en cours...' : '🔊 Declencher le brief maintenant'}
+          </button>
+        </div>
+      </div>
+
+      {/* Apercu du brief */}
+      <div style={{background:P.card,borderRadius:16,border:`1.5px solid ${P.border}`,overflow:'hidden'}}>
+        <div style={{padding:'14px 20px',borderBottom:`1px solid ${P.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{fontWeight:900,color:P.dark,fontSize:15}}>Apercu du brief ce soir</div>
+          <button onClick={() => { setLoading(true); fetch(`${MBASE}/mama/brief`).then(r=>r.json()).then(d=>{setBrief(d);setLoading(false)}) }}
+            style={{background:P.light,color:P.dark,border:'none',borderRadius:8,padding:'6px 12px',fontWeight:700,cursor:'pointer',fontSize:12}}>
+            Rafraichir
+          </button>
+        </div>
+
+        {loading && <div style={{padding:'30px',textAlign:'center',color:P.soft}}>Chargement...</div>}
+
+        {brief && !loading && (
+          <div style={{padding:16,display:'grid',gap:10}}>
+            {brief.children?.map((c: any) => (
+              <div key={c.child_id} style={{background:P.light,borderRadius:14,padding:'14px 16px',border:`1px solid ${P.border}`}}>
+                <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:P.sidebar,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:900,color:'white'}}>
+                    {c.first_name?.[0]}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:900,color:P.dark}}>{c.first_name}</div>
+                    <div style={{fontSize:11,color:P.soft}}>{c.level}</div>
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontSize:18,fontWeight:900,color:pctColor(c.today_avg)}}>{Math.round(c.today_avg)}%</div>
+                    <div style={{fontSize:11,color:P.soft}}>{c.today_count} exercice(s)</div>
+                  </div>
+                </div>
+                {c.message && (
+                  <div style={{background:'white',borderRadius:10,padding:'10px 14px',fontSize:13,color:P.dark,fontStyle:'italic',borderLeft:`3px solid ${P.sidebar}`}}>
+                    "{c.message}"
+                  </div>
+                )}
+                {c.subjects_today?.length > 0 && (
+                  <div style={{display:'flex',gap:4,flexWrap:'wrap' as const,marginTop:8}}>
+                    {c.subjects_today.map((s: string) => (
+                      <span key={s} style={{background:P.sidebar+'22',color:P.sidebar,borderRadius:6,padding:'2px 7px',fontSize:11,fontWeight:700}}>{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {toast && (
+        <div style={{position:'fixed',bottom:24,right:24,background:'#D1FAE5',color:'#065F46',borderRadius:14,padding:'14px 20px',fontWeight:800,fontSize:14,boxShadow:'0 4px 16px rgba(0,0,0,.12)',zIndex:999}}>
+          ✅ {toast}
+        </div>
+      )}
+    </div>
+  )
+
 }
 
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function AdminApp() {
   const [screen, setScreen] = useState<Screen>('dashboard')
   const [screenParams, setScreenParams] = useState<any>(null)
-
-  const goTo = (s: Screen, params?: any) => {
-    setScreenParams(params || null)
-    setScreen(s)
-  }
-
-  const NAV: { id: Screen; icon: string; label: string }[] = [
-    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-    { id: 'children', icon: '👨‍👩‍👧‍👦', label: 'Enfants' },
-    { id: 'subjects', icon: '🎯', label: 'Matières' },
-    { id: 'units', icon: '🗂️', label: 'Unités' },
-    { id: 'lessons', icon: '📖', label: 'Leçons' },
-    { id: 'exercises', icon: '📝', label: 'Exercices' },
+  const goTo = (s: Screen, params?: any) => { setScreenParams(params||null); setScreen(s) }
+  const NAV_GROUPS = [
+    {
+      label: null,
+      items: [
+        { id: 'dashboard' as Screen, icon: '📊', label: 'Dashboard' },
+        { id: 'children' as Screen, icon: '👪', label: 'Enfants' },
+      ]
+    },
+    {
+      label: 'Contenu',
+      items: [
+        { id: 'subjects' as Screen, icon: '🎯', label: 'Matieres' },
+        { id: 'curriculum' as Screen, icon: '🗂', label: 'Curriculum' },
+        { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
+        { id: 'assets' as Screen, icon: '🖼', label: 'Assets' },
+      ]
+    },
+    {
+      label: 'Suivi',
+      items: [
+        { id: 'bulletin' as Screen, icon: '📋', label: 'Bulletins' },
+        { id: 'progress' as Screen, icon: '📈', label: 'Progression' },
+        { id: 'report' as Screen, icon: '📅', label: 'Rapport' },
+        { id: 'brief' as Screen, icon: '🔊', label: 'Brief vocal' },
+        { id: 'schoolyears' as Screen, icon: '🗓', label: 'Annees' },
+      ]
+    },
+    {
+      label: 'Systeme',
+      items: [
+        { id: 'health' as Screen, icon: '🩺', label: 'Health' },
+        { id: 'logs' as Screen, icon: '📟', label: 'Logs' },
+      ]
+    },
   ]
-
+  const [collapsed, setCollapsed] = React.useState<Record<string,boolean>>({})
+  const toggleGroup = (label: string) => setCollapsed(c => ({...c, [label]: !c[label]}))
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', background: P.bg }}>
-      {/* Sidebar */}
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Nunito,system-ui,sans-serif', background: P.bg }}>
       <div style={{ width: 220, background: P.sidebar, display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', left: 0, top: 0 }}>
         <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,.15)' }}>
           <div style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,.5)', letterSpacing: 2 }}>EDUMAISON</div>
           <div style={{ fontSize: 18, fontWeight: 900, color: 'white', marginTop: 4 }}>Admin</div>
         </div>
-        <nav style={{ padding: '12px 10px', flex: 1 }}>
-          {NAV.map(item => (
-            <button key={item.id} onClick={() => goTo(item.id)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', marginBottom: 4, background: screen === item.id ? 'rgba(255,255,255,.2)' : 'transparent', color: screen === item.id ? 'white' : 'rgba(255,255,255,.6)', fontWeight: screen === item.id ? 900 : 600, fontSize: 14, fontFamily: 'Nunito, sans-serif', textAlign: 'left' as const }}>
-              <span style={{ fontSize: 18 }}>{item.icon}</span>{item.label}
-            </button>
+        <nav style={{ padding: '8px 10px', flex: 1, overflowY: 'auto' as const }}>
+          {NAV_GROUPS.map((group, gi) => (
+            <div key={gi} style={{ marginBottom: 4 }}>
+              {group.label && (
+                <button onClick={() => toggleGroup(group.label!)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.4)', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, textTransform: 'uppercase' as const, fontFamily: 'Nunito,sans-serif', marginTop: 6 }}>
+                  {group.label}
+                  <span>{collapsed[group.label] ? '▸' : '▾'}</span>
+                </button>
+              )}
+              {!collapsed[group.label!] && group.items.map(item => (
+                <button key={item.id} onClick={() => goTo(item.id)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer', marginBottom: 2, background: screen===item.id ? 'rgba(255,255,255,.2)' : 'transparent', color: screen===item.id ? 'white' : 'rgba(255,255,255,.6)', fontWeight: screen===item.id ? 900 : 600, fontSize: 14, fontFamily: 'Nunito,sans-serif', textAlign: 'left' as const }}>
+                  <span style={{ fontSize: 16 }}>{item.icon}</span>{item.label}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
-        <div style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,.15)', textAlign: 'center' }}>
-          <a href="/admin-react" onClick={() => goTo('dashboard')} style={{ color: 'rgba(255,255,255,.4)', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}>
-            📊 Dashboard
-          </a>
-        </div>
         <div style={{ padding: '12px', borderTop: '1px solid rgba(255,255,255,.15)' }}>
-          <a href="/app" style={{ display: 'block', textAlign: 'center', color: 'rgba(255,255,255,.5)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
-            ← App enfant
-          </a>
+          <a href="/app" style={{ display: 'block', textAlign: 'center', color: 'rgba(255,255,255,.5)', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>← App enfant</a>
         </div>
       </div>
-
-      {/* Main */}
       <div style={{ flex: 1, marginLeft: 220, padding: '32px 40px', maxWidth: 'calc(100vw - 220px)' }}>
         {screen === 'dashboard' && <Dashboard goTo={goTo} />}
         {screen === 'children' && <ChildrenScreen />}
-        {screen === 'subjects' && <SubjectsScreen goTo={goTo} />}
-        {screen === 'units' && <UnitsScreen initParams={screenParams} goTo={goTo} />}
-        {screen === 'lessons' && <LessonsScreen initParams={screenParams} goTo={goTo} />}
+        {screen === 'subjects' && <SubjectsScreen />}
+        {screen === 'curriculum' && <CurriculumScreen goTo={goTo} />}
         {screen === 'exercises' && <ExercisesScreen initParams={screenParams} />}
+        {screen === 'assets' && <AssetsScreen />}
+        {screen === 'bulletin' && <BulletinScreen />}
+        {screen === 'brief' && <BriefScreen />}
+        {screen === 'schoolyears' && <SchoolYearsScreen />}
+        {screen === 'report' && <ReportScreen />}
+        {screen === 'progress' && <ProgressScreen />}
+        {screen === 'logs' && <LogsScreen />}
+        {screen === 'health' && <HealthScreen />}
       </div>
     </div>
   )

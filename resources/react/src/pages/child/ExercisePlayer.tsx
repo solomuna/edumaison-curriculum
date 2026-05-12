@@ -774,7 +774,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -806,7 +806,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -838,7 +838,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -870,7 +870,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -898,7 +898,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -930,7 +930,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -962,7 +962,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -1002,7 +1002,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -1030,7 +1030,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -1058,7 +1058,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 
@@ -1076,6 +1076,26 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
   }
 
+  // Fallback MCQ — questions[] sans champ type (seeders NLC/Vocational/Social)
+  if (content.questions && Array.isArray(content.questions)) {
+    const fallbackMcq = {
+      ...content,
+      questions: content.questions.map((q: any) => {
+        if (typeof q.answer === 'string') {
+          const idx = (q.options || []).indexOf(q.answer)
+          return { ...q, answer: idx >= 0 ? idx : 0 }
+        }
+        return q
+      })
+    }
+    return <MCQ title={exercise.title} instructions={exercise.instructions} content={fallbackMcq} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
+  }
+
+  // Fallback FillIn — sentence/answer sans champ type
+  if (content.sentence !== undefined && content.answer !== undefined) {
+    return <FillIn title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
+  }
+
 
 
 
@@ -1086,7 +1106,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} instructions={exercise.instructions} isFrench={isFrench}>
+    <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
 
 
 

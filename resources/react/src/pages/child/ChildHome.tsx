@@ -9,6 +9,7 @@ import ProfilePage from './ProfilePage'
 import ExamSession from './ExamSession'
 import DuelSession from './DuelSession'
 import BulletinPage from './BulletinPage'
+import RevisionPage from './RevisionPage'
 import { getExercisesForChild, getMoreExercisesForChild, saveAttempt } from '../../services/api'
 import { useStreak } from '../../hooks/useStreak'
 import { useOfflineSync } from '../../hooks/useOfflineSync'
@@ -27,7 +28,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 interface Props { child: Child; onLogout: () => void }
-type Tab = 'home' | 'subjects' | 'progress' | 'profile' | 'bulletin'
+type Tab = 'home' | 'subjects' | 'progress' | 'profile' | 'bulletin' | 'review'
 
 // Subject icons as unicode escapes - no emoji literals
 const SUBJECT_ICONS: Record<string, string> = {
@@ -124,7 +125,7 @@ function MamaJudiSmall() {
 export default function ChildHome({ child, onLogout }: Props) {
   const [tab, setTab] = useState<Tab>(() => {
     const saved = localStorage.getItem('edumaison_tab_' + child.id)
-    const valid = ['home', 'subjects', 'progress', 'profile', 'bulletin']
+    const valid = ['home', 'subjects', 'progress', 'profile', 'bulletin', 'review']
     return (saved && valid.includes(saved) ? saved : 'home') as Tab
   })
   const [exercises, setExercises] = useState<(Exercise & { subject: string })[]>([])
@@ -163,7 +164,7 @@ export default function ChildHome({ child, onLogout }: Props) {
   useEffect(() => {
     // Restaurer le tab actif apres actualisation
     const saved = localStorage.getItem('edumaison_tab_' + child.id)
-    if (saved && ['home','subjects','progress','profile','bulletin'].includes(saved)) {
+    if (saved && ['home','subjects','progress','profile','bulletin','review'].includes(saved)) {
       setTab(saved as Tab)
     }
     window.history.pushState({ sentinel: true }, '')
@@ -318,6 +319,7 @@ export default function ChildHome({ child, onLogout }: Props) {
   const NAV_ITEMS = [
     { id: 'home' as Tab, label: 'Home', icon: '\u{1F3E0}' },
     { id: 'subjects' as Tab, label: 'Subjects', icon: '\u{1F4DA}' },
+    { id: 'review' as Tab, label: 'Revision', icon: '\u{1F4D6}' },
     { id: 'progress' as Tab, label: 'Progress', icon: '\u{1F4CA}' },
     { id: 'profile' as Tab, label: 'Profile', icon: '\u{1F464}' },
   ]
@@ -330,6 +332,7 @@ export default function ChildHome({ child, onLogout }: Props) {
       {tab === 'progress' && <ProgressPage child={child} onBack={() => setTab('home')} />}
       {tab === 'profile'  && <ProfilePage  child={child} onLogout={onLogout} onBack={() => setTab('home')} />}
       {tab === 'bulletin' && <BulletinPage  child={child} onBack={() => setTab('home')} />}
+      {tab === 'review'   && <RevisionPage  child={child} onBack={() => setTab('home')} />}
 
       {/* Home content */}
       {tab === 'home' && (

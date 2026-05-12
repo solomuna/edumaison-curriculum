@@ -823,8 +823,20 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
+        {/* Image URL — grande image visuelle (exercices C1/C2 animaux, fruits, formes) */}
+        {content.image_url && (
+          <div style={{ borderRadius: 20, overflow: 'hidden', marginBottom: 12, background: 'white', border: '1px solid #FFD4B0', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+            <img
+              src={content.image_url}
+              alt={title}
+              style={{ width: '100%', maxHeight: 280, objectFit: 'contain', display: 'block' }}
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+            />
+          </div>
+        )}
+
         {/* Illustration - bibliotheque si manquant */}
-        {(content.illustration || subject) && (
+        {!content.image_url && (content.illustration || subject) && (
           <div style={{ background: '#FFF0E6', borderRadius: 16, padding: '14px', textAlign: 'center', fontSize: 52, marginBottom: 12, border: '1px solid #FFD4B0', lineHeight: 1 }}>
             {content.illustration || getSubjectIcon(subject || '')}
           </div>

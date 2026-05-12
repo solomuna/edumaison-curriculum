@@ -1,3 +1,4 @@
+// TrueFalse.tsx — Moteur Vrai/Faux (TRUE/FALSE en anglais)
 import { useState } from "react"
 
 interface Props {
@@ -19,11 +20,11 @@ export default function TrueFalse({ content, onComplete }: Props) {
 
   const isCorrect = chosen !== null && chosen === content.answer
 
-  const btnStyle = (v: boolean) => {
+  const btnStyle = (v: boolean): React.CSSProperties => {
     const base: React.CSSProperties = {
       padding: 18, borderRadius: 18, fontSize: 18, fontWeight: 900,
       cursor: answered ? 'default' : 'pointer', border: '2.5px solid',
-      width: '100%'
+      width: '100%', fontFamily: 'Nunito, system-ui, sans-serif'
     }
     if (!answered) {
       return {
@@ -44,33 +45,37 @@ export default function TrueFalse({ content, onComplete }: Props) {
 
   return (
     <div>
+      {/* Énoncé */}
       <div style={{
         fontSize: 17, fontWeight: 800, color: '#2D1B0E',
         textAlign: 'center', margin: '0 0 20px', lineHeight: 1.4
       }}>
-        "{content.statement}"
+        &ldquo;{content.statement}&rdquo;
       </div>
 
+      {/* Boutons TRUE / FALSE */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <button onClick={() => answer(true)} disabled={answered} style={btnStyle(true)}>
-          VRAI ✓
+          TRUE {'\u2713'}
         </button>
         <button onClick={() => answer(false)} disabled={answered} style={btnStyle(false)}>
-          FAUX ✗
+          FALSE {'\u2717'}
         </button>
       </div>
 
+      {/* Feedback */}
       {answered && chosen !== null && (
         <div style={{
           borderRadius: 16, padding: '12px 16px', marginTop: 14,
           background: isCorrect ? '#ECFDF5' : '#FEF2F2',
           border: `1.5px solid ${isCorrect ? '#6EE7B7' : '#FCA5A5'}`,
           fontWeight: 800, fontSize: 14,
-          color: isCorrect ? '#065F46' : '#991B1B'
+          color: isCorrect ? '#065F46' : '#991B1B',
+          textAlign: 'center'
         }}>
           {isCorrect
-            ? '🎉 Bravo ! C\'est correct !'
-            : `La bonne réponse est : ${content.answer ? 'VRAI' : 'FAUX'}`}
+            ? '\uD83C\uDF89 Correct! Well done!'
+            : `The correct answer is: ${content.answer ? 'TRUE' : 'FALSE'}`}
         </div>
       )}
     </div>

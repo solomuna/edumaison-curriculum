@@ -29,6 +29,21 @@ export default function App() {
   })
   const [mode, setMode] = useState<'child' | 'parent'>('child')
 
+  // Rafraîchir les données de l'enfant depuis l'API au chargement
+  // Evite les données périmées (niveau changé dans l'admin, etc.)
+  useEffect(() => {
+    if (!child?.id) return
+    fetch(`/api/children/${child.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.id) {
+          localStorage.setItem('edumaison_session', JSON.stringify(data))
+          setChild(data)
+        }
+      })
+      .catch(() => {})
+  }, [child?.id])
+
   if (isAdmin) return <AdminApp />
   if (isTV) return <ThemeProvider><TVApp /></ThemeProvider>
 

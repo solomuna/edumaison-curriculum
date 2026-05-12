@@ -31,6 +31,8 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [scores, setScores] = useState<boolean[]>([])
   const [done, setDone] = useState(false)
+  const [hintUsed, setHintUsed] = useState(false)
+  const [userInput, setUserInput] = useState('')  // garde la saisie pour l'afficher dans le feedback
 
   // Gerer format plat {sentence, answer} sans tableau items[]
   const rawContent = content as any
@@ -47,6 +49,8 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
   useEffect(() => {
     setInput('')
     setFeedback(null)
+    setHintUsed(false)
+    setUserInput('')
     if (item) MamaJudi.speak(text.replace('___', 'blank'), 0.85)
   }, [current])
 
@@ -56,6 +60,7 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
     const correctAns = normalized(item.answer)
     const alts = (item.alternatives || []).map(normalized)
     const correct = userAns === correctAns || alts.includes(userAns)
+    setUserInput(input.trim())  // garder la saisie avant reset
     setFeedback(correct ? 'correct' : 'wrong')
     setScores([...scores, correct])
     if (correct) MamaJudi.speak('Correct! Well done!')
@@ -185,8 +190,35 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
             color: feedback === 'correct' ? '#065F46' : '#991B1B'
           }}>
             {feedback === 'correct'
-              ? '🎉 Bravo ! Bonne réponse !'
-              : `La bonne réponse est : "${item.answer}"`}
+              ? '\uD83C\uDF89 Correct! Well done!'
+              : (
+                <div>
+                  <div>You wrote: <span style={{ textDecoration: 'line-through', opacity: .7 }}>"{userInput || '?'}"</span></div>
+                  <div style={{ marginTop: 4 }}>Correct answer: <strong>"{item.answer}"</strong></div>
+                </div>
+              )}
+          </div>
+        )}
+
+        {/* Bouton Hint — disponible avant de vérifier */}
+        {!feedback && !hintUsed && (
+          <button onClick={() => {
+            setHintUsed(true)
+            const ans = item.answer || ''
+            const hint = ans[0].toUpperCase() + '_'.repeat(Math.max(0, ans.length - 1))
+            MamaJudi.speak('Hint: the answer starts with ' + ans[0])
+            setInput(ans[0])
+          }} style={{
+            width: '100%', padding: '10px 0', borderRadius: 14, border: '1.5px dashed #F59E0B',
+            background: '#FFFBEB', color: '#92400E', fontSize: 13, fontWeight: 800,
+            cursor: 'pointer', marginBottom: 10, fontFamily: 'Nunito, system-ui, sans-serif'
+          }}>
+            {'\uD83D\uDCA1'} Hint — first letter: <strong>{(item.answer || '')[0]?.toUpperCase()}</strong> ({item.answer?.length} letters)
+          </button>
+        )}
+        {!feedback && hintUsed && (
+          <div style={{ fontSize: 12, color: '#92400E', textAlign: 'center', marginBottom: 8, fontWeight: 700, opacity: .7 }}>
+            {'\uD83D\uDCA1'} Hint used — starts with <strong>{(item.answer || '')[0]?.toUpperCase()}</strong> ({item.answer?.length} letters)
           </div>
         )}
 

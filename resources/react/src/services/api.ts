@@ -1,4 +1,6 @@
-const BASE = (import.meta.env.VITE_API_URL ?? 'http://192.168.100.106:8100') + '/api'
+// Adresse de l'API : relative par defaut (meme hote que la page ; nginx proxy /api -> FastAPI:8100).
+// Surchargeable via VITE_API_URL (dev, ou build mobile Capacitor).
+const BASE = (import.meta.env.VITE_API_URL || '') + '/api'
 
 
 // Shuffle array in place — Fisher-Yates

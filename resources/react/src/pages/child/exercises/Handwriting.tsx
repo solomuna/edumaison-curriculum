@@ -275,10 +275,44 @@ export default function Handwriting({ title, instructions, content, onComplete, 
             flex: 2, padding: '13px 0', borderRadius: 16, border: 'none',
             background: '#1D6B2A', color: 'white', fontSize: 14, fontWeight: 800, cursor: 'pointer'
           }}>
-            {current === prompts.length - 1 ? 'Finish ✓' : 'Next →'}
+            {current === prompts.length - 1 ? 'Finish \u2713' : 'Next \u2192'}
           </button>
         </div>
       </div>
+
+      {/* Modal auto-evaluation */}
+      {showEval && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
+          <div style={{ background: '#F0E8D8', borderRadius: 24, padding: 28, maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,.2)' }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>{'\u270D\uFE0F'}</div>
+            <div style={{ fontSize: 17, fontWeight: 900, color: '#3D2B1F', marginBottom: 6 }}>
+              How does it look?
+            </div>
+            <div style={{ fontSize: 13, color: '#7A6050', marginBottom: 20 }}>
+              Compare your writing with the guide letter above.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => handleSelfEval('good')}
+                style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 15, fontWeight: 900, cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
+                {'\u2714\uFE0F'} Looks good!
+              </button>
+              <button
+                onClick={() => handleSelfEval('retry')}
+                style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#FEE2E2', color: '#991B1B', fontSize: 15, fontWeight: 900, cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
+                {'\uD83D\uDD04'} Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback encouragement */}
+      {selfEval && (
+        <div style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: selfEval === 'good' ? '#D1FAE5' : '#FEF3C7', borderRadius: 16, padding: '14px 24px', fontWeight: 900, fontSize: 15, color: selfEval === 'good' ? '#065F46' : '#92400E', boxShadow: '0 4px 16px rgba(0,0,0,.12)', whiteSpace: 'nowrap' }}>
+          {selfEval === 'good' ? '\uD83C\uDF1F Great job!' : '\uD83D\uDCAA Try again!'}
+        </div>
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 // Curriculum screen: pills cascade Niveau > Matiere > Unite > Lecons + search + CRUD
 import React, { useState, useEffect } from 'react'
 
-const BASE = 'http://192.168.100.106:8100/api/admin'
+const BASE = '/api/admin'
 
 const P = {
   bg: '#F7F3EE', card: '#FFFFFF', sidebar: '#1D6B2A',
@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'bulletin' | 'brief' | 'schoolyears' | 'report' | 'progress' | 'logs' | 'health'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'images' | 'bulletin' | 'brief' | 'schoolyears' | 'report' | 'progress' | 'logs' | 'health'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -452,7 +452,8 @@ function ExercisePreview({ content, title }: { content: string; title: string })
     </div>
   )
   if (['mcq','multiple_choice'].includes(type)) {
-    const opts = parsed.options || parsed.questions?.[0]?.options || []
+    const rawOpts = parsed.options || parsed.questions?.[0]?.options
+    const opts: string[] = Array.isArray(rawOpts) ? rawOpts : []
     const ans = parsed.answer ?? parsed.questions?.[0]?.answer
     return (<PreviewShell>{opts.map((o: string, i: number) => (
       <div key={i} style={{padding:'6px 10px',borderRadius:8,border:`2px solid ${i===ans?'#1D6B2A':'#D0C8B8'}`,background:i===ans?'#D1FAE5':'white',fontSize:12,fontWeight:i===ans?800:600,color:i===ans?'#065F46':'#3D2B1F',marginBottom:5,display:'flex',alignItems:'center',gap:7}}>
@@ -505,12 +506,34 @@ function ExerciseEditModal({ exerciseId, onClose, onSaved }: { exerciseId: numbe
   const [form, setForm] = useState({ title: '', category: 'reading', difficulty: 'easy', is_active: true, lesson_id: 0, content: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [images, setImages] = useState<{name:string; url:string}[]>([])
+  const [showImagePicker, setShowImagePicker] = useState(false)
+  const [imgSearch, setImgSearch] = useState('')
+
   useEffect(() => {
     api(`/exercises/${exerciseId}`).then(data => {
       setEx(data)
       setForm({ title: data.title||'', category: data.category||'reading', difficulty: data.difficulty||'easy', is_active: data.is_active??true, lesson_id: data.lesson_id||0, content: typeof data.content==='object' ? JSON.stringify(data.content,null,2) : (data.content||'{}') })
     })
+    // Charger la galerie images
+    fetch('/api/admin/edu-images')
+      .then(r => r.json()).then(d => setImages(Array.isArray(d) ? d : [])).catch(() => {})
   }, [exerciseId])
+
+  const currentImageUrl = (() => {
+    try { return JSON.parse(form.content)?.image_url || null } catch { return null }
+  })()
+
+  const setImage = (imgName: string | null) => {
+    try {
+      const c = JSON.parse(form.content)
+      if (imgName) c.image_url = `/storage/images/edu/${imgName}`
+      else delete c.image_url
+      setForm(f => ({ ...f, content: JSON.stringify(c, null, 2) }))
+    } catch {}
+    setShowImagePicker(false)
+  }
+
   const save = async () => {
     setError(''); let content: any
     try { content = JSON.parse(form.content) } catch { return setError('JSON invalide') }
@@ -518,6 +541,9 @@ function ExerciseEditModal({ exerciseId, onClose, onSaved }: { exerciseId: numbe
     await api(`/exercises/${exerciseId}`, { method: 'PUT', body: JSON.stringify({ ...form, content }) })
     setSaving(false); onSaved()
   }
+
+  const filteredImages = images.filter(img => !imgSearch || img.name.toLowerCase().includes(imgSearch.toLowerCase()))
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
       <div style={{ background: P.card, borderRadius: 20, width: '100%', maxWidth: 1000, maxHeight: '90vh', overflow: 'auto', padding: 28, boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
@@ -543,6 +569,52 @@ function ExerciseEditModal({ exerciseId, onClose, onSaved }: { exerciseId: numbe
                     <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} /> Actif
                   </label>
                 </div>
+
+                {/* Sélecteur d'image */}
+                <div style={{ background: 'white', borderRadius: 12, padding: 12, border: `1.5px solid ${P.border}` }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 8, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Image illustrative</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {currentImageUrl ? (
+                      <img src={currentImageUrl} alt="current"
+                        style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 8, background: '#F0E8D8', border: `1px solid ${P.border}` }} />
+                    ) : (
+                      <div style={{ width: 60, height: 60, borderRadius: 8, background: '#F0E8D8', border: `1px dashed ${P.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>?</div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
+                      <button onClick={() => setShowImagePicker(!showImagePicker)}
+                        style={{ ...btnStyle(P.sidebar), fontSize: 12, padding: '6px 12px' }}>
+                        {currentImageUrl ? 'Changer image' : 'Choisir image'}
+                      </button>
+                      {currentImageUrl && (
+                        <button onClick={() => setImage(null)}
+                          style={{ ...btnStyle(P.red), fontSize: 12, padding: '6px 12px' }}>
+                          Supprimer image
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Galerie picker */}
+                  {showImagePicker && (
+                    <div style={{ marginTop: 10 }}>
+                      <input value={imgSearch} onChange={e => setImgSearch(e.target.value)}
+                        placeholder="Rechercher..." autoFocus
+                        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const, marginBottom: 8, fontSize: 12 }} />
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: 6, maxHeight: 200, overflowY: 'auto' as const }}>
+                        {filteredImages.map(img => (
+                          <div key={img.name} onClick={() => setImage(img.name)}
+                            style={{ cursor: 'pointer', borderRadius: 8, border: `2px solid ${P.border}`, overflow: 'hidden', background: 'white' }}
+                            title={img.name}>
+                            <img src={`/storage/images/edu/${img.name}`} alt={img.name}
+                              style={{ width: '100%', height: 55, objectFit: 'contain', display: 'block' }} />
+                            <div style={{ fontSize: 9, padding: '2px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, color: P.soft }}>{img.name}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 800, color: P.soft, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: 1 }}>Contenu JSON</div>
                   <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} style={taStyle} />
@@ -576,6 +648,9 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
   const [deleteTarget, setDeleteTarget] = useState<any>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false)  // confirmation modale bulk delete
+  const [bulkDifficulty, setBulkDifficulty] = useState('easy')       // difficulté sélectionnée pour bulk
+  const [bulkLessonId, setBulkLessonId] = useState('')               // lesson_id cible pour bulk move
   const [toast, setToast] = useState<string|null>(null)
   const lessonFilter = initParams?.lesson_id?.toString() || ''
   const limit = 30
@@ -606,6 +681,7 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
     else setSelected(new Set(filtered.map(e => e.id)))
   }
 
+  // Action bulk simple (activate / deactivate)
   const bulkAction = async (action: string, label: string) => {
     if (!selected.size) return
     setBulkLoading(true)
@@ -615,9 +691,52 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
     reload()
   }
 
+  // Action bulk avec payload extra (set_difficulty, move_lesson, delete confirme)
+  const bulkActionWithPayload = async (action: string, label: string, extra: Record<string, any> = {}) => {
+    if (!selected.size) return
+    setBulkLoading(true)
+    const res = await api('/exercises/bulk', { method: 'POST', body: JSON.stringify({ ids: Array.from(selected), action, ...extra }) })
+    setBulkLoading(false)
+    if (res.success === false) {
+      showToast(`Erreur : ${res.detail}`)
+    } else {
+      showToast(`${label} : ${selected.size} exercice(s)`)
+    }
+    reload()
+  }
+
   const filtered = exercises.filter(e => e.title.toLowerCase().includes(search.toLowerCase()))
   const allSelected = filtered.length > 0 && selected.size === filtered.length
   const tc = (t: string) => ({ mcq:'#3B82F6',multiple_choice:'#3B82F6',true_false:'#10B981',fill_in:'#F59E0B',match_pairs:'#8B5CF6',oral_drill:'#EC4899',handwriting:'#6B7280',sentence_order:'#F97316',clock_reading:'#06B6D4' } as Record<string,string>)[t]||'#9CA3AF'
+
+  const [importLoading, setImportLoading] = useState(false)
+  const [importResult,  setImportResult ] = useState<any>(null)
+
+  // Export CSV — déclenche un téléchargement direct
+  const exportCSV = () => {
+    const params = new URLSearchParams()
+    if (levelFilter)  params.set('level_id',  levelFilter)
+    if (lessonFilter) params.set('lesson_id', lessonFilter)
+    const a = document.createElement('a')
+    a.href = `${BASE}/exercises/export?${params}`
+    a.download = 'exercises_export.csv'
+    a.click()
+  }
+
+  // Import CSV — envoie le fichier au backend
+  const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImportLoading(true); setImportResult(null)
+    const form = new FormData()
+    form.append('file', file)
+    const res  = await fetch(`${BASE}/exercises/import`, { method: 'POST', body: form })
+    const data = await res.json()
+    setImportLoading(false); setImportResult(data)
+    if (data.inserted > 0) reload()
+    setTimeout(() => setImportResult(null), 6000)
+  }
 
   return (
     <div>
@@ -626,7 +745,31 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
           Exercices{initParams?.lesson_name && <span style={{ color: P.soft, fontWeight: 700 }}> — {initParams.lesson_name}</span>}
           <span style={{ fontSize: 15, marginLeft: 8 }}>({total.toLocaleString()})</span>
         </h2>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={exportCSV}
+            style={{ background: '#DBEAFE', color: '#1D4ED8', border: 'none', borderRadius: 10, padding: '8px 16px', fontWeight: 800, cursor: 'pointer', fontSize: 13, fontFamily: 'Nunito,sans-serif' }}>
+            Export CSV
+          </button>
+          <label style={{ background: importLoading ? P.border : '#D1FAE5', color: importLoading ? P.soft : '#065F46', borderRadius: 10, padding: '8px 16px', fontWeight: 800, cursor: importLoading ? 'default' : 'pointer', fontSize: 13, fontFamily: 'Nunito,sans-serif' }}>
+            {importLoading ? 'Import...' : 'Import CSV'}
+            <input type="file" accept=".csv" onChange={importCSV} style={{ display: 'none' }} disabled={importLoading} />
+          </label>
+        </div>
       </div>
+
+      {importResult && (
+        <div style={{ background: importResult.inserted > 0 ? '#D1FAE5' : '#FEF3C7', borderRadius: 12, padding: '12px 16px', marginBottom: 12, fontSize: 13, fontWeight: 700, color: importResult.inserted > 0 ? '#065F46' : '#92400E' }}>
+          {importResult.inserted > 0
+            ? `OK : ${importResult.inserted} exercice(s) importe(s) sur ${importResult.total_rows} ligne(s)`
+            : 'Aucun exercice importe'}
+          {importResult.errors?.length > 0 && (
+            <div style={{ marginTop: 6, fontSize: 11, opacity: .8 }}>
+              {importResult.errors.slice(0, 5).map((err: string, i: number) => <div key={i}>{err}</div>)}
+              {importResult.errors.length > 5 && <div>...et {importResult.errors.length - 5} autres erreurs</div>}
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' as const }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." style={{ ...inputStyle, flex: 1 }} />
@@ -636,10 +779,16 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
         </select>}
       </div>
 
-      {/* Bulk action bar */}
+      {/* Bulk action bar — activate / deactivate / difficulty / move / delete */}
       {selected.size > 0 && (
-        <div style={{ background: P.sidebar, borderRadius: 12, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' as const }}>
-          <span style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>{selected.size} selectionne(s)</span>
+        <div style={{ background: P.sidebar, borderRadius: 12, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+
+          {/* Compteur */}
+          <span style={{ color: 'white', fontWeight: 900, fontSize: 14, marginRight: 4 }}>
+            {selected.size} selectionne(s)
+          </span>
+
+          {/* Activer / Desactiver */}
           <button onClick={() => bulkAction('activate', 'Actives')} disabled={bulkLoading}
             style={{ background: '#D1FAE5', color: '#065F46', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
             Activer
@@ -648,12 +797,67 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
             style={{ background: '#FEF3C7', color: '#92400E', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
             Desactiver
           </button>
-          <button onClick={() => bulkAction('delete', 'Supprimes')} disabled={bulkLoading}
+
+          {/* Separateur visuel */}
+          <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,.25)', flexShrink: 0 }} />
+
+          {/* Changer difficulte */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: 700 }}>Diff:</span>
+            <select
+              value={bulkDifficulty}
+              onChange={e => setBulkDifficulty(e.target.value)}
+              style={{ padding: '5px 8px', borderRadius: 7, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'white', color: P.dark }}
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button
+              onClick={() => bulkActionWithPayload('set_difficulty', `Difficulte → ${bulkDifficulty}`, { difficulty: bulkDifficulty })}
+              disabled={bulkLoading}
+              style={{ background: '#EDE9FE', color: '#5B21B6', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
+              Appliquer
+            </button>
+          </div>
+
+          {/* Separateur visuel */}
+          <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,.25)', flexShrink: 0 }} />
+
+          {/* Deplacer vers lecon */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'rgba(255,255,255,.7)', fontSize: 12, fontWeight: 700 }}>Lecon #</span>
+            <input
+              type="number"
+              value={bulkLessonId}
+              onChange={e => setBulkLessonId(e.target.value)}
+              placeholder="ID"
+              style={{ width: 64, padding: '5px 8px', borderRadius: 7, border: 'none', fontSize: 12, fontWeight: 700, color: P.dark }}
+            />
+            <button
+              onClick={() => {
+                if (!bulkLessonId) return
+                bulkActionWithPayload('move_lesson', `Deplace → lecon #${bulkLessonId}`, { lesson_id: Number(bulkLessonId) })
+                setBulkLessonId('')
+              }}
+              disabled={bulkLoading || !bulkLessonId}
+              style={{ background: '#DBEAFE', color: '#1D4ED8', border: 'none', borderRadius: 8, padding: '6px 12px', fontWeight: 800, cursor: bulkLessonId ? 'pointer' : 'default', fontSize: 12, opacity: bulkLessonId ? 1 : .5 }}>
+              Deplacer
+            </button>
+          </div>
+
+          {/* Separateur visuel */}
+          <span style={{ width: 1, height: 24, background: 'rgba(255,255,255,.25)', flexShrink: 0 }} />
+
+          {/* Supprimer (avec confirmation) */}
+          <button onClick={() => setBulkDeleteConfirm(true)} disabled={bulkLoading}
             style={{ background: '#FEE2E2', color: P.red, border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 800, cursor: 'pointer', fontSize: 12 }}>
             Supprimer
           </button>
+
+          {/* Deselectionner */}
           <button onClick={() => setSelected(new Set())}
-            style={{ background: 'rgba(255,255,255,.2)', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 700, cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>
+            style={{ background: 'rgba(255,255,255,.15)', color: 'white', border: 'none', borderRadius: 8, padding: '6px 14px', fontWeight: 700, cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>
             Deselectionner
           </button>
         </div>
@@ -699,6 +903,39 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
       {editingId !== null && <ExerciseEditModal exerciseId={editingId} onClose={() => setEditingId(null)} onSaved={() => { setEditingId(null); reload() }} />}
       {deleteTarget && <ConfirmDelete label={`"${deleteTarget.title}"`} onConfirm={confirmDelete} onCancel={() => setDeleteTarget(null)} />}
 
+      {/* Confirmation suppression bulk */}
+      {bulkDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: P.card, borderRadius: 20, padding: 32, maxWidth: 400, textAlign: 'center', boxShadow: '0 12px 48px rgba(0,0,0,.2)' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+            <div style={{ fontWeight: 900, color: P.dark, fontSize: 17, marginBottom: 8 }}>
+              Supprimer {selected.size} exercice(s) ?
+            </div>
+            <div style={{ color: P.soft, fontSize: 13, marginBottom: 8 }}>
+              Cette action est irreversible.
+            </div>
+            <div style={{ color: '#92400E', background: '#FEF3C7', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, marginBottom: 20 }}>
+              Les tentatives associees seront egalement supprimees.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                onClick={async () => {
+                  setBulkDeleteConfirm(false)
+                  await bulkActionWithPayload('delete', 'Supprimes')
+                }}
+                disabled={bulkLoading}
+                style={{ background: P.red, color: 'white', border: 'none', borderRadius: 10, padding: '10px 24px', fontWeight: 900, cursor: 'pointer', fontSize: 14, fontFamily: 'Nunito,sans-serif' }}>
+                Supprimer definitivement
+              </button>
+              <button onClick={() => setBulkDeleteConfirm(false)}
+                style={{ background: P.border, color: P.dark, border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 800, cursor: 'pointer', fontSize: 14, fontFamily: 'Nunito,sans-serif' }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, background: '#D1FAE5', color: '#065F46', borderRadius: 14, padding: '14px 20px', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 999 }}>
           ✅ {toast}
@@ -709,9 +946,169 @@ function ExercisesScreen({ initParams }: { initParams?: any }) {
 }
 
 
+// ── IMAGES SCREEN — Galerie images éducatives ─────────────────────────────────
+function ImagesScreen() {
+  const IMG_DIR  = '/storage/images/edu'
+  const API_BASE = '/api/admin'
+
+  const [images, setImages] = useState<{name:string; url:string; used:number}[]>([])
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<string|null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [toast, setToast] = useState<string|null>(null)
+  const [usedBy, setUsedBy] = useState<any[]>([])
+  const [loadingUsed, setLoadingUsed] = useState(false)
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
+  // Charger la liste des images depuis le backend
+  const reload = () => {
+    fetch(`${API_BASE}/edu-images`)
+      .then(r => r.json())
+      .then(data => setImages(Array.isArray(data) ? data : []))
+      .catch(() => setImages([]))
+  }
+
+  React.useEffect(() => { reload() }, [])
+
+  // Charger les exercices utilisant cette image
+  const loadUsedBy = (name: string) => {
+    setLoadingUsed(true)
+    fetch(`${API_BASE}/edu-images/${encodeURIComponent(name)}/exercises`)
+      .then(r => r.json())
+      .then(data => { setUsedBy(Array.isArray(data) ? data : []); setLoadingUsed(false) })
+      .catch(() => { setUsedBy([]); setLoadingUsed(false) })
+  }
+
+  const selectImage = (name: string) => {
+    setSelected(name)
+    loadUsedBy(name)
+  }
+
+  // Remplacer une image par upload
+  const handleReplace = async (e: React.ChangeEvent<HTMLInputElement>, name: string) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setUploading(true)
+    const form = new FormData()
+    form.append('file', file)
+    form.append('name', name)
+    try {
+      const res = await fetch(`${API_BASE}/edu-images/replace`, { method: 'POST', body: form })
+      const data = await res.json()
+      if (data.success) {
+        showToast(`Image remplacee : ${name}`)
+        reload()
+      } else {
+        showToast(`Erreur : ${data.detail || 'upload echoue'}`)
+      }
+    } catch {
+      showToast('Erreur reseau')
+    }
+    setUploading(false)
+  }
+
+  const filtered = images.filter(img => !search || img.name.toLowerCase().includes(search.toLowerCase()))
+  const sel = selected ? images.find(i => i.name === selected) : null
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 900, color: P.dark }}>
+          Images educatives
+          <span style={{ fontSize: 15, marginLeft: 8, color: P.soft }}>({images.length})</span>
+        </h2>
+      </div>
+
+      <input value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="Rechercher une image..."
+        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' as const, marginBottom: 16 }} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 340px' : '1fr', gap: 20 }}>
+
+        {/* Grille images */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
+          {filtered.map(img => (
+            <div key={img.name}
+              onClick={() => selectImage(img.name)}
+              style={{ background: selected === img.name ? P.sidebar + '18' : P.card, borderRadius: 14, padding: 10, border: `2px solid ${selected === img.name ? P.sidebar : P.border}`, cursor: 'pointer', transition: 'all .15s' }}>
+              <img src={`${IMG_DIR}/${img.name}?t=${Date.now()}`} alt={img.name}
+                style={{ width: '100%', height: 90, objectFit: 'contain', borderRadius: 8, marginBottom: 6, display: 'block', background: 'white', padding: img.name.endsWith('.svg') ? 4 : 0 }}
+                onError={e => { (e.currentTarget as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="90"><rect width="100" height="90" fill="%23f0e8d8"/><text x="50" y="50" text-anchor="middle" fill="%237a6050" font-size="12">?</text></svg>' }}
+              />
+              <div style={{ fontSize: 11, fontWeight: 700, color: P.dark, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                {img.name}
+              </div>
+              {img.used > 0 && (
+                <div style={{ fontSize: 10, color: P.sidebar, fontWeight: 700, marginTop: 2 }}>
+                  {img.used} exercice(s)
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Panneau détail */}
+        {sel && (
+          <div style={{ background: P.card, borderRadius: 18, padding: 20, border: `1.5px solid ${P.border}`, position: 'sticky' as const, top: 20, height: 'fit-content' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontWeight: 900, color: P.dark, fontSize: 15 }}>
+                {sel.name}
+              </div>
+              <button onClick={() => setSelected(null)}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: P.soft }}>✕</button>
+            </div>
+
+            {/* Grande prévisualisation */}
+            <img src={`${IMG_DIR}/${sel.name}?t=${Date.now()}`} alt={sel.name}
+              style={{ width: '100%', height: 200, objectFit: 'contain', borderRadius: 12, background: 'white', marginBottom: 14, border: `1px solid ${P.border}` }} />
+
+            {/* Stats */}
+            <div style={{ background: '#D1FAE5', borderRadius: 10, padding: '8px 12px', marginBottom: 14, fontSize: 13, fontWeight: 700, color: '#065F46' }}>
+              Utilise dans {sel.used} exercice(s)
+            </div>
+
+            {/* Exercices qui utilisent cette image */}
+            {loadingUsed && <div style={{ fontSize: 12, color: P.soft, marginBottom: 10 }}>Chargement...</div>}
+            {!loadingUsed && usedBy.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: P.soft, textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 6 }}>Exercices</div>
+                <div style={{ maxHeight: 150, overflowY: 'auto' as const, display: 'grid', gap: 4 }}>
+                  {usedBy.map((ex: any) => (
+                    <div key={ex.id} style={{ fontSize: 12, color: P.dark, padding: '4px 8px', background: 'white', borderRadius: 6, border: `1px solid ${P.border}` }}>
+                      #{ex.id} {ex.title}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bouton remplacer */}
+            <label style={{ display: 'block', padding: '11px 0', borderRadius: 12, border: 'none', background: uploading ? P.border : P.accent, color: 'white', fontWeight: 800, fontSize: 14, cursor: uploading ? 'default' : 'pointer', textAlign: 'center' as const, fontFamily: 'Nunito,sans-serif' }}>
+              {uploading ? 'Upload...' : 'Remplacer image'}
+              <input type="file" accept="image/*,.svg" onChange={e => handleReplace(e, sel.name)} style={{ display: 'none' }} disabled={uploading} />
+            </label>
+
+            <div style={{ fontSize: 11, color: P.soft, marginTop: 8, textAlign: 'center' as const }}>
+              Meme nom de fichier — tous les exercices lieś seront mis a jour automatiquement.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, background: '#D1FAE5', color: '#065F46', borderRadius: 14, padding: '14px 20px', fontWeight: 800, fontSize: 14, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 999 }}>
+          {toast}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── ASSETS SCREEN ─────────────────────────────────────────────────────────────
 function AssetsScreen() {
-  const ABASE = 'http://192.168.100.106:8100/assets'
+  const ABASE = '/assets'
   const [assets, setAssets] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [resetTarget, setResetTarget] = useState<any>(null)
@@ -929,7 +1326,7 @@ function HealthScreen() {
 
 // ── BULLETIN SCREEN ──────────────────────────────────────────────────────────
 function BulletinScreen() {
-  const BBASE = 'http://192.168.100.106:8100/api'
+  const BBASE = '/api'
   const [children, setChildren] = useState<any[]>([])
   const [selChild, setSelChild] = useState<number | null>(null)
   const [bulletin, setBulletin] = useState<any>(null)
@@ -1064,7 +1461,7 @@ function LogsScreen() {
 
   // SSE stream
   useEffect(() => {
-    const es = new EventSource('http://192.168.100.106:8100/api/admin/logs/stream')
+    const es = new EventSource('/api/admin/logs/stream')
     esRef.current = es
     es.onopen = () => setConnected(true)
     es.onerror = () => setConnected(false)
@@ -1510,7 +1907,7 @@ function SchoolYearsScreen() {
 
 // ── BRIEF SCREEN ──────────────────────────────────────────────────────────────
 function BriefScreen() {
-  const MBASE = 'http://192.168.100.106:8100/api'
+  const MBASE = '/api'
   const [brief, setBrief] = useState<any>(null)
   const [config, setConfig] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -1682,6 +2079,7 @@ export default function AdminApp() {
         { id: 'curriculum' as Screen, icon: '🗂', label: 'Curriculum' },
         { id: 'exercises' as Screen, icon: '📝', label: 'Exercices' },
         { id: 'assets' as Screen, icon: '🖼', label: 'Assets' },
+        { id: 'images' as Screen, icon: '🖼', label: 'Images' },
       ]
     },
     {
@@ -1741,6 +2139,7 @@ export default function AdminApp() {
         {screen === 'curriculum' && <CurriculumScreen goTo={goTo} />}
         {screen === 'exercises' && <ExercisesScreen initParams={screenParams} />}
         {screen === 'assets' && <AssetsScreen />}
+        {screen === 'images' && <ImagesScreen />}
         {screen === 'bulletin' && <BulletinScreen />}
         {screen === 'brief' && <BriefScreen />}
         {screen === 'schoolyears' && <SchoolYearsScreen />}

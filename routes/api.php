@@ -49,6 +49,8 @@ Route::get('/mama/profile', [MamaProfileController::class, 'getProfile']);
 Route::post('/mama/profile/verify-pin', [MamaProfileController::class, 'verifyPin']);
 Route::post('/mama/profile/pin', [MamaProfileController::class, 'updatePin']);
 Route::post('/mama/profile/avatar', [MamaProfileController::class, 'updateAvatar']);
-Route::get('/mama/brief', [\App\Http\Controllers\Api\MamaController::class, 'brief']);
-Route::get('/mama/subjects/{levelId}', [\App\Http\Controllers\Api\MamaController::class, 'subjects']);
-Route::post('/mama/trigger-revision', [\App\Http\Controllers\Api\MamaController::class, 'triggerRevision']);
+// TODO: MamaController n'existe pas (cassait `php artisan route:list`). Ces endpoints sont en fait
+// servis par l'API FastAPI (port 8100). A supprimer definitivement ou recreer le controleur si besoin.
+// Route::get('/mama/brief', [\App\Http\Controllers\Api\MamaController::class, 'brief']);
+// Route::get('/mama/subjects/{levelId}', [\App\Http\Controllers\Api\MamaController::class, 'subjects']);
+// Route::post('/mama/trigger-revision', [\App\Http\Controllers\Api\MamaController::class, 'triggerRevision']);
