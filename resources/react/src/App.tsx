@@ -13,7 +13,11 @@ import type { Child } from './types/child'
 const isTV = window.location.pathname.startsWith('/tv') ||
   navigator.userAgent.toLowerCase().includes('webos') ||
   navigator.userAgent.toLowerCase().includes('smart-tv')
-const isDesktop = !isTV && window.innerWidth >= 1024
+// Seuil eleve pour reserver la disposition desktop aux vrais ecrans laptop/PC.
+// Les tablettes (jusqu'a ~1200 CSS en paysage) restent en mode mobile elargi, UX uniforme.
+const isDesktop = !isTV && window.innerWidth >= 1280
+// Largeur max du conteneur "colonne". Telephone -> 100% ecran. Tablette -> 900px.
+const SHELL_MAX_WIDTH = Math.min(900, window.innerWidth)
 const isMama = window.location.pathname.startsWith('/mama')
 const isAdmin = window.location.pathname.startsWith('/admin-react')
 
@@ -55,7 +59,7 @@ export default function App() {
   }
 
   const shell: Record<string, string | number> = {
-    maxWidth: 480, margin: '0 auto', minHeight: '100vh',
+    maxWidth: SHELL_MAX_WIDTH, margin: '0 auto', minHeight: '100vh',
     position: 'relative', overflow: 'hidden',
     boxShadow: '0 0 60px rgba(0,0,0,0.15)'
   }

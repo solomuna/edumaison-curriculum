@@ -486,8 +486,8 @@ export default function ChildHome({ child, onLogout }: Props) {
         )}
       </div>
 
-      {/* Bottom nav — always visible */}
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, background: 'var(--card)', borderTop: '2px solid var(--border)', padding: '10px 0 14px', display: 'flex', zIndex: 100 }}>
+      {/* Bottom nav — always visible. maxWidth aligne sur le shell App.tsx (720 ou ecran). */}
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: Math.min(720, window.innerWidth), background: 'var(--card)', borderTop: '2px solid var(--border)', padding: '10px 0 14px', display: 'flex', zIndex: 100 }}>
         {NAV_ITEMS.map(item => (
           <button key={item.id} onClick={() => { pushNav(); setTab(item.id as Tab) }} style={{
             flex: 1, background: 'none', border: 'none', cursor: 'pointer',
