@@ -90,6 +90,10 @@ services:
 
 networks:
   curriculum:
+    # name explicite (sans préfixe projet compose) pour que d'autres stacks
+    # puissent rejoindre ce network via `external: true` + `name: curriculum`
+    # (cf edumaison-api qui partage la DB `edumaison` hébergée ici).
+    name: curriculum
     driver: bridge
   proxy:
     external: true
