@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
 
 import { SoundService } from '../../../services/SoundService'
+import { fireSuccess } from '../../../components/SuccessFx'
 
 import type { OralDrillContent } from '../../../types/exercise'
 
@@ -239,6 +240,8 @@ export default function OralDrill({ title, instructions, content, onComplete, on
 
         SoundService.correct()
 
+        fireSuccess({ xp: 10 })
+
         MamaJudi.speak('Excellent pronunciation!')
 
       } else if (bestScore >= 50) {
@@ -401,7 +404,7 @@ export default function OralDrill({ title, instructions, content, onComplete, on
 
 
 
-      <div style={{ padding: '18px 18px', maxWidth: 480, margin: '0 auto' }}>
+      <div style={{ padding: '18px 18px', maxWidth: 640, margin: '0 auto' }}>
 
 
 
@@ -521,7 +524,7 @@ export default function OralDrill({ title, instructions, content, onComplete, on
 
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
 
-              <button onClick={() => { setScore(90); SoundService.correct() }} style={{ flex: 1, padding: '10px', borderRadius: 12, border: 'none', background: C.green, color: 'white', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+              <button onClick={(e) => { setScore(90); SoundService.correct(); const r = e.currentTarget.getBoundingClientRect(); fireSuccess({ xp: 10, x: r.left + r.width/2, y: r.top + r.height/2 }) }} style={{ flex: 1, padding: '10px', borderRadius: 12, border: 'none', background: C.green, color: 'white', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
 
                 &#128077; Good
 

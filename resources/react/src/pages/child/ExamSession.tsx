@@ -131,7 +131,7 @@ export default function ExamSession({ child, exam, onBack, onComplete }: Props) 
         </div>
 
         {/* Indicator dots */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 32, maxWidth: 360 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 32, maxWidth: 640 }}>
           {scores.map((ok, i) => (
             <div key={i} style={{
               width: 14, height: 14, borderRadius: '50%',

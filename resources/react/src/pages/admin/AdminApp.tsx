@@ -25,7 +25,7 @@ const btnStyle = (color: string, text = 'white'): React.CSSProperties => ({
   fontFamily: 'Nunito, sans-serif',
 })
 
-type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'images' | 'bulletin' | 'brief' | 'schoolyears' | 'report' | 'progress' | 'logs' | 'health'
+type Screen = 'dashboard' | 'children' | 'subjects' | 'curriculum' | 'exercises' | 'assets' | 'images' | 'bulletin' | 'brief' | 'schoolyears' | 'report' | 'progress' | 'logs' | 'health' | 'seeders'
 
 async function api(path: string, opts?: RequestInit) {
   const r = await fetch(BASE + path, { headers: { 'Content-Type': 'application/json' }, ...opts })
@@ -2059,6 +2059,93 @@ function BriefScreen() {
 
 }
 
+// ── SEEDERS ───────────────────────────────────────────────────────────────────
+// Liste et execute les seeders Python du repertoire edumaison-api/seeders/.
+function SeedersScreen() {
+  const [seeders, setSeeders] = React.useState<Array<{ name: string; size: number }>>([])
+  const [seedersDir, setSeedersDir] = React.useState<string>('')
+  const [running, setRunning] = React.useState<string | null>(null)
+  const [output, setOutput] = React.useState<Record<string, { ok: boolean; stdout: string; stderr: string; exit: number }>>({})
+
+  const load = () => {
+    fetch('/api/admin/seeders')
+      .then(r => r.json())
+      .then(d => { setSeeders(d.seeders || []); setSeedersDir(d.dir || '') })
+      .catch(() => {})
+  }
+  React.useEffect(load, [])
+
+  const run = async (name: string) => {
+    setRunning(name)
+    try {
+      const r = await fetch('/api/admin/seeders/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      const d = await r.json()
+      setOutput(prev => ({ ...prev, [name]: { ok: d.success, stdout: d.stdout || '', stderr: d.stderr || '', exit: d.exit_code ?? -1 } }))
+    } catch (e: any) {
+      setOutput(prev => ({ ...prev, [name]: { ok: false, stdout: '', stderr: String(e), exit: -1 } }))
+    } finally {
+      setRunning(null)
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 22, fontWeight: 900, color: P.dark, marginBottom: 4 }}>Seeders</div>
+        <div style={{ fontSize: 13, color: P.soft }}>
+          Scripts Python qui ajoutent des exercices en base. Idempotents (un exercice deja present est ignore).
+        </div>
+        {seedersDir && (
+          <div style={{ fontSize: 11, color: P.soft, fontFamily: 'monospace', marginTop: 6 }}>
+            {seedersDir}
+          </div>
+        )}
+      </div>
+
+      {seeders.length === 0 ? (
+        <div style={{ background: P.card, borderRadius: 12, padding: 24, color: P.soft, textAlign: 'center' }}>
+          Aucun seeder trouve, ou le service FastAPI n'a pas encore les nouvelles routes.<br/>
+          (Redemarre <code>EduMaisonAPI</code> via <code>nssm restart EduMaisonAPI</code> en admin.)
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 12 }}>
+          {seeders.map(s => {
+            const out = output[s.name]
+            const isRunning = running === s.name
+            return (
+              <div key={s.name} style={{ background: P.card, borderRadius: 14, padding: 16, border: `1px solid ${P.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div>
+                    <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 800, color: P.dark }}>{s.name}</div>
+                    <div style={{ fontSize: 11, color: P.soft, marginTop: 2 }}>{(s.size / 1024).toFixed(1)} KB</div>
+                  </div>
+                  <button onClick={() => run(s.name)} disabled={isRunning || running !== null}
+                    style={{ background: isRunning ? P.soft : P.sidebar, color: 'white', border: 'none', borderRadius: 10, padding: '8px 18px', fontWeight: 800, fontSize: 13, cursor: isRunning ? 'wait' : 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+                    {isRunning ? 'En cours...' : '▶ Lancer'}
+                  </button>
+                </div>
+                {out && (
+                  <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: out.ok ? '#F0FDF4' : '#FEF2F2', border: `1px solid ${out.ok ? '#86EFAC' : '#FCA5A5'}`, fontSize: 12, fontFamily: 'monospace' as const }}>
+                    <div style={{ fontWeight: 800, color: out.ok ? '#15803D' : '#B91C1C', marginBottom: 6 }}>
+                      {out.ok ? '✓ Succes' : `✗ Echec (exit ${out.exit})`}
+                    </div>
+                    {out.stdout && <pre style={{ whiteSpace: 'pre-wrap' as const, margin: 0, color: P.dark }}>{out.stdout}</pre>}
+                    {out.stderr && <pre style={{ whiteSpace: 'pre-wrap' as const, margin: '6px 0 0', color: '#B91C1C' }}>{out.stderr}</pre>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function AdminApp() {
   const [screen, setScreen] = useState<Screen>('dashboard')
@@ -2097,6 +2184,7 @@ export default function AdminApp() {
       items: [
         { id: 'health' as Screen, icon: '🩺', label: 'Health' },
         { id: 'logs' as Screen, icon: '📟', label: 'Logs' },
+        { id: 'seeders' as Screen, icon: '🌱', label: 'Seeders' },
       ]
     },
   ]
@@ -2147,6 +2235,7 @@ export default function AdminApp() {
         {screen === 'progress' && <ProgressScreen />}
         {screen === 'logs' && <LogsScreen />}
         {screen === 'health' && <HealthScreen />}
+        {screen === 'seeders' && <SeedersScreen />}
       </div>
     </div>
   )

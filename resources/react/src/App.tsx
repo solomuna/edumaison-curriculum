@@ -8,6 +8,7 @@ import ParentDashboard from './pages/parent/ParentDashboard'
 import TVApp from './TVApp'
 import AdminApp from './pages/admin/AdminApp'
 import DesktopApp from './DesktopApp'
+import SuccessFx from './components/SuccessFx'
 import type { Child } from './types/child'
 
 const isTV = window.location.pathname.startsWith('/tv') ||
@@ -87,6 +88,18 @@ export default function App() {
     return <ThemeProvider><div style={shell}><ChildLogin onLogin={c => { if (c && c.id) { localStorage.setItem('edumaison_session', JSON.stringify(c)) }; setChild(c) }} onParentMode={() => setMode('parent')} /></div></ThemeProvider>
   }
 
-  if (isDesktop) return <ThemeProvider><DesktopApp child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} /></ThemeProvider>
-  return <ThemeProvider><div style={shell}><ChildHome child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} /></div></ThemeProvider>
+  if (isDesktop) return (
+    <ThemeProvider>
+      <DesktopApp child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} />
+      <SuccessFx />
+    </ThemeProvider>
+  )
+  return (
+    <ThemeProvider>
+      <div style={shell}>
+        <ChildHome child={child} onLogout={() => { localStorage.removeItem('edumaison_session'); setChild(null) }} />
+      </div>
+      <SuccessFx />
+    </ThemeProvider>
+  )
 }

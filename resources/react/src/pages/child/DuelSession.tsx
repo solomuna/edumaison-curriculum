@@ -163,7 +163,7 @@ export default function DuelSession({ child, duel, onComplete }: Props) {
 
         {/* Podium si les 2 résultats sont là */}
         {duelResults.length >= 2 && (
-          <div style={{ background: '#F0E8D8', borderRadius: 20, padding: '14px 20px', marginBottom: 20, border: '1.5px solid #D0C8B8', width: '100%', maxWidth: 320 }}>
+          <div style={{ background: '#F0E8D8', borderRadius: 20, padding: '14px 20px', marginBottom: 20, border: '1.5px solid #D0C8B8', width: '100%', maxWidth: 440 }}>
             {duelResults.map((r: any, i: number) => (
               <div key={r.child_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: i < duelResults.length - 1 ? '1px solid #D0C8B8' : 'none' }}>
                 <span style={{ fontSize: 24 }}>{i === 0 ? '🥇' : '🥈'}</span>

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { SoundService } from '../../../services/SoundService'
+import { fireSuccess } from '../../../components/SuccessFx'
 
 interface HandwritingContent {
   type: 'handwriting'
@@ -133,6 +134,7 @@ export default function Handwriting({ title, instructions, content, onComplete, 
     setShowEval(false)
     if (val === 'good') {
       SoundService.correct()
+      fireSuccess({ xp: 10 })
       const msg = ENCOURAGEMENTS_GOOD[Math.floor(Math.random() * ENCOURAGEMENTS_GOOD.length)]
       MamaJudi.speak(msg)
       setTimeout(() => {
@@ -283,7 +285,7 @@ export default function Handwriting({ title, instructions, content, onComplete, 
       {/* Modal auto-evaluation */}
       {showEval && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
-          <div style={{ background: '#F0E8D8', borderRadius: 24, padding: 28, maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,.2)' }}>
+          <div style={{ background: '#F0E8D8', borderRadius: 24, padding: 28, maxWidth: 640, width: '100%', textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,.2)' }}>
             <div style={{ fontSize: 36, marginBottom: 10 }}>{'\u270D\uFE0F'}</div>
             <div style={{ fontSize: 17, fontWeight: 900, color: '#3D2B1F', marginBottom: 6 }}>
               How does it look?

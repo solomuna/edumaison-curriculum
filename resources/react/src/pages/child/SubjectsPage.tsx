@@ -184,7 +184,7 @@ export default function SubjectsPage({ child, onBack, initialSubjectName, isDesk
             <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 700 }}>Correct</div>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 300 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 560 }}>
           <button onClick={() => { setShowResult(false); setSelUnit(null) }} style={{ padding: '14px 0', borderRadius: 16, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
             Back to units
           </button>

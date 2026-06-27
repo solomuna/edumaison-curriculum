@@ -119,15 +119,15 @@ export default function BulletinPage({ child, onBack }: Props) {
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#333', textTransform: 'uppercase' }}>Ministry of Basic Education</div>
             <div style={{ fontSize: 16, fontWeight: 900, color: '#1D6B2A', marginTop: 2 }}>EduMaison</div>
-            <div style={{ fontSize: 10, color: '#666', marginTop: 1 }}>Digital Educational Platform — Yaoundé</div>
+            <div style={{ fontSize: 12, color: '#666', marginTop: 1 }}>Digital Educational Platform — Yaoundé</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg,#1D6B2A,#4A9B5F)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📚</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 10, color: '#666' }}>School Year</div>
+            <div style={{ fontSize: 12, color: '#666' }}>School Year</div>
             <div style={{ fontSize: 14, fontWeight: 900, color: '#333' }}>{data.year}</div>
-            <div style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
               {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
             </div>
           </div>
@@ -165,8 +165,8 @@ export default function BulletinPage({ child, onBack }: Props) {
               return (
                 <>
                   <tr style={{ background: '#1D6B2A' }}>
-                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', fontSize: 10, color: 'white', fontWeight: 800 }}>{comp.label}</td>
-                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', textAlign: 'center', fontSize: 10, color: 'white' }}>{comp.sur}</td>
+                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', fontSize: 12, color: 'white', fontWeight: 800 }}>{comp.label}</td>
+                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', textAlign: 'center', fontSize: 12, color: 'white' }}>{comp.sur}</td>
                     <td colSpan={3} style={{ padding: '6px 10px', border: '1px solid #ddd' }}></td>
                   </tr>
                   {compResults.map((r, ri) => {
@@ -189,15 +189,15 @@ export default function BulletinPage({ child, onBack }: Props) {
                           <strong style={{ color: scoreColor, fontSize: 13 }}>{score.toFixed(2)}</strong>
                         </td>
                         <td style={{ padding: '7px 10px', border: '1px solid #ddd', textAlign: 'center' }}>
-                          <span style={{ background: app.bg, color: app.color, padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700 }}>{appEn}</span>
+                          <span style={{ background: app.bg, color: app.color, padding: '2px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700 }}>{appEn}</span>
                         </td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd', fontSize: 10, color: '#555', lineHeight: 1.4 }}>{r.teacher_comment || '—'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd', fontSize: 12, color: '#555', lineHeight: 1.4 }}>{r.teacher_comment || '—'}</td>
                       </tr>
                     )
                   })}
                   <tr style={{ background: '#E8F4FD' }}>
-                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', fontSize: 10, color: '#555', fontStyle: 'italic' }}>Subtotal</td>
-                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', textAlign: 'center', fontSize: 10, color: '#555' }}>{comp.sur}</td>
+                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', fontSize: 12, color: '#555', fontStyle: 'italic' }}>Subtotal</td>
+                    <td style={{ padding: '6px 10px', border: '1px solid #ddd', textAlign: 'center', fontSize: 12, color: '#555' }}>{comp.sur}</td>
                     <td style={{ padding: '6px 10px', border: '1px solid #ddd', textAlign: 'center', fontSize: 12, color: '#1D4ED8', fontWeight: 900 }}>{compTotal.toFixed(2)}</td>
                     <td style={{ padding: '6px 10px', border: '1px solid #ddd', textAlign: 'center', fontSize: 11, color: '#059669', fontWeight: 700 }}>
                       Avg: {(compTotal / compResults.length).toFixed(2)}/20
@@ -225,7 +225,7 @@ export default function BulletinPage({ child, onBack }: Props) {
           <div style={{ textAlign: 'center', background: 'var(--card2)', borderRadius: 10, padding: '10px 6px' }}>
             <div style={{ fontSize: 9, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class Average</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: '#6B7280', marginTop: 4 }}>
-              {data.class_average ? data.class_average.toFixed(2) : '—'}<span style={{ fontSize: 10, color: '#aaa' }}>/20</span>
+              {data.class_average ? data.class_average.toFixed(2) : '—'}<span style={{ fontSize: 12, color: '#aaa' }}>/20</span>
             </div>
           </div>
           <div style={{ textAlign: 'center', background: 'var(--card2)', borderRadius: 10, padding: '10px 6px' }}>

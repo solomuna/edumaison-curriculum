@@ -11,6 +11,7 @@ import { MamaJudi } from '../../../services/MamaJudi'
 
 
 import { SoundService } from '../../../services/SoundService'
+import { fireSuccess } from '../../../components/SuccessFx'
 
 
 
@@ -331,7 +332,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-  const choose = (opt: string, idx: number) => {
+  const choose = (opt: string, idx: number, ev?: React.MouseEvent<HTMLElement>) => {
 
 
 
@@ -351,7 +352,16 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-    if (correct) { MamaJudi.correct(); SoundService.correct() }
+    if (correct) {
+      MamaJudi.correct(); SoundService.correct()
+      // Celebration "exageree" : confetti + +XP flottant depuis la zone tapee
+      const rect = ev?.currentTarget?.getBoundingClientRect?.()
+      fireSuccess({
+        xp: 10,
+        x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2,
+        y: rect ? rect.top + rect.height / 2 : window.innerHeight / 2,
+      })
+    }
 
 
 
@@ -972,7 +982,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-              <div key={i} onClick={() => choose(opt, i)} style={{
+              <div key={i} onClick={(e) => choose(opt, i, e)} style={{
 
 
 

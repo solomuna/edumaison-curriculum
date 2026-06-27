@@ -1,5 +1,6 @@
 // TrueFalse.tsx — Moteur Vrai/Faux (TRUE/FALSE en anglais)
-import { useState } from "react"
+import React, { useState } from "react"
+import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
@@ -10,11 +11,20 @@ export default function TrueFalse({ content, onComplete }: Props) {
   const [answered, setAnswered] = useState(false)
   const [chosen, setChosen] = useState<boolean | null>(null)
 
-  const answer = (v: boolean) => {
+  const answer = (v: boolean, ev?: React.MouseEvent<HTMLElement>) => {
     if (answered) return
     setAnswered(true)
     setChosen(v)
     const ok = v === content.answer
+    if (ok) {
+      // Celebration "exageree" : confetti + +XP depuis le bouton cliquE
+      const rect = ev?.currentTarget?.getBoundingClientRect?.()
+      fireSuccess({
+        xp: 10,
+        x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2,
+        y: rect ? rect.top + rect.height / 2 : window.innerHeight / 2,
+      })
+    }
     setTimeout(() => onComplete(ok), 1000)
   }
 
@@ -55,10 +65,10 @@ export default function TrueFalse({ content, onComplete }: Props) {
 
       {/* Boutons TRUE / FALSE */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <button onClick={() => answer(true)} disabled={answered} style={btnStyle(true)}>
+        <button onClick={(e) => answer(true, e)} disabled={answered} style={btnStyle(true)}>
           TRUE {'\u2713'}
         </button>
-        <button onClick={() => answer(false)} disabled={answered} style={btnStyle(false)}>
+        <button onClick={(e) => answer(false, e)} disabled={answered} style={btnStyle(false)}>
           FALSE {'\u2717'}
         </button>
       </div>

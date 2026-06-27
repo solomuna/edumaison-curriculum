@@ -92,11 +92,11 @@ export default function RemediationPage({ child, onBack }: Props) {
           <button
             onClick={() => { setActiveEx(null); setActivePlan(null) }}
             style={{ background: 'var(--card)', border: '1.5px solid #D0C8B8', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C47A3C', cursor: 'pointer' }}>
-            \u2190 Back
+            {'\u2190'} Back
           </button>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-dark)' }}>
-              {activePlan?.subject} \u2014 Remediation
+              {activePlan?.subject} {'\u2014'} Remediation
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-soft)' }}>
               Exercise {sessionIdx + 1} / {activePlan?.exercises.length}
@@ -132,7 +132,7 @@ export default function RemediationPage({ child, onBack }: Props) {
 
     return (
       <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Nunito,system-ui,sans-serif' }}>
-        <div style={{ background: 'white', borderRadius: 24, padding: 32, maxWidth: 380, width: '100%', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,.08)' }}>
+        <div style={{ background: 'white', borderRadius: 24, padding: 32, maxWidth: 500, width: '100%', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,.08)' }}>
           <div style={{ fontSize: 52, marginBottom: 12 }}>
             {great ? '\uD83C\uDF1F' : '\uD83D\uDCAA'}
           </div>
@@ -181,11 +181,11 @@ export default function RemediationPage({ child, onBack }: Props) {
         <button
           onClick={onBack}
           style={{ background: 'var(--card)', border: '1.5px solid #D0C8B8', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C47A3C', cursor: 'pointer' }}>
-          \u2190
+          {'\u2190'}
         </button>
         <div>
           <div style={{ fontSize: 16, fontWeight: 900, color: '#3D2B1F' }}>Remediation Plan</div>
-          <div style={{ fontSize: 12, color: '#7A6050' }}>{child.first_name} \u2014 Subjects needing extra practice</div>
+          <div style={{ fontSize: 12, color: '#7A6050' }}>{child.first_name} {'\u2014'} Subjects needing extra practice</div>
         </div>
       </div>
 
@@ -199,7 +199,7 @@ export default function RemediationPage({ child, onBack }: Props) {
       {/* Aucune matière faible */}
       {!loading && data?.status === 'excellent' && (
         <div style={{ padding: 32, textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>'\uD83C\uDF1F'</div>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>{'\uD83C\uDF1F'}</div>
           <div style={{ fontSize: 18, fontWeight: 900, color: '#3D2B1F', marginBottom: 8 }}>Excellent results!</div>
           <div style={{ fontSize: 13, color: '#7A6050' }}>No remediation needed. Keep up the great work!</div>
         </div>

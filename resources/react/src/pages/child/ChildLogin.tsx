@@ -168,7 +168,7 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
       <div style={{ background: '#87CEEB', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, system-ui, sans-serif', padding: '24px 20px' }}>
         <MamaJudiHead />
         <div onClick={() => speakText('Enter your secret PIN')}
-          style={{ background: '#F5EDD8', borderRadius: 16, padding: '12px 24px', margin: '14px 0', textAlign: 'center', border: '2px solid #1D6B2A', maxWidth: 280, cursor: 'pointer' }}>
+          style={{ background: '#F5EDD8', borderRadius: 16, padding: '12px 24px', margin: '14px 0', textAlign: 'center', border: '2px solid #1D6B2A', maxWidth: 560, cursor: 'pointer' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#3D2B1F' }}>Enter your secret PIN</div>
           <div style={{ fontSize: 12, color: '#7A6050', marginTop: 3 }}>&#128266; tap to hear again</div>
         </div>
@@ -209,7 +209,7 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 6 }}>
         <MamaJudiHead />
         <div onClick={() => speakText('Welcome! Who is learning today?')}
-          style={{ background: '#F5EDD8', borderRadius: 18, padding: '12px 20px', margin: '10px 18px', border: '2px solid #1D6B2A', textAlign: 'center', maxWidth: 320, width: '100%', boxSizing: 'border-box', cursor: 'pointer' }}>
+          style={{ background: '#F5EDD8', borderRadius: 18, padding: '12px 20px', margin: '10px 18px', border: '2px solid #1D6B2A', textAlign: 'center', maxWidth: 440, width: '100%', boxSizing: 'border-box', cursor: 'pointer' }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: '#3D2B1F' }}>Welcome! Who is learning today?</div>
           <div style={{ fontSize: 12, color: '#7A6050', marginTop: 3 }}>&#128266; tap to hear again</div>
         </div>
@@ -263,7 +263,7 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '0 32px' }}>
           <div style={{ background: '#F5EDD8', borderRadius: 24, padding: '28px 24px',
-            width: '100%', maxWidth: 360, textAlign: 'center',
+            width: '100%', maxWidth: 640, textAlign: 'center',
             boxShadow: '0 8px 40px rgba(0,0,0,0.25)' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
             <div style={{ fontSize: 18, fontWeight: 900, color: '#3D2B1F', marginBottom: 8 }}>Quit EduMaison?</div>

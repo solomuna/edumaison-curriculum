@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Confetti from '../../../components/Confetti'
+import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Pair {
   word?: string
@@ -55,6 +56,7 @@ export default function MatchPairs({ content, onComplete }: Props) {
     })
     setResult(ok)
     setChecked(true)
+    if (ok) fireSuccess({ xp: 10 })
   }
 
   const isEmojiMode = pairs.length > 0 && pairs.every(p => (p.image || '').length <= 4)

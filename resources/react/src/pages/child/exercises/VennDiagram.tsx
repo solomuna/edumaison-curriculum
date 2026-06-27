@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
@@ -40,6 +41,7 @@ export default function VennDiagram({ content, onComplete }: Props) {
     })
     setResult(ok)
     setChecked(true)
+    if (ok) fireSuccess({ xp: 10 })
     setTimeout(() => onComplete(ok), 1200)
   }
 
@@ -89,7 +91,7 @@ export default function VennDiagram({ content, onComplete }: Props) {
       )}
 
       {/* Venn diagram */}
-      <div style={{ position: 'relative', marginBottom: 14, maxWidth: 420, margin: '0 auto 14px' }}>
+      <div style={{ position: 'relative', marginBottom: 14, maxWidth: 560, margin: '0 auto 14px' }}>
         <svg viewBox="0 0 320 180" style={{ width: '100%', height: 'auto' }}>
           <ellipse cx="120" cy="80" rx="105" ry="65" fill="#DBEAFE" fillOpacity="0.7" stroke="#3B82F6" strokeWidth="2.5"/>
           <ellipse cx="200" cy="80" rx="105" ry="65" fill="#FEF3C7" fillOpacity="0.7" stroke="#F59E0B" strokeWidth="2.5"/>

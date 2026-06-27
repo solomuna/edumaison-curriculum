@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Confetti from '../../../components/Confetti'
 import { MamaJudi } from '../../../services/MamaJudi'
+import { fireSuccess } from '../../../components/SuccessFx'
 
 interface FillInItem {
   prompt?: string
@@ -63,8 +64,13 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
     setUserInput(input.trim())  // garder la saisie avant reset
     setFeedback(correct ? 'correct' : 'wrong')
     setScores([...scores, correct])
-    if (correct) MamaJudi.speak('Correct! Well done!')
-    else MamaJudi.speak('The answer is ' + item.answer)
+    if (correct) {
+      MamaJudi.speak('Correct! Well done!')
+      // Celebration "exageree" : confetti + +XP au centre de l'ecran
+      fireSuccess({ xp: 10 })
+    } else {
+      MamaJudi.speak('The answer is ' + item.answer)
+    }
   }
 
   const next = () => {

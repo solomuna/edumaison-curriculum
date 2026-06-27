@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
@@ -89,6 +90,7 @@ export default function Geometry({ content, onComplete }: Props) {
   const check = () => {
     if (sel === null) return
     setChecked(true)
+    if (sel === ans) fireSuccess({ xp: 10 })
     setTimeout(() => onComplete(sel === ans), 1200)
   }
 

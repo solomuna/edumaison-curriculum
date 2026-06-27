@@ -10,6 +10,7 @@ import ExamSession from './ExamSession'
 import DuelSession from './DuelSession'
 import BulletinPage from './BulletinPage'
 import RevisionPage from './RevisionPage'
+import RemediationPage from './RemediationPage'
 import { getExercisesForChild, getMoreExercisesForChild, saveAttempt } from '../../services/api'
 import { useStreak } from '../../hooks/useStreak'
 import { useOfflineSync } from '../../hooks/useOfflineSync'
@@ -28,7 +29,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 interface Props { child: Child; onLogout: () => void }
-type Tab = 'home' | 'subjects' | 'progress' | 'profile' | 'bulletin' | 'review'
+type Tab = 'home' | 'subjects' | 'progress' | 'profile' | 'bulletin' | 'review' | 'remediation'
 
 // Subject icons as unicode escapes - no emoji literals
 const SUBJECT_ICONS: Record<string, string> = {
@@ -64,11 +65,22 @@ interface LeaderEntry {
 
 function MiniLeaderboard({ child }: { child: Child }) {
   const [entries, setEntries] = useState<LeaderEntry[]>([])
+  // Map id -> avatar (charge en parallele depuis /api/children)
+  const [avatars, setAvatars] = useState<Record<number, string>>({})
 
   useEffect(() => {
     fetch(`/api/leaderboard/child/${child.id}`)
       .then(r => r.json())
       .then(data => setEntries(Array.isArray(data) ? data : []))
+      .catch(() => {})
+    fetch('/api/children')
+      .then(r => r.json())
+      .then((data: Array<{ id: number; avatar?: string }>) => {
+        if (!Array.isArray(data)) return
+        const map: Record<number, string> = {}
+        for (const c of data) if (c.avatar) map[c.id] = '/storage/' + c.avatar
+        setAvatars(map)
+      })
       .catch(() => {})
   }, [child.id])
 
@@ -86,28 +98,36 @@ function MiniLeaderboard({ child }: { child: Child }) {
           border: e.is_current ? '1.5px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.15)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: 20 }}>{medals[i] || ''}</div>
-          <div style={{ fontSize: 15, fontWeight: 900, color: 'white', marginTop: 2 }}>
+          {avatars[e.id] ? (
+            <img src={avatars[e.id]} alt={e.name} style={{
+              width: 42, height: 42, borderRadius: '50%', objectFit: 'cover',
+              border: e.is_current ? '2px solid #FFE45D' : '2px solid rgba(255,255,255,0.35)',
+              display: 'block', margin: '0 auto'
+            }}/>
+          ) : (
+            <div style={{ fontSize: 28, lineHeight: 1 }}>{medals[i] || ''}</div>
+          )}
+          <div style={{ fontSize: 14, fontWeight: 900, color: 'white', marginTop: 4 }}>
             {e.name.split(' ')[0]}
           </div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{e.xp}xp</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)' }}>{BOLT}{e.streak}j</div>
+          {e.streak > 0 && <div style={{ fontSize: 11, color: '#FFE45D' }}>{BOLT}{e.streak}j</div>}
         </div>
       ))}
     </div>
   )
 }
 
-function MamaJudiSmall() {
+function MamaJudiSmall({ size = 76 }: { size?: number } = {}) {
   const [src, setSrc] = React.useState<string | null>(null)
   React.useEffect(() => {
     fetch('/api/mama/profile').then(r => r.json()).then(d => {
       if (d.avatar) setSrc('/storage/' + d.avatar)
     }).catch(() => {})
   }, [])
-  if (src) return <img src={src} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.3)' }} />
+  if (src) return <img src={src} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '3px solid #1D6B2A', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} />
   return (
-    <svg viewBox="0 0 60 60" width="52" height="52" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 60 60" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
       <circle cx="30" cy="30" r="30" fill="#C8874A"/>
       <circle cx="30" cy="26" r="16" fill="#A06830"/>
       <circle cx="24" cy="23" r="3" fill="#1A0A00"/>
@@ -125,7 +145,7 @@ function MamaJudiSmall() {
 export default function ChildHome({ child, onLogout }: Props) {
   const [tab, setTab] = useState<Tab>(() => {
     const saved = localStorage.getItem('edumaison_tab_' + child.id)
-    const valid = ['home', 'subjects', 'progress', 'profile', 'bulletin', 'review']
+    const valid = ['home', 'subjects', 'progress', 'profile', 'bulletin', 'review', 'remediation']
     return (saved && valid.includes(saved) ? saved : 'home') as Tab
   })
   const [exercises, setExercises] = useState<(Exercise & { subject: string })[]>([])
@@ -144,6 +164,14 @@ export default function ChildHome({ child, onLogout }: Props) {
   const [activeDuelData, setActiveDuelData] = useState<any>(null)
   const streakData = useStreak(child)
   const { isOnline, syncPending } = useOfflineSync(child)
+  // Plan de remediation (calcule depuis les bulletins reels : school_results < 12/20)
+  const [remediation, setRemediation] = useState<{ status: string; plans: Array<{ subject: string; average: number; priority: string }> } | null>(null)
+  useEffect(() => {
+    fetch(`/api/remediation/child/${child.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setRemediation(d) })
+      .catch(() => {})
+  }, [child.id])
 
   // Refs pour eviter stale closure dans popstate handler
   const activeRef = useRef(active)
@@ -164,7 +192,7 @@ export default function ChildHome({ child, onLogout }: Props) {
   useEffect(() => {
     // Restaurer le tab actif apres actualisation
     const saved = localStorage.getItem('edumaison_tab_' + child.id)
-    if (saved && ['home','subjects','progress','profile','bulletin','review'].includes(saved)) {
+    if (saved && ['home','subjects','progress','profile','bulletin','review','remediation'].includes(saved)) {
       setTab(saved as Tab)
     }
     window.history.pushState({ sentinel: true }, '')
@@ -263,6 +291,16 @@ export default function ChildHome({ child, onLogout }: Props) {
     setHasMore(hm)
     loadingMoreRef.current = false
     setLoadingMore(false)
+    // Cascade : si la sentinelle est toujours dans le viewport ET qu'il reste des pages,
+    // on enchaine. Sinon l'utilisateur restait coince a la page 2 quand le contenu charge
+    // ne suffisait pas a faire scroller la page (cas tablette / page courte).
+    setTimeout(() => {
+      if (!hm) return
+      const el = sentinelRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      if (rect.top < window.innerHeight + 200) loadMoreExercises()
+    }, 250)
   }
 
   // IntersectionObserver -- charge plus quand sentinel visible
@@ -311,8 +349,8 @@ export default function ChildHome({ child, onLogout }: Props) {
   const judiMsg = loading
     ? 'Loading your activities...'
     : remaining > 0
-    ? remaining + ' activit' + (remaining > 1 ? 'ies' : 'y') + " to go today. Let's go!"
-    : 'Well done! You completed everything!'
+    ? `${remaining} activit${remaining > 1 ? 'ies' : 'y'} to go today. Let's go!`
+    : 'You completed everything! Well done!'
 
   const firstName = child.name.split(' ')[0]
 
@@ -333,6 +371,7 @@ export default function ChildHome({ child, onLogout }: Props) {
       {tab === 'profile'  && <ProfilePage  child={child} onLogout={onLogout} onBack={() => setTab('home')} />}
       {tab === 'bulletin' && <BulletinPage  child={child} onBack={() => setTab('home')} />}
       {tab === 'review'   && <RevisionPage  child={child} onBack={() => setTab('home')} />}
+      {tab === 'remediation' && <RemediationPage child={child} onBack={() => setTab('home')} />}
 
       {/* Home content */}
       {tab === 'home' && (
@@ -362,11 +401,32 @@ export default function ChildHome({ child, onLogout }: Props) {
           </div>
 
           <div style={{ padding: '16px 18px 0' }}>
-            {/* Mama Judi */}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 16 }}>
-              <MamaJudiSmall />
-              <div style={{ background: 'var(--card)', borderRadius: 16, borderTopLeftRadius: 4, padding: '12px 14px', flex: 1, border: '2px solid #1D6B2A' }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-dark)', lineHeight: 1.4 }}>{judiMsg}</div>
+            {/* Mama Judi -- presente, bulle de dialogue avec pointe */}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+              <MamaJudiSmall size={76} />
+              <div style={{
+                position: 'relative', background: 'var(--card)', borderRadius: 18, padding: '14px 16px',
+                flex: 1, border: '2px solid #1D6B2A', boxShadow: '0 2px 10px rgba(29,107,42,0.08)'
+              }}>
+                {/* pointe de la bulle (triangle) vers Mama Judi a gauche */}
+                <span style={{
+                  position: 'absolute', left: -10, top: '50%', transform: 'translateY(-50%)',
+                  width: 0, height: 0,
+                  borderTop: '8px solid transparent', borderBottom: '8px solid transparent',
+                  borderRight: '10px solid #1D6B2A'
+                }} />
+                <span style={{
+                  position: 'absolute', left: -7, top: '50%', transform: 'translateY(-50%)',
+                  width: 0, height: 0,
+                  borderTop: '6px solid transparent', borderBottom: '6px solid transparent',
+                  borderRight: '8px solid var(--card)'
+                }} />
+                {/* Prenom en GROS, accroche claire */}
+                <div style={{ fontSize: 22, fontWeight: 900, color: '#1D6B2A', lineHeight: 1.1, marginBottom: 4 }}>
+                  Hey {firstName}!
+                </div>
+                {/* Message Mama Judi en taille normale */}
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-dark)', lineHeight: 1.35 }}>{judiMsg}</div>
                 <div onClick={() => {
                   if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel()
@@ -374,20 +434,48 @@ export default function ChildHome({ child, onLogout }: Props) {
                     u.lang = 'en-GB'; u.rate = 0.9
                     window.speechSynthesis.speak(u)
                   }
-                }} style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, cursor: 'pointer' }}>
+                }} style={{ fontSize: 12, color: '#1D6B2A', marginTop: 6, cursor: 'pointer', fontWeight: 700 }}>
                   {SPEAKER} tap to hear again
                 </div>
               </div>
             </div>
 
-            {/* Child name */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-dark)' }}>{firstName}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-soft)', marginTop: 1 }}>{child.level} · MARIO Nursery & Primary School</div>
+            {/* Niveau seul (le prenom est dans la bulle Mama Judi maintenant) */}
+            <div style={{ fontSize: 12, color: 'var(--text-soft)', marginTop: -6, marginBottom: 16, marginLeft: 4 }}>
+              {child.level}
             </div>
 
             {/* Exam banner */}
             <ExamBanner child={child} onStartExam={setActiveExam} />
+
+            {/* Plan de remediation -- visible UNIQUEMENT si l'enfant a des lacunes (bulletin < 12/20) */}
+            {remediation && remediation.status === 'needs_work' && remediation.plans.length > 0 && (() => {
+              const critical = remediation.plans.filter(p => p.priority === 'critical').length
+              const tone = critical > 0
+                ? { bg: '#FEE2E2', border: '#DC2626', accent: '#991B1B', emoji: '🚨' }
+                : { bg: '#FEF3C7', border: '#D97706', accent: '#92400E', emoji: '⚠️' }
+              const topSubjects = remediation.plans.slice(0, 3).map(p => p.subject).join(' · ')
+              return (
+                <div onClick={() => { pushNav(); setTab('remediation') }} style={{
+                  background: tone.bg, borderRadius: 18, padding: '14px 16px',
+                  marginBottom: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
+                  border: `2px solid ${tone.border}`,
+                  boxShadow: `0 2px 12px ${tone.border}22`
+                }}>
+                  <div style={{ fontSize: 30, lineHeight: 1, flexShrink: 0 }}>{tone.emoji}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: tone.accent, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 2 }}>
+                      Plan de remédiation
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: '#1F1A14', lineHeight: 1.25 }}>
+                      {remediation.plans.length} matière{remediation.plans.length > 1 ? 's' : ''} à rattraper
+                    </div>
+                    <div style={{ fontSize: 11, color: tone.accent, marginTop: 2, fontWeight: 700 }}>{topSubjects}</div>
+                  </div>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: tone.border, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16, fontWeight: 900 }}>{ARROW}</div>
+                </div>
+              )
+            })()}
 
             {/* Today's activity */}
             {!loading && exercises.find(e => !completed.includes(e.id)) && (() => {
@@ -411,67 +499,47 @@ export default function ChildHome({ child, onLogout }: Props) {
               )
             })()}
 
-            {/* Priority subjects */}
-            {prioritySubjects.length > 0 && (
-              <>
-                <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
-                  PRIORITY SUBJECTS
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                  {prioritySubjects.map(([subject, exs]) => {
-                    const done = exs.filter(e => completed.includes(e.id)).length
-                    const pct = Math.round(done / exs.length * 100)
-                    const icon = SUBJECT_ICONS[subject] || '\u{1F4CB}'
-                    const badgeLabel = pct >= 70 ? 'Good' : pct >= 40 ? 'Watch' : 'Urgent'
-                    const badgeBg = pct >= 70 ? '#4CAF50' : pct >= 40 ? '#F59E0B' : '#CE1126'
-                    return (
-                      <div key={subject} onClick={() => { pushNav(); setOpenSubjectName(subject); setTab('subjects') }} style={{ background: 'var(--card)', borderRadius: 16, padding: '14px 12px', cursor: 'pointer', border: '1.5px solid var(--border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                          <span style={{ fontSize: 24 }}>{icon}</span>
-                          <span style={{ background: badgeBg, color: 'white', borderRadius: 20, padding: '2px 8px', fontSize: 10, fontWeight: 800 }}>{badgeLabel}</span>
+            {/* Toutes les matieres -- grille responsive, prioritaires (moins avancees) en premier */}
+            {Object.keys(bySubject).length > 0 && (() => {
+              const allSubjects = Object.entries(bySubject).map(([subject, exs]) => {
+                const done = exs.filter(e => completed.includes(e.id)).length
+                const pct = exs.length > 0 ? Math.round(done / exs.length * 100) : 0
+                return { subject, exs, done, pct }
+              })
+              // tri : moins avance d'abord (plus prioritaire pour reprendre)
+              allSubjects.sort((a, b) => a.pct - b.pct)
+              return (
+                <>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
+                    TES MATIÈRES
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                    gap: 10, marginBottom: 16
+                  }}>
+                    {allSubjects.map(({ subject, pct }) => {
+                      const icon = SUBJECT_ICONS[subject] || '\u{1F4CB}'
+                      const barColor = pct >= 70 ? '#4CAF50' : pct >= 40 ? '#F59E0B' : '#1D6B2A'
+                      return (
+                        <div key={subject} onClick={() => { pushNav(); setOpenSubjectName(subject); setTab('subjects') }} style={{
+                          background: 'var(--card)', borderRadius: 16, padding: '14px 10px',
+                          cursor: 'pointer', border: '1.5px solid var(--border)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 6
+                        }}>
+                          <span style={{ fontSize: 36, lineHeight: 1 }}>{icon}</span>
+                          <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-dark)', lineHeight: 1.2, minHeight: 28 }}>{subject}</div>
+                          <div style={{ width: '100%', height: 5, background: 'var(--border)', borderRadius: 3 }}>
+                            <div style={{ height: 5, borderRadius: 3, background: barColor, width: pct + '%' }}/>
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--text-soft)', fontWeight: 700 }}>{pct}%</div>
                         </div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dark)', marginBottom: 4, lineHeight: 1.2 }}>{subject}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 6 }}>{done * 10}pts · {pct}%</div>
-                        <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
-                          <div style={{ height: 5, borderRadius: 3, background: '#1D6B2A', width: pct + '%' }}/>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Other subjects */}
-            {Object.keys(bySubject).length > 4 && (
-              <>
-                <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--text-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
-                  OTHER SUBJECTS - TAP TO PRACTISE
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                  {Object.entries(bySubject).slice(4).map(([subject, exs]) => {
-                    const done = exs.filter(e => completed.includes(e.id)).length
-                    const pct = Math.round(done / exs.length * 100)
-                    const icon = SUBJECT_ICONS[subject] || '\u{1F4CB}'
-                    const badgeLabel = pct >= 70 ? 'Good' : 'Watch'
-                    const badgeBg = pct >= 70 ? '#4CAF50' : '#F59E0B'
-                    return (
-                      <div key={subject} onClick={() => { pushNav(); setOpenSubjectName(subject); setTab('subjects') }} style={{ background: 'var(--card)', borderRadius: 16, padding: '14px 12px', cursor: 'pointer', border: '1.5px solid var(--border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                          <span style={{ fontSize: 24 }}>{icon}</span>
-                          <span style={{ background: badgeBg, color: 'white', borderRadius: 20, padding: '2px 8px', fontSize: 10, fontWeight: 800 }}>{badgeLabel}</span>
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-dark)', marginBottom: 4, lineHeight: 1.2 }}>{subject}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 6 }}>{done * 10}pts · {pct}%</div>
-                        <div style={{ height: 5, background: 'var(--border)', borderRadius: 3 }}>
-                          <div style={{ height: 5, borderRadius: 3, background: '#1D6B2A', width: pct + '%' }}/>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
+                      )
+                    })}
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </>
       )}
@@ -511,7 +579,7 @@ export default function ChildHome({ child, onLogout }: Props) {
         }}>
           <div style={{
             background: 'white', borderRadius: 24, padding: '28px 24px',
-            width: '100%', maxWidth: 360, textAlign: 'center'
+            width: '100%', maxWidth: 480, textAlign: 'center'
           }}>
             <div style={{ fontSize: 52, marginBottom: 12 }}>⚔️</div>
             <div style={{ fontSize: 28, fontWeight: 900, color: '#3D2B1F', marginBottom: 8 }}>Duel !</div>
@@ -550,7 +618,7 @@ export default function ChildHome({ child, onLogout }: Props) {
         }}>
           <div style={{
             background: 'white', borderRadius: 24, padding: '28px 24px',
-            width: '100%', maxWidth: 360, textAlign: 'center'
+            width: '100%', maxWidth: 480, textAlign: 'center'
           }}>
             <div style={{ fontSize: 52, marginBottom: 12 }}>📚</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: '#2D1B0E', marginBottom: 8 }}>Revision du soir !</div>
@@ -592,7 +660,7 @@ export default function ChildHome({ child, onLogout }: Props) {
         }}>
           <div style={{
             background: 'var(--card)', borderRadius: 24, padding: '28px 24px',
-            width: '100%', maxWidth: 360, textAlign: 'center',
+            width: '100%', maxWidth: 480, textAlign: 'center',
             boxShadow: '0 8px 40px rgba(0,0,0,0.25)'
           }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>

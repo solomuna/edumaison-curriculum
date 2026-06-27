@@ -47,6 +47,7 @@ const T = {
     duel_exercises: "Nombre d'exercices", duel_duration: 'Durée',
     start_duel: 'Démarrer le duel !', sent: 'Envoyé ! Les enfants vont recevoir la révision.',
     duel_sent: 'Duel créé ! Les enfants vont être notifiés.', back: '← Retour',
+    reset: 'Réinitialiser', reset_confirm: 'Réinitialiser tous les exercices, examens et duels de %name% ? Les bulletins seront conservés.', reset_done: 'Réinitialisation effectuée — les exercices sont à nouveau disponibles.', reset_fail: 'Échec de la réinitialisation. Réessaie.',
     minutes: 'min', pin_title: 'Espace Mama Judi', pin_sub: 'Entrez votre code PIN',
     pin_error: 'Code incorrect', profile: 'Mon Profil',
     change_photo: 'Changer ma photo', change_pin: 'Changer mon PIN',
@@ -77,6 +78,7 @@ const T = {
     duel_exercises: 'Number of exercises', duel_duration: 'Duration',
     start_duel: 'Start the Duel!', sent: 'Sent! Children will receive the revision.',
     duel_sent: 'Duel created! Children will be notified.', back: '← Back',
+    reset: 'Reset', reset_confirm: 'Reset all exercises, exams and duels for %name%? Report cards are kept.', reset_done: 'Reset done — exercises are available again.', reset_fail: 'Reset failed. Try again.',
     minutes: 'min', pin_title: 'Mama Judi Space', pin_sub: 'Enter your PIN code',
     pin_error: 'Incorrect PIN', profile: 'My Profile',
     change_photo: 'Change my photo', change_pin: 'Change my PIN',
@@ -276,8 +278,45 @@ function BriefScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
               </div>
             </div>
           )}
+          {/* Actions : reset progres */}
+          <ResetChildButton child={c} t={t} />
         </div>
       ))}
+    </div>
+  )
+}
+
+// Bouton "Reinitialiser" -- supprime exercise_attempts / exams / duels pour cet enfant.
+// Garde school_results et remediation. Endpoint : POST /api/admin/children/{id}/reset.
+function ResetChildButton({ child, t }: { child: ChildBrief; t: typeof T['fr'] }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'fail'>('idle')
+  const handle = async () => {
+    const msg = t.reset_confirm.replace('%name%', child.name)
+    if (!window.confirm(msg)) return
+    setState('busy')
+    try {
+      const r = await fetch(`/api/admin/children/${child.id}/reset`, { method: 'POST' })
+      if (!r.ok) throw new Error('http ' + r.status)
+      setState('done')
+      setTimeout(() => setState('idle'), 4000)
+    } catch {
+      setState('fail')
+      setTimeout(() => setState('idle'), 4000)
+    }
+  }
+  const colors = state === 'done'
+    ? { bg: '#D1FAE5', color: '#065F46', border: '#10B981' }
+    : state === 'fail'
+    ? { bg: '#FEE2E2', color: P.red, border: '#FCA5A5' }
+    : { bg: 'transparent', color: P.soft, border: P.border }
+  const label = state === 'busy' ? '…' : state === 'done' ? '✓ ' + t.reset_done : state === 'fail' ? t.reset_fail : '↻ ' + t.reset
+  return (
+    <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+      <button onClick={handle} disabled={state === 'busy'} style={{
+        background: colors.bg, color: colors.color, border: `1.5px solid ${colors.border}`,
+        borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 800,
+        cursor: state === 'busy' ? 'wait' : 'pointer', fontFamily: 'Nunito, sans-serif'
+      }}>{label}</button>
     </div>
   )
 }
@@ -805,7 +844,7 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: P.bg, fontFamily: 'Nunito, system-ui, sans-serif', maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column' as const }}>
+    <div style={{ minHeight: '100vh', background: P.bg, fontFamily: 'Nunito, system-ui, sans-serif', maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column' as const }}>
       {/* Header */}
       <div style={{ background: P.brown, padding: '16px 20px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -847,7 +886,7 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
       </div>
 
       {/* Bottom nav */}
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, background: P.white, borderTop: '1.5px solid ' + P.border, display: 'flex', zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 640, background: P.white, borderTop: '1.5px solid ' + P.border, display: 'flex', zIndex: 100 }}>
         {NAV.map(item => (
           <button key={item.id} onClick={() => setScreen(item.id)}
             style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', padding: '10px 0 14px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 3, color: screen === item.id ? P.brown : P.soft, fontFamily: 'Nunito, sans-serif' }}>

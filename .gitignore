@@ -13,3 +13,7 @@
 *.bak[0-9]*
 /backups/
 __pycache__
+
+# Fichiers locaux generes par le setup OPS / certificats LAN
+/public/edumaison-rootCA.crt
+/start
