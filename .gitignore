@@ -17,3 +17,4 @@ __pycache__
 # Fichiers locaux generes par le setup OPS / certificats LAN
 /public/edumaison-rootCA.crt
 /start
+docker/nginx/.htpasswd
