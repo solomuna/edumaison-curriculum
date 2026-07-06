@@ -27,6 +27,41 @@ class ChildController extends Controller
         ]);
     }
 
+    // Profil d'un enfant : infos de base + stats de progression (annee courante).
+    // Contrat aligne sur FastAPI (id/name/level/level_id/avatar/birth_date) + les
+    // compteurs attempts/completed lus par la page profil React. Ne leve jamais
+    // d'erreur : 404 propre si l'enfant n'existe pas, sinon zeros.
+    public function profile(int $childId)
+    {
+        $child = DB::table('children')
+            ->leftJoin('levels', 'children.level_id', '=', 'levels.id')
+            ->where('children.id', $childId)
+            ->select('children.*', 'levels.name as level_name')
+            ->first();
+
+        if (!$child) return response()->json(['error' => 'Child not found'], 404);
+
+        $schoolYearId = DB::table('school_years')->where('is_current', true)->value('id');
+
+        $base = DB::table('exercise_attempts')
+            ->where('child_id', $childId)
+            ->when($schoolYearId, fn($q) => $q->where('school_year_id', $schoolYearId));
+
+        $attempts  = (clone $base)->count();
+        $completed = (clone $base)->where('status', 'completed')->count();
+
+        return response()->json([
+            'id'         => $child->id,
+            'name'       => trim($child->first_name . ' ' . $child->last_name),
+            'level'      => $child->level_name ?? 'Class 1',
+            'level_id'   => $child->level_id,
+            'avatar'     => $child->avatar,
+            'birth_date' => $child->birth_date,
+            'attempts'   => $attempts,
+            'completed'  => $completed,
+        ]);
+    }
+
     // Level progression map
     private array $nextLevel = [
         2 => 3,   // Pre-Nursery -> Nursery 1
