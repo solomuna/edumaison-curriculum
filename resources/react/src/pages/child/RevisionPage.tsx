@@ -942,14 +942,20 @@ function MathsModule({ child }: { child: Child }) {
 
 // ── Page principale ───────────────────────────────────────────────────────────
 export default function RevisionPage({ child, onBack }: Props) {
-  const [module, setModule] = useState<Module>('dictionary')
+  // Le dictionnaire depend de /api/revision/dictionary, servi uniquement par
+  // FastAPI. Sur le web (backend Laravel) cet endpoint renvoie 404 -> on masque
+  // l'onglet hors application native (Capacitor). Les autres modules restent.
+  const isNativeApp = typeof (window as any).Capacitor !== 'undefined'
+    && (window as any).Capacitor.isNativePlatform()
 
   const MODULES: { id: Module; icon: string; label: string; color: string }[] = [
-    { id: 'dictionary',   icon: '\uD83D\uDCD6', label: 'Dictionary',   color: '#3B82F6' },
+    ...(isNativeApp ? [{ id: 'dictionary' as Module, icon: '\uD83D\uDCD6', label: 'Dictionary', color: '#3B82F6' }] : []),
     { id: 'grammar',      icon: '\uD83D\uDD24', label: 'Grammar',      color: '#8B5CF6' },
     { id: 'conjugation',  icon: '\uD83C\uDDEB\uD83C\uDDF7', label: 'Conjugation', color: '#EC4899' },
     { id: 'maths',        icon: '\uD83D\uDCCA', label: 'Maths',        color: '#10B981' },
   ]
+
+  const [module, setModule] = useState<Module>(MODULES[0].id)
 
   const activeModule = MODULES.find(m => m.id === module)!
 
@@ -964,7 +970,7 @@ export default function RevisionPage({ child, onBack }: Props) {
         </button>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>{'\uD83D\uDCDA'} Revision</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>Dictionary · Grammar · Conjugation · Maths</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>{MODULES.map(m => m.label).join(' · ')}</div>
         </div>
       </div>
 
