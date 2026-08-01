@@ -5,7 +5,7 @@ RUN apk add --no-cache \
     bash git curl \
     libpng-dev libjpeg-turbo-dev freetype-dev \
     libxml2-dev oniguruma-dev libzip-dev icu-dev \
-    postgresql-dev \
+    postgresql-dev postgresql-client \
     autoconf gcc g++ make linux-headers \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install -j$(nproc) \
