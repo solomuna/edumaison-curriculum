@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-09-29 - Moteurs d'exercices harmonises deployes : cac9ddf
+
+- Deploye via `docker/deploy.sh cac9ddf` (PR #9). Precedent : `262f781`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T200606Z`. Aucune migration.
+- Un seul bouton VERIFIER (cadre `LessonShell`, `useLessonCheck`) pour vrai/faux, associations, remise en ordre, horloge, droite numerique, geometrie et Venn ; texte de correction dans le bandeau, en FR ou EN selon la matiere.
+- Vrai/faux : choisir puis verifier. Venn : prendre un element puis toucher sa zone. Associations : paires colorees, correction listee.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, bundle contenant les nouveaux composants, aucune erreur Laravel. Reponses envoyees au serveur inchangees (verifie sur les 7 moteurs).
+- Reste connu : sur telephone, le bouton ardoise chevauche legerement le dernier bouton de zone du Venn.
+
 ## 2026-09-29 - Boucle de lecon interactive et sons synchronises deployes : 262f781
 
 - Deploye via `docker/deploy.sh 262f781` (PR #7). Precedent : `a97da07`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T193516Z`. Aucune migration.
