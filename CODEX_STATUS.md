@@ -1,5 +1,12 @@
 # Codex Status
 
+## 2026-09-29 - Correctifs espace Mama et ardoise deployes : 0770ce6
+
+- Deploye via `docker/deploy.sh 0770ce6` (PR #15). Precedent : `346eeea`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T211136Z`. Aucune migration.
+- `App.tsx` : le chemin `/mama` de l'app principale utilise le vrai `MamaJudiApp` (charge a la demande) au lieu d'un `MamaSpace` inexistant. Le web sert toujours `mama.html`.
+- Telephone : bouton ardoise en haut a droite, ne chevauche plus les reponses.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, aucune erreur Laravel.
+
 ## 2026-09-29 - Reprise des questions ratees deployee : 346eeea
 
 - Deploye via `docker/deploy.sh 346eeea` (PR #13). Precedent : `c1f3c15`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T210026Z`. Aucune migration.
