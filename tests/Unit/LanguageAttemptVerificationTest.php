@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Http\Controllers\Api\ExerciseController;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 use ReflectionMethod;
 use Illuminate\Validation\ValidationException;
 use App\Services\Speech\PronunciationAssessmentService;
@@ -143,12 +143,26 @@ class LanguageAttemptVerificationTest extends TestCase
             'items' => [['text' => 'The children walk to school.']],
         ], [
             'score' => 0,
-            'answers' => ['items' => ['The children walk to school']],
+            'answers' => ['items' => ['The children walk to school.']],
             'evidence' => ['replays' => [2]],
         ]);
 
         $this->assertSame(100, $score);
         $this->assertSame('auto_checked', $status);
+    }
+
+    public function test_dictation_missing_final_punctuation_costs_ten_percent(): void
+    {
+        [$score] = $this->verify('dictation', [
+            'type' => 'dictation',
+            'items' => [['text' => 'The children walk to school.']],
+        ], [
+            'score' => 100,
+            'answers' => ['items' => ['The children walk to school']],
+            'evidence' => ['replays' => [2]],
+        ]);
+
+        $this->assertSame(90, $score);
     }
 
     public function test_speaking_transcript_does_not_claim_pronunciation_verification(): void
