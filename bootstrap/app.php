@@ -15,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // Une route /api protégée doit lever AuthenticationException même si un
+        // client ancien omet Accept: application/json. Sans cette règle,
+        // Authenticate tente de générer la route web inexistante `login` et
+        // transforme un simple 401 en erreur 500.
+        $middleware->redirectGuestsTo(
+            fn (Request $request) => $request->is('api/*') ? null : '/',
+        );
         $middleware->alias([
             'family.access' => \App\Http\Middleware\RequireFamilyAccess::class,
             'mama.access' => \App\Http\Middleware\RequireMamaAccess::class,
