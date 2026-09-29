@@ -7,6 +7,7 @@ import SchoolTimetable from './SchoolTimetable'
 import AcademicCalendar from './AcademicCalendar'
 import LanguageReviews from './LanguageReviews'
 import LegacyFamilyClaim from './LegacyFamilyClaim'
+import LanguageContributions from './LanguageContributions'
 
 const LEVEL_COLORS: Record<string, string> = {
   'Class 1': '#4CAF50', 'Class 2': '#2196F3', 'Class 3': '#9C27B0',
@@ -25,7 +26,7 @@ interface ProgressSummary {
 interface ChildSummary extends ProgressSummary { id: number; name: string; level: string; level_id: number }
 interface Dashboard { school_year: string; children: ChildSummary[]; total_completed_exercises: number; total_attempts: number }
 interface ChildDetail { child: Pick<ChildSummary, 'id' | 'name' | 'level'>; summary: ProgressSummary; recent_attempts: unknown[] }
-type Tab = 'children' | 'calendar' | 'timetable' | 'exams' | 'create' | 'reviews' | 'settings'
+type Tab = 'children' | 'calendar' | 'timetable' | 'exams' | 'create' | 'reviews' | 'contributions' | 'settings'
 
 export default function ParentDashboard() {
   const [data, setData] = useState<Dashboard | null>(null)
@@ -118,7 +119,10 @@ export default function ParentDashboard() {
     ['create', 'Schedule Exam', '📅'],
     ['settings', 'Paramètres', '⚙️'],
   ]
-  if (hasFamilyAccount) TABS.splice(TABS.length - 1, 0, ['reviews', 'Productions', '✓'])
+  if (hasFamilyAccount) TABS.splice(TABS.length - 1, 0,
+    ['reviews', 'Productions', '✓'],
+    ['contributions', 'Atelier langue', '🗣️'],
+  )
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: 40 }}>
@@ -221,6 +225,7 @@ export default function ParentDashboard() {
         {tab === 'timetable' && <SchoolTimetable children={data?.children || []} />}
         {tab === 'create' && <ExamCreator onCreated={() => setTab('exams')} />}
         {tab === 'reviews' && <LanguageReviews />}
+        {tab === 'contributions' && <LanguageContributions />}
         {tab === 'settings' && accountChecked && (hasFamilyAccount
           ? <FamilySettings />
           : <LegacyFamilyClaim onClaimed={() => setHasFamilyAccount(true)} />)}

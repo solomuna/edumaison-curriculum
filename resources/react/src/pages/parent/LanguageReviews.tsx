@@ -22,14 +22,29 @@ interface SpeakingReview {
   target_text: string
   transcript: string
   transcript_score: number | null
+  automatic_assessment: PronunciationAssessment | null
   pronunciation_score: number | null
   parent_feedback: string | null
   audio_url: string
   attempted_at: string
 }
 
+interface PronunciationAssessment {
+  pronunciation_score: number
+  accuracy_score: number
+  fluency_score: number | null
+  completeness_score: number | null
+  words: Array<{ word: string; accuracy: number; error_type: string }>
+}
+
 interface ReviewData {
-  settings: { speaking_audio_enabled: boolean; retention_days: number }
+  settings: {
+    speaking_audio_enabled: boolean
+    speaking_analysis_enabled: boolean
+    speaking_analysis_consented: boolean
+    speaking_analysis_available: boolean
+    retention_days: number
+  }
   pending_writing: WritingReview[]
   speaking: SpeakingReview[]
 }
@@ -124,7 +139,7 @@ function WritingItem({ item, onReviewed }: { item: WritingReview; onReviewed: ()
 }
 
 function SpeakingItem({ item, onChanged }: { item: SpeakingReview; onChanged: () => void }) {
-  const [score, setScore] = useState(item.pronunciation_score ?? 50)
+  const [score, setScore] = useState(item.pronunciation_score ?? item.automatic_assessment?.pronunciation_score ?? 50)
   const [feedback, setFeedback] = useState(item.parent_feedback ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -158,6 +173,14 @@ function SpeakingItem({ item, onChanged }: { item: SpeakingReview; onChanged: ()
       <div style={{ color: 'var(--text-soft)', fontSize: 12, marginBottom: 10 }}>{item.exercise_title}</div>
       <div style={{ marginBottom: 5 }}><strong>À prononcer :</strong> {item.target_text}</div>
       <div style={{ marginBottom: 10, color: '#6C5142' }}><strong>Reconnu :</strong> {item.transcript || 'Aucun texte'} {item.transcript_score !== null && `(${item.transcript_score}%)`}</div>
+      {item.automatic_assessment && (
+        <div style={{ background: '#E7F3E8', border: '1px solid #86B98C', borderRadius: 8, padding: 10, marginBottom: 10, color: '#14532D', fontSize: 12 }}>
+          <strong>Analyse automatique : {item.automatic_assessment.pronunciation_score}%</strong>
+          <div style={{ marginTop: 4 }}>
+            Précision {item.automatic_assessment.accuracy_score}% · Fluidité {item.automatic_assessment.fluency_score ?? '—'} · Texte complet {item.automatic_assessment.completeness_score ?? '—'}
+          </div>
+        </div>
+      )}
       <audio controls preload="none" src={item.audio_url} style={{ width: '100%', height: 42 }} />
       <label style={{ display: 'grid', gridTemplateColumns: '130px 1fr 48px', gap: 8, alignItems: 'center', marginTop: 12, fontSize: 12, fontWeight: 800 }}>
         <span>Prononciation</span><input type="range" min="0" max="100" step="5" value={score} onChange={event => setScore(Number(event.target.value))} /><strong>{score}%</strong>
@@ -192,16 +215,28 @@ export default function LanguageReviews() {
     const deleteExisting = !enabled && data.speaking.length > 0 && window.confirm('Supprimer aussi tous les enregistrements déjà conservés ?')
     const settings = await writeJson('/api/parent/language-reviews/settings', 'PUT', {
       speaking_audio_enabled: enabled,
+      speaking_analysis_enabled: data.settings.speaking_analysis_enabled,
       retention_days: data.settings.retention_days,
       delete_existing_audio: deleteExisting,
     })
     setData(current => current ? { ...current, settings, ...(deleteExisting ? { speaking: [] } : {}) } : current)
   }
 
+  const updateAnalysis = async (enabled: boolean) => {
+    if (!data) return
+    const settings = await writeJson('/api/parent/language-reviews/settings', 'PUT', {
+      speaking_audio_enabled: data.settings.speaking_audio_enabled,
+      speaking_analysis_enabled: enabled,
+      retention_days: data.settings.retention_days,
+    })
+    setData(current => current ? { ...current, settings } : current)
+  }
+
   const updateRetention = async (days: number) => {
     if (!data) return
     const settings = await writeJson('/api/parent/language-reviews/settings', 'PUT', {
       speaking_audio_enabled: data.settings.speaking_audio_enabled,
+      speaking_analysis_enabled: data.settings.speaking_analysis_enabled,
       retention_days: days,
     })
     setData(current => current ? { ...current, settings } : current)
@@ -216,6 +251,21 @@ export default function LanguageReviews() {
     <div>
       <section style={{ padding: '2px 0 18px', borderBottom: '1px solid var(--border)', marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 8px', fontSize: 19, color: 'var(--text-dark)' }}>Validation des apprentissages</h2>
+        <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, fontWeight: 800 }}>
+          <span>Analyser automatiquement la prononciation</span>
+          <input
+            type="checkbox"
+            checked={data.settings.speaking_analysis_enabled}
+            disabled={!data.settings.speaking_analysis_available}
+            onChange={event => updateAnalysis(event.target.checked).catch(error => setError(error.message))}
+            style={{ width: 22, height: 22 }}
+          />
+        </label>
+        <p style={{ margin: '6px 0 14px', color: 'var(--text-soft)', fontSize: 12, lineHeight: 1.45 }}>
+          {data.settings.speaking_analysis_available
+            ? 'La voix est analysée pendant l’exercice. Elle n’est conservée que si l’option ci-dessous est aussi activée.'
+            : 'Le moteur de prononciation doit encore être configuré sur le serveur.'}
+        </p>
         <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, fontWeight: 800 }}>
           <span>Conserver l’audio Speaking</span>
           <input type="checkbox" checked={data.settings.speaking_audio_enabled} onChange={event => updateSettings(event.target.checked).catch(error => setError(error.message))} style={{ width: 22, height: 22 }} />

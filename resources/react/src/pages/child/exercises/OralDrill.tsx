@@ -15,6 +15,10 @@ import Ardoise from './Ardoise'
 
 interface Props {
 
+  exerciseId: number
+
+  childId: number
+
   title: string
 
   instructions: string
@@ -26,6 +30,80 @@ interface Props {
 
   onBack: () => void
 
+}
+
+interface WordAssessment {
+  word: string
+  accuracy: number
+  error_type: string
+}
+
+interface PronunciationAssessment {
+  method: 'azure_pronunciation_assessment'
+  transcript: string
+  pronunciation_score: number
+  accuracy_score: number
+  fluency_score: number | null
+  completeness_score: number | null
+  words: WordAssessment[]
+}
+
+interface SpeakingResponse {
+  target: string
+  transcript: string
+  score: number
+  method: 'pronunciation_assessment' | 'speech_transcript' | 'practice_only'
+  assessment_token?: string
+  audio_data_url?: string
+}
+
+async function blobToWaveDataUrl(blob: Blob): Promise<string> {
+  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+  if (!AudioContextClass) throw new Error('Audio conversion is not supported on this device.')
+  const context = new AudioContextClass()
+  try {
+    const decoded = await context.decodeAudioData(await blob.arrayBuffer())
+    const targetRate = 16000
+    const length = Math.max(1, Math.ceil(decoded.duration * targetRate))
+    const mono = new Float32Array(length)
+    const channels = Array.from({ length: decoded.numberOfChannels }, (_, index) => decoded.getChannelData(index))
+    for (let index = 0; index < length; index++) {
+      const sourcePosition = index * decoded.sampleRate / targetRate
+      const left = Math.floor(sourcePosition)
+      const right = Math.min(left + 1, decoded.length - 1)
+      const fraction = sourcePosition - left
+      let sample = 0
+      for (const channel of channels) sample += channel[left] + (channel[right] - channel[left]) * fraction
+      mono[index] = Math.max(-1, Math.min(1, sample / channels.length))
+    }
+
+    const buffer = new ArrayBuffer(44 + mono.length * 2)
+    const view = new DataView(buffer)
+    const write = (offset: number, value: string) => Array.from(value).forEach((character, index) => view.setUint8(offset + index, character.charCodeAt(0)))
+    write(0, 'RIFF')
+    view.setUint32(4, 36 + mono.length * 2, true)
+    write(8, 'WAVE')
+    write(12, 'fmt ')
+    view.setUint32(16, 16, true)
+    view.setUint16(20, 1, true)
+    view.setUint16(22, 1, true)
+    view.setUint32(24, targetRate, true)
+    view.setUint32(28, targetRate * 2, true)
+    view.setUint16(32, 2, true)
+    view.setUint16(34, 16, true)
+    write(36, 'data')
+    view.setUint32(40, mono.length * 2, true)
+    mono.forEach((sample, index) => view.setInt16(44 + index * 2, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true))
+
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Audio conversion failed.'))
+      reader.onerror = () => reject(new Error('Audio conversion failed.'))
+      reader.readAsDataURL(new Blob([buffer], { type: 'audio/wav' }))
+    })
+  } finally {
+    await context.close().catch(() => {})
+  }
 }
 
 
@@ -94,7 +172,7 @@ const C = {
 
 
 
-export default function OralDrill({ title, instructions, content, isFrench, onComplete, onBack }: Props) {
+export default function OralDrill({ exerciseId, childId, title, instructions, content, isFrench, onComplete, onBack }: Props) {
 
   const [current, setCurrent] = useState(0)
 
@@ -110,7 +188,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
   const [scores, setScores] = useState<number[]>([])
 
-  const [responses, setResponses] = useState<Array<{ target: string; transcript: string; score: number; method: 'speech_transcript' | 'practice_only'; audio_data_url?: string }>>([])
+  const [responses, setResponses] = useState<SpeakingResponse[]>([])
 
   const [done, setDone] = useState(false)
 
@@ -124,9 +202,21 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
   const [audioConsent, setAudioConsent] = useState(false)
 
+  const [analysisEnabled, setAnalysisEnabled] = useState(false)
+
+  const [analysisAvailable, setAnalysisAvailable] = useState(false)
+
   const [saveAudio, setSaveAudio] = useState(false)
 
   const [audioDataUrl, setAudioDataUrl] = useState('')
+
+  const [assessment, setAssessment] = useState<PronunciationAssessment | null>(null)
+
+  const [assessmentToken, setAssessmentToken] = useState('')
+
+  const [assessmentMethod, setAssessmentMethod] = useState<'pronunciation_assessment' | 'speech_transcript' | 'practice_only'>('practice_only')
+
+  const [assessing, setAssessing] = useState(false)
 
   const recognitionRef = useRef<any>(null)
 
@@ -137,6 +227,8 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
   const stopTimerRef = useRef<number | null>(null)
 
   const lessonAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  const browserResultRef = useRef<{ transcript: string; score: number } | null>(null)
 
 
 
@@ -156,12 +248,21 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
 
-    setSpeechSupported(!!SR)
+    const microphoneAvailable = Boolean(navigator.mediaDevices && 'MediaRecorder' in window)
+    setSpeechSupported(Boolean(SR) || microphoneAvailable)
 
     fetch('/api/language-practice/settings', { headers: { Accept: 'application/json' } })
       .then(response => response.ok ? response.json() : null)
-      .then(settings => setAudioConsent(Boolean(settings?.speaking_audio_enabled)))
-      .catch(() => setAudioConsent(false))
+      .then(settings => {
+        setAudioConsent(Boolean(settings?.speaking_audio_enabled))
+        setAnalysisAvailable(Boolean(settings?.speaking_analysis_available))
+        setAnalysisEnabled(Boolean(settings?.speaking_analysis_enabled))
+      })
+      .catch(() => {
+        setAudioConsent(false)
+        setAnalysisAvailable(false)
+        setAnalysisEnabled(false)
+      })
 
     return () => {
       lessonAudioRef.current?.pause()
@@ -194,13 +295,17 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
   const playItem = async () => {
 
-    if (recording || submitting) return
+    if (recording || assessing || submitting) return
 
     setSpeaking(true)
     setError('')
     setTranscript('')
     setScore(null)
     setAudioDataUrl('')
+    setAssessment(null)
+    setAssessmentToken('')
+    setAssessmentMethod('practice_only')
+    browserResultRef.current = null
 
     MamaJudi.stop()
     const audioKey = !isFrench && item.audio_hint?.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -218,190 +323,169 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
 
 
-  const stopAudioCapture = () => {
-
-    if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current)
-
-    stopTimerRef.current = null
-
-    const recorder = mediaRecorderRef.current
-
-    if (recorder && recorder.state !== 'inactive') recorder.stop()
-
-    else {
-
-      mediaStreamRef.current?.getTracks().forEach(track => track.stop())
-
-      mediaStreamRef.current = null
-
-      setRecording(false)
-
+  const applyFeedback = (value: number, verified: boolean) => {
+    if (value >= 80) {
+      SoundService.correct()
+      if (verified) fireSuccess({ xp: 10 })
+      MamaJudi.speak(verified ? 'Your pronunciation was very clear!' : 'The words matched very well!')
+    } else if (value >= 50) {
+      SoundService.streak()
+      MamaJudi.speak('Good try! Listen again and repeat.')
+    } else {
+      MamaJudi.speak('Listen carefully and try again.')
     }
+  }
 
+  const applyBrowserFallback = (message?: string) => {
+    const result = browserResultRef.current
+    setAssessment(null)
+    setAssessmentToken('')
+    if (result) {
+      setTranscript(result.transcript)
+      setScore(result.score)
+      setAssessmentMethod('speech_transcript')
+      setError(message || 'The words were recognized, but pronunciation was not verified.')
+      applyFeedback(result.score, false)
+    } else {
+      setAssessmentMethod('practice_only')
+      setError(message || 'No reliable speech result was produced. Please try again.')
+    }
+  }
+
+  const assessWave = async (waveDataUrl: string) => {
+    setAssessing(true)
+    setError('')
+    try {
+      const response = await fetch(`/api/children/${childId}/exercises/${exerciseId}/speaking-assessment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ item_index: current, audio_data_url: waveDataUrl }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || !payload.assessment_token || !payload.assessment) {
+        throw new Error(payload.message || 'Pronunciation analysis was not available.')
+      }
+      const result = payload.assessment as PronunciationAssessment
+      setAssessment(result)
+      setAssessmentToken(String(payload.assessment_token))
+      setAssessmentMethod('pronunciation_assessment')
+      setTranscript(result.transcript)
+      setScore(result.pronunciation_score)
+      applyFeedback(result.pronunciation_score, true)
+    } catch (reason) {
+      applyBrowserFallback(reason instanceof Error ? `${reason.message} The browser result will be kept as practice only.` : undefined)
+    } finally {
+      setAssessing(false)
+    }
+  }
+
+  const stopAudioCapture = () => {
+    if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current)
+    stopTimerRef.current = null
+    const recorder = mediaRecorderRef.current
+    if (recorder && recorder.state !== 'inactive') recorder.stop()
+    else {
+      mediaStreamRef.current?.getTracks().forEach(track => track.stop())
+      mediaStreamRef.current = null
+      setRecording(false)
+    }
   }
 
   const startRecording = async () => {
-
-    if (!listened[current] || speaking || submitting) {
-
+    if (!listened[current] || speaking || submitting || assessing) {
       setError('Listen first, then repeat the words you heard.')
-
       return
-
     }
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-
-    if (!SR) return
+    const captureAudio = (analysisEnabled && analysisAvailable) || (saveAudio && audioConsent)
+    if (!SR && !captureAudio) return
 
     setError('')
-
     setTranscript('')
-
     setScore(null)
-
     setAudioDataUrl('')
+    setAssessment(null)
+    setAssessmentToken('')
+    setAssessmentMethod('practice_only')
+    browserResultRef.current = null
 
-    if (saveAudio && audioConsent && navigator.mediaDevices?.getUserMedia && 'MediaRecorder' in window) {
-
+    if (captureAudio && navigator.mediaDevices?.getUserMedia && 'MediaRecorder' in window) {
       try {
-
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } })
         mediaStreamRef.current = stream
-
         const chunks: BlobPart[] = []
-
-        const preferredType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : ''
-
-        const recorder = new MediaRecorder(stream, { ...(preferredType ? { mimeType: preferredType } : {}), audioBitsPerSecond: 24000 })
-
+        const preferredType = ['audio/ogg;codecs=opus', 'audio/webm;codecs=opus', 'audio/mp4']
+          .find(type => MediaRecorder.isTypeSupported(type)) || ''
+        const recorder = new MediaRecorder(stream, { ...(preferredType ? { mimeType: preferredType } : {}), audioBitsPerSecond: 32000 })
         mediaRecorderRef.current = recorder
-
         recorder.ondataavailable = event => { if (event.data.size > 0) chunks.push(event.data) }
-
-        recorder.onstop = () => {
-
-          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
-
-          const reader = new FileReader()
-
-          reader.onloadend = () => {
-
-            setAudioDataUrl(typeof reader.result === 'string' ? reader.result : '')
-
-            setRecording(false)
-
-          }
-
-          reader.readAsDataURL(blob)
-
+        recorder.onstart = () => setRecording(true)
+        recorder.onstop = async () => {
           stream.getTracks().forEach(track => track.stop())
-
           mediaStreamRef.current = null
-
+          setRecording(false)
+          try {
+            const waveDataUrl = await blobToWaveDataUrl(new Blob(chunks, { type: recorder.mimeType || preferredType || 'audio/webm' }))
+            if (saveAudio && audioConsent) setAudioDataUrl(waveDataUrl)
+            if (analysisEnabled && analysisAvailable) await assessWave(waveDataUrl)
+            else if (browserResultRef.current) applyBrowserFallback()
+          } catch (reason) {
+            applyBrowserFallback(reason instanceof Error ? reason.message : 'Audio conversion failed.')
+          }
         }
-
         recorder.start(250)
-
       } catch {
-
         setSaveAudio(false)
-
-        setError('Audio could not be saved, but your spoken answer can still be checked.')
-
+        if (!SR) {
+          setError('The microphone could not be opened. Check its permission and try again.')
+          return
+        }
+        setError('Automatic pronunciation analysis is unavailable. The browser check will be used.')
       }
-
     }
 
-    const recognition = new SR()
+    if (SR) {
+      const recognition = new SR()
+      recognitionRef.current = recognition
+      recognition.lang = isFrench ? 'fr-FR' : 'en-GB'
+      recognition.interimResults = false
+      recognition.maxAlternatives = 3
+      recognition.onstart = () => setRecording(true)
+      recognition.onend = () => stopAudioCapture()
+      recognition.onerror = (event: any) => {
+        stopAudioCapture()
+        if (event.error === 'not-allowed' && !(analysisEnabled && analysisAvailable)) setSpeechSupported(false)
+        else if (event.error !== 'no-speech') setError('The browser could not transcribe this recording.')
+      }
+      recognition.onresult = (event: any) => {
+        let best = ''
+        let bestScore = 0
+        for (let index = 0; index < event.results[0].length; index++) {
+          const alternative = event.results[0][index].transcript
+          const alternativeScore = similarity(item.text, alternative)
+          if (alternativeScore > bestScore) { bestScore = alternativeScore; best = alternative }
+        }
+        browserResultRef.current = { transcript: best, score: bestScore }
+        if (!(analysisEnabled && analysisAvailable)) {
+          setTranscript(best)
+          setScore(bestScore)
+          setAssessmentMethod('speech_transcript')
+          applyFeedback(bestScore, false)
+        }
+      }
+      recognition.start()
+    }
 
-    recognitionRef.current = recognition
-
-    recognition.lang = isFrench ? 'fr-FR' : 'en-GB'
-
-    recognition.interimResults = false
-
-    recognition.maxAlternatives = 3
-
-
-
-    recognition.onstart = () => setRecording(true)
-
-    recognition.onend = () => stopAudioCapture()
-
-    recognition.onerror = (e: any) => {
-
+    stopTimerRef.current = window.setTimeout(() => {
+      recognitionRef.current?.stop?.()
       stopAudioCapture()
-
-      if (e.error === 'no-speech') setError('No speech detected. Try again!')
-
-      else if (e.error === 'not-allowed') { setSpeechSupported(false); setError('') }
-
-      else setError('Could not hear you. Try again!')
-
-    }
-
-    recognition.onresult = (e: any) => {
-
-      // Prendre la meilleure alternative
-
-      let best = ''
-
-      let bestScore = 0
-
-      for (let i = 0; i < e.results[0].length; i++) {
-
-        const alt = e.results[0][i].transcript
-
-        const s = similarity(item.text, alt)
-
-        if (s > bestScore) { bestScore = s; best = alt }
-
-      }
-
-      setTranscript(best)
-
-      setScore(bestScore)
-
-      // Feedback sonore et vocal
-
-      if (bestScore >= 80) {
-
-        SoundService.correct()
-
-        fireSuccess({ xp: 10 })
-
-        MamaJudi.speak('The words matched very well!')
-
-      } else if (bestScore >= 50) {
-
-        SoundService.streak()
-
-        MamaJudi.speak('Good try! Listen again and repeat.')
-
-      } else {
-
-        MamaJudi.speak('Listen carefully and try again.')
-
-      }
-
-    }
-
-    recognition.start()
-
-    stopTimerRef.current = window.setTimeout(() => recognition.stop(), 12000)
-
+    }, 12000)
   }
 
-
-
   const stopRecording = () => {
-
-    recognitionRef.current?.stop()
-
+    recognitionRef.current?.stop?.()
     stopAudioCapture()
-
   }
 
 
@@ -416,7 +500,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
     }
 
-    if (recording) {
+    if (recording || assessing) {
 
       setError('Wait a moment while the recording is prepared.')
 
@@ -436,9 +520,11 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
       score: finalScore,
 
-      method: 'speech_transcript' as const,
+      method: assessmentMethod,
 
-      ...(audioDataUrl ? { audio_data_url: audioDataUrl } : {}),
+      ...(assessmentToken ? { assessment_token: assessmentToken } : {}),
+
+      ...(saveAudio && audioDataUrl ? { audio_data_url: audioDataUrl } : {}),
 
     }]
 
@@ -454,6 +540,22 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
       setAudioDataUrl('')
 
+      setAssessment(null)
+
+      setAssessmentToken('')
+
+      setAssessmentMethod('practice_only')
+
+      browserResultRef.current = null
+
+      setAssessment(null)
+
+      setAssessmentToken('')
+
+      setAssessmentMethod('practice_only')
+
+      browserResultRef.current = null
+
       setError('')
 
       setCurrent(current + 1)
@@ -462,7 +564,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
       const avg = Math.round(newScores.reduce((a, b) => a + b, 0) / newScores.length)
 
-      const verificationStatus = newResponses.some(response => response.method === 'practice_only') ? 'practice_only' : 'auto_checked'
+      const verificationStatus = newResponses.every(response => response.method === 'pronunciation_assessment') ? 'auto_checked' : 'practice_only'
 
       setSubmitting(true)
 
@@ -476,7 +578,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
           answers: { items: newResponses },
 
-          evidence: { method: 'speech_transcript_match', pronunciation_verified: false },
+          evidence: { method: verificationStatus === 'auto_checked' ? 'pronunciation_assessment' : 'speaking_practice', pronunciation_verified: verificationStatus === 'auto_checked' },
 
         })
 
@@ -544,7 +646,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
           answers: { items: newResponses },
 
-          evidence: { method: 'speech_transcript_match', pronunciation_verified: false },
+          evidence: { method: 'speaking_practice', pronunciation_verified: false },
 
         })
 
@@ -573,6 +675,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
   if (done) {
 
     const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+    const verified = responses.length > 0 && responses.every(response => response.method === 'pronunciation_assessment')
 
     return (
 
@@ -586,7 +689,9 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
         </div>
 
-        <div style={{ fontSize: 18, fontWeight: 800, color: C.green, marginBottom: 4 }}>{avg}% word match</div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: C.green, marginBottom: 4 }}>{avg}% {verified ? 'pronunciation' : 'word match'}</div>
+
+        {!verified && <div style={{ fontSize: 13, color: C.soft, marginBottom: 8 }}>Practice completed. Pronunciation was not automatically verified.</div>}
 
         <div style={{ fontSize: 14, color: C.soft, marginBottom: 28 }}>{title}</div>
 
@@ -610,9 +715,9 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
   const scoreLabel = score === null ? '' : score >= 80 ? 'Excellent!' : score >= 50 ? 'Good try!' : 'Try again!'
 
-  const canStartRecording = listened[current] && !speaking && !submitting
+  const canStartRecording = listened[current] && !speaking && !assessing && !submitting
 
-  const canContinue = score !== null && !recording && !submitting
+  const canContinue = score !== null && !recording && !assessing && !submitting
 
 
 
@@ -724,6 +829,12 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
         )}
 
+        {analysisEnabled && analysisAvailable && (
+          <div style={{ background: '#E7F3E8', color: '#14532D', border: '1px solid #86B98C', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, fontWeight: 800, textAlign: 'center' }}>
+            Pronunciation analysis is active. The temporary recording is discarded after checking unless you choose to save it.
+          </div>
+        )}
+
 
 
         {/* Step 2 — Speak */}
@@ -738,11 +849,13 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
               onClick={recording ? stopRecording : startRecording}
 
-              disabled={!recording && !canStartRecording}
+              disabled={assessing || (!recording && !canStartRecording)}
 
               style={{ width: '100%', padding: '14px 0', borderRadius: 16, border: 'none', background: recording ? C.red : canStartRecording ? C.golden : '#8A8A7E', color: 'white', fontSize: 15, fontWeight: 800, cursor: recording || canStartRecording ? 'pointer' : 'not-allowed', marginBottom: 12, fontFamily: 'Nunito, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, animation: recording ? 'pulse 1s infinite' : 'none' }}>
 
-              {recording ? (
+              {assessing ? (
+                <>Checking pronunciation...</>
+              ) : recording ? (
 
                 <><svg width="18" height="18" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="white"/></svg> Stop recording</>
 
@@ -766,7 +879,25 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
                 <div style={{ fontSize: 18, fontWeight: 800, color: C.dark, marginBottom: 8 }}>"{transcript}"</div>
 
-                <div style={{ fontSize: 22, fontWeight: 900, color: scoreColor }}>{score}% word match — {scoreLabel}</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: scoreColor }}>{score}% {assessment ? 'pronunciation' : 'word match'} — {scoreLabel}</div>
+
+                {assessment && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 10 }}>
+                    <div style={{ background: '#FFFDF8', borderRadius: 6, padding: 7 }}><strong>{assessment.accuracy_score}%</strong><br /><span style={{ fontSize: 10, color: C.soft }}>Accuracy</span></div>
+                    <div style={{ background: '#FFFDF8', borderRadius: 6, padding: 7 }}><strong>{assessment.fluency_score ?? '—'}{assessment.fluency_score !== null ? '%' : ''}</strong><br /><span style={{ fontSize: 10, color: C.soft }}>Fluency</span></div>
+                    <div style={{ background: '#FFFDF8', borderRadius: 6, padding: 7 }}><strong>{assessment.completeness_score ?? '—'}{assessment.completeness_score !== null ? '%' : ''}</strong><br /><span style={{ fontSize: 10, color: C.soft }}>Complete</span></div>
+                  </div>
+                )}
+
+                {assessment && assessment.words.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 10 }}>
+                    {assessment.words.map((word, index) => (
+                      <span key={`${word.word}-${index}`} style={{ padding: '4px 7px', borderRadius: 6, background: word.accuracy >= 70 ? '#D1FAE5' : '#FEE2E2', color: word.accuracy >= 70 ? '#065F46' : '#991B1B', fontSize: 12, fontWeight: 900 }}>
+                        {word.word} {word.accuracy}%
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div style={{ height: 6, background: C.border, borderRadius: 3, marginTop: 8 }}>
 
@@ -780,7 +911,7 @@ export default function OralDrill({ title, instructions, content, isFrench, onCo
 
 
 
-            {audioDataUrl && <div style={{ color: C.green, fontSize: 12, fontWeight: 800, textAlign: 'center', marginBottom: 12 }}>Voice recording ready for parent review.</div>}
+            {saveAudio && audioDataUrl && <div style={{ color: C.green, fontSize: 12, fontWeight: 800, textAlign: 'center', marginBottom: 12 }}>Voice recording ready for parent review.</div>}
 
           </>
 

@@ -10,29 +10,40 @@ use App\Support\FamilyContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\Speech\PronunciationAssessmentService;
 
 class LanguageReviewController extends Controller
 {
-    public function settings(Request $request)
+    public function settings(Request $request, PronunciationAssessmentService $speech)
     {
         $household = $this->household($request, false);
         return response()->json([
             'speaking_audio_enabled' => (bool) $household->speaking_audio_consent_at,
+            'speaking_analysis_enabled' => (bool) $household->speaking_analysis_consent_at && $speech->available(),
+            'speaking_analysis_consented' => (bool) $household->speaking_analysis_consent_at,
+            'speaking_analysis_available' => $speech->available(),
             'retention_days' => (int) ($household->speaking_audio_retention_days ?: 30),
         ]);
     }
 
-    public function updateSettings(Request $request)
+    public function updateSettings(Request $request, PronunciationAssessmentService $speech)
     {
         $household = $this->household($request, true);
         $data = $request->validate([
             'speaking_audio_enabled' => ['required', 'boolean'],
+            'speaking_analysis_enabled' => ['required', 'boolean'],
             'retention_days' => ['required', 'integer', 'min:7', 'max:90'],
             'delete_existing_audio' => ['sometimes', 'boolean'],
         ]);
+        if ($data['speaking_analysis_enabled'] && ! $speech->available()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'speaking_analysis_enabled' => 'Automatic pronunciation analysis is not configured.',
+            ]);
+        }
 
         $household->update([
             'speaking_audio_consent_at' => $data['speaking_audio_enabled'] ? ($household->speaking_audio_consent_at ?? now()) : null,
+            'speaking_analysis_consent_at' => $data['speaking_analysis_enabled'] ? ($household->speaking_analysis_consent_at ?? now()) : null,
             'speaking_audio_retention_days' => $data['retention_days'],
         ]);
 
@@ -42,10 +53,10 @@ class LanguageReviewController extends Controller
             $this->deleteExpiredAudio($household);
         }
 
-        return $this->settings($request);
+        return $this->settings($request, $speech);
     }
 
-    public function index(Request $request)
+    public function index(Request $request, PronunciationAssessmentService $speech)
     {
         $household = $this->household($request, true);
         $this->deleteExpiredAudio($household);
@@ -87,22 +98,29 @@ class LanguageReviewController extends Controller
             ->latest('attempted_at')
             ->limit(100)
             ->get()
-            ->map(fn (PronunciationAttempt $attempt) => [
+            ->map(function (PronunciationAttempt $attempt) {
+                $automatic = $attempt->feedback_json['automatic_assessment'] ?? null;
+                return [
                 'id' => $attempt->id,
                 'child_name' => trim($attempt->child->first_name.' '.$attempt->child->last_name),
                 'exercise_title' => $attempt->exercise?->title ?? 'Speaking activity',
                 'target_text' => $attempt->target_text,
                 'transcript' => $attempt->feedback_json['transcript'] ?? '',
-                'transcript_score' => $attempt->overall_score === null ? null : (int) round($attempt->overall_score),
+                'transcript_score' => $automatic || $attempt->overall_score === null ? null : (int) round($attempt->overall_score),
+                'automatic_assessment' => $automatic,
                 'pronunciation_score' => $attempt->pronunciation_score === null ? null : (int) round($attempt->pronunciation_score),
                 'parent_feedback' => $attempt->feedback_json['parent_feedback'] ?? null,
                 'audio_url' => "/api/parent/pronunciation-reviews/{$attempt->id}/audio",
                 'attempted_at' => $attempt->attempted_at,
-            ]);
+                ];
+            });
 
         return response()->json([
             'settings' => [
                 'speaking_audio_enabled' => (bool) $household->speaking_audio_consent_at,
+                'speaking_analysis_enabled' => (bool) $household->speaking_analysis_consent_at && $speech->available(),
+                'speaking_analysis_consented' => (bool) $household->speaking_analysis_consent_at,
+                'speaking_analysis_available' => $speech->available(),
                 'retention_days' => (int) ($household->speaking_audio_retention_days ?: 30),
             ],
             'pending_writing' => $pendingWriting,
@@ -183,7 +201,7 @@ class LanguageReviewController extends Controller
         if ($attempt->exercise_attempt_id) {
             $status = PronunciationAttempt::query()
                 ->where('exercise_attempt_id', $attempt->exercise_attempt_id)
-                ->where('feedback_json->assessment_method', 'practice_only')
+                ->whereIn('feedback_json->assessment_method', ['practice_only', 'speech_transcript'])
                 ->exists() ? 'practice_only' : 'auto_checked';
             ExerciseAttempt::query()->whereKey($attempt->exercise_attempt_id)->update(['verification_status' => $status]);
         }
