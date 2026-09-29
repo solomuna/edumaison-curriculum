@@ -793,7 +793,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
   }
 
   if (type === 'written_response') {
-    return <WrittenResponse title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
+    return <WrittenResponse title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
   }
 
 

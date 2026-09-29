@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
+import { fireSuccess } from '../../../components/SuccessFx'
+import LessonEnd from '../../../components/lesson/LessonEnd'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
 import type { DictationContent, ExerciseCompletionHandler } from '../../../types/exercise'
 
 interface Props {
@@ -73,19 +76,28 @@ function scoreDictation(expected: string, actual: string): ScoreBreakdown {
 const labels = {
   en: {
     defaultInstructions: 'Listen carefully, then write exactly what you hear.', listen: 'Listen', left: 'left', limit: 'Listening limit reached',
-    prompt: 'What did you hear?', listenFirst: 'Listen before writing.', empty: 'Write what you heard before continuing.', check: 'Check my sentence',
-    yourSentence: 'Your sentence', expected: 'Expected sentence', words: 'Words', spelling: 'Spelling', capitalization: 'Capital letter', punctuation: 'Punctuation',
-    continue: 'Continue', finish: 'Finish dictation', word: 'word', wordsCount: 'words', hint: 'Hint',
-    playing: 'Playing...', audioError: 'Listening audio is unavailable. Check the media volume and try again.',
+    prompt: 'What did you hear?', listenFirst: 'Listen before writing.', empty: 'Write what you heard.',
+    expected: 'Expected sentence', words: 'Words', spelling: 'Spelling', capitalization: 'Capital letter', punctuation: 'Punctuation',
+    word: 'word', wordsCount: 'words', hint: 'Hint', playing: 'Listening…', keepGoing: 'Keep practising!',
+    audioError: 'Listening audio is unavailable. Check the media volume and try again.',
   },
   fr: {
-    defaultInstructions: 'Ecoute attentivement, puis ecris exactement ce que tu entends.', listen: 'Ecouter', left: 'restantes', limit: "Limite d'ecoutes atteinte",
-    prompt: 'Qu\'as-tu entendu ?', listenFirst: "Ecoute d'abord la phrase.", empty: 'Ecris ce que tu as entendu avant de continuer.', check: 'Verifier ma phrase',
-    yourSentence: 'Ta phrase', expected: 'Phrase attendue', words: 'Mots', spelling: 'Orthographe', capitalization: 'Majuscule', punctuation: 'Ponctuation',
-    continue: 'Continuer', finish: 'Terminer la dictee', word: 'mot', wordsCount: 'mots', hint: 'Indice',
-    playing: 'Lecture...', audioError: "L'audio d'ecoute est indisponible. Verifie le volume et reessaie.",
+    defaultInstructions: 'Écoute attentivement, puis écris exactement ce que tu entends.', listen: 'Écouter', left: 'restantes', limit: "Limite d'écoutes atteinte",
+    prompt: "Qu'as-tu entendu ?", listenFirst: "Écoute d'abord la phrase.", empty: 'Écris ce que tu as entendu.',
+    expected: 'Phrase attendue', words: 'Mots', spelling: 'Orthographe', capitalization: 'Majuscule', punctuation: 'Ponctuation',
+    word: 'mot', wordsCount: 'mots', hint: 'Indice', playing: 'Écoute…', keepGoing: 'Continue à t’entraîner !',
+    audioError: "L'audio d'écoute est indisponible. Vérifie le volume et réessaie.",
   },
 }
+
+/** Une phrase de dictée est réussie à partir de 80 % (mots, orthographe, majuscule, ponctuation). */
+const PASS = 80
+
+const SpeakerIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" />
+  </svg>
+)
 
 export default function Dictation({ title, instructions, content, onComplete, onBack }: Props) {
   const [current, setCurrent] = useState(0)
@@ -93,28 +105,37 @@ export default function Dictation({ title, instructions, content, onComplete, on
   const [answers, setAnswers] = useState<string[]>([])
   const [completedScores, setCompletedScores] = useState<ScoreBreakdown[]>([])
   const [replays, setReplays] = useState<number[]>(() => content.items.map(() => 0))
-  const [review, setReview] = useState<{ answer: string; breakdown: ScoreBreakdown } | null>(null)
+  const [review, setReview] = useState<{ answer: string; breakdown: ScoreBreakdown; praise: string } | null>(null)
   const [error, setError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const [speaking, setSpeaking] = useState(false)
+  const [done, setDone] = useState(false)
+  const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
   const startedAt = useRef(Date.now())
   const recordedAudioRef = useRef<HTMLAudioElement | null>(null)
+  const cancelVoice = useRef<() => void>(() => {})
+  const checkBtn = useRef<HTMLButtonElement>(null)
   const item = content.items[current]
+  const isFrench = content.language === 'fr-FR'
+  const t = isFrench ? labels.fr : labels.en
+  const L = labelsFor(isFrench)
   const maxReplays = Math.max(1, Math.min(5, content.max_replays ?? 3))
   const canReplay = replays[current] < maxReplays && !review && !speaking
   const hasListened = replays[current] > 0
-  const progress = Math.round((current / content.items.length) * 100)
+  const isLast = current === content.items.length - 1
   const wordCount = useMemo(() => answer.trim().split(/\s+/).filter(Boolean).length, [answer])
   const expectedWordCount = useMemo(() => normalizeDictation(item.text).split(' ').filter(Boolean).length, [item.text])
-  const wordCountColor = wordCount === 0 ? '#7A6050' : wordCount === expectedWordCount ? '#1D6B2A' : '#B42318'
-  const t = content.language === 'fr-FR' ? labels.fr : labels.en
   const guidance = !hasListened ? t.listenFirst : !answer.trim() ? t.empty : ''
-  const canCheck = hasListened && answer.trim().length > 0 && !review && !submitting
+  const canCheck = hasListened && answer.trim().length > 0 && !review
 
-  useEffect(() => () => {
-    recordedAudioRef.current?.pause()
-    recordedAudioRef.current = null
-    MamaJudi.stop()
+  useEffect(() => {
+    prepareLessonAudio()
+    return () => {
+      recordedAudioRef.current?.pause()
+      recordedAudioRef.current = null
+      cancelVoice.current()
+      MamaJudi.stop()
+    }
   }, [])
 
   const playRecordedAudio = (source: string): Promise<boolean> => new Promise(resolve => {
@@ -145,56 +166,88 @@ export default function Dictation({ title, instructions, content, onComplete, on
     setSpeaking(false)
   }
 
-  const submit = () => {
-    if (!hasListened) {
-      setError(t.listenFirst)
-      return
-    }
-    if (!answer.trim()) {
-      setError(t.empty)
-      return
-    }
+  const check = () => {
+    if (review) return
+    if (!hasListened) { setError(t.listenFirst); return }
+    if (!answer.trim()) { setError(t.empty); return }
+    recordedAudioRef.current?.pause()
     const submitted = answer.trim()
-    setReview({ answer: submitted, breakdown: scoreDictation(item.text, submitted) })
+    const breakdown = scoreDictation(item.text, submitted)
+    const good = breakdown.score >= PASS
+    setReview({ answer: submitted, breakdown, praise: randomPraise(L) })
     setError('')
+    cancelVoice.current()
+    if (good) {
+      const next = streak + 1
+      setStreak(next)
+      setBestStreak(b => Math.max(b, next))
+      cancelVoice.current = playVerdict(true, next)
+      const rect = checkBtn.current?.getBoundingClientRect()
+      fireSuccess({ xp: XP_PER_CORRECT, x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2, y: rect ? rect.top : window.innerHeight * 0.8 })
+    } else {
+      setStreak(0)
+      cancelVoice.current = playVerdict(false)
+    }
   }
 
-  const continueAfterReview = async () => {
+  const next = () => {
     if (!review) return
-    const nextAnswers = [...answers, review.answer]
-    const nextScores = [...completedScores, review.breakdown]
-    if (current < content.items.length - 1) {
-      setAnswers(nextAnswers)
-      setCompletedScores(nextScores)
-      setCurrent(value => value + 1)
-      setAnswer('')
-      setReview(null)
-      setError('')
-      return
-    }
-
-    const score = Math.round(nextScores.reduce((sum, value) => sum + value.score, 0) / nextScores.length)
-    setSubmitting(true)
+    cancelVoice.current()
+    setAnswers(values => [...values, review.answer])
+    setCompletedScores(values => [...values, review.breakdown])
+    if (isLast) { setDone(true); return }
+    setCurrent(value => value + 1)
+    setAnswer('')
+    setReview(null)
     setError('')
-    try {
-      await onComplete(score, {
-        verification_status: 'auto_checked',
-        answers: { items: nextAnswers },
-        evidence: {
-          method: 'dictation_words_spelling_mechanics',
-          replays,
-          item_scores: nextScores.map(value => value.score),
-          item_breakdown: nextScores,
-        },
-        duration_seconds: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
-      })
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not save this dictation. Try again.')
-    } finally {
-      setSubmitting(false)
-    }
   }
 
+  // Enregistrement depuis l'écran de fin : LessonEnd affiche l'erreur éventuelle.
+  const submit = () => {
+    const score = Math.round(completedScores.reduce((sum, value) => sum + value.score, 0) / completedScores.length)
+    return onComplete(score, {
+      verification_status: 'auto_checked',
+      answers: { items: answers },
+      evidence: {
+        method: 'dictation_words_spelling_mechanics',
+        replays,
+        item_scores: completedScores.map(value => value.score),
+        item_breakdown: completedScores,
+      },
+      duration_seconds: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
+    })
+  }
+
+  // Entrée : vérifier puis continuer (Ctrl+Entrée dans la zone de texte).
+  useEffect(() => {
+    if (done) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return
+      if (e.target instanceof HTMLTextAreaElement && !e.ctrlKey && !review) return
+      e.preventDefault()
+      if (review) next(); else check()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  if (done) {
+    const accuracy = Math.round(completedScores.reduce((sum, value) => sum + value.score, 0) / Math.max(1, completedScores.length))
+    return (
+      <LessonEnd
+        isFrench={isFrench}
+        results={content.items.map((it, i) => ({ title: it.text, correct: (completedScores[i]?.score ?? 0) >= PASS }))}
+        total={content.items.length}
+        bestStreak={bestStreak}
+        accuracy={accuracy}
+        onContinue={submit}
+      />
+    )
+  }
+
+  const answered = current + (review ? 1 : 0)
+  const progress = Math.max(4, Math.round(answered / content.items.length * 100))
+  const good = !!review && review.breakdown.score >= PASS
   const scoreRows = review ? [
     [t.words, review.breakdown.words],
     [t.spelling, review.breakdown.spelling],
@@ -203,68 +256,82 @@ export default function Dictation({ title, instructions, content, onComplete, on
   ] as Array<[string, number]> : []
 
   return (
-    <div className="adventure-exercise-shell adventure-dictation-page" style={{ minHeight: '100vh', background: '#E8DCC8', color: '#3D2B1F', fontFamily: 'Nunito, system-ui, sans-serif' }}>
-      <header className="adventure-exercise-header" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#F0E8D8', borderBottom: '1px solid #D0C8B8' }}>
-        <button onClick={onBack} aria-label="Back" style={{ border: '1px solid #D0C8B8', background: '#F0E8D8', borderRadius: 8, padding: '7px 12px', cursor: 'pointer' }}>←</button>
-        <div style={{ flex: 1 }}>
-          <strong>{title}</strong>
-          <div style={{ height: 5, marginTop: 6, background: '#D0C8B8' }}><div style={{ width: `${progress}%`, height: '100%', background: '#1D6B2A' }} /></div>
+    <div className="lesson">
+      <div className="lesson-top">
+        <button className="lesson-icon-btn" onClick={onBack} aria-label={L.close} title={L.close}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+        <div className={`lesson-progress${streak >= 3 ? ' is-streak' : ''}`} role="progressbar" aria-valuemin={0} aria-valuemax={content.items.length} aria-valuenow={answered}>
+          <div className="lesson-progress__fill" style={{ width: `${progress}%` }} />
         </div>
-        <span style={{ fontSize: 13, fontWeight: 800 }}>{current + 1}/{content.items.length}</span>
-      </header>
+        <div className={`lesson-streak${streak >= 2 ? ' is-on' : ''}`} aria-live="polite">🔥 {streak}</div>
+      </div>
 
-      <main className="adventure-exercise-content" style={{ maxWidth: 680, margin: '0 auto', padding: 20 }}>
-        <p style={{ textAlign: 'center', color: '#7A6050' }}>{instructions || t.defaultInstructions}</p>
-        <section className="adventure-exercise-panel" style={{ background: '#F0E8D8', border: '1px solid #D0C8B8', borderRadius: 8, padding: 22 }}>
-          {!review && (
-            <button onClick={listen} disabled={!canReplay || submitting} style={{ width: '100%', minHeight: 52, border: 0, borderRadius: 8, background: canReplay && !submitting ? '#1D6B2A' : '#9E9A90', color: 'white', fontWeight: 900, cursor: canReplay && !submitting ? 'pointer' : 'default' }}>
-              {speaking ? t.playing : canReplay ? `${t.listen} (${maxReplays - replays[current]} ${t.left})` : t.limit}
+      <div className="lesson-body">
+        <div className="lesson-kicker">{title}</div>
+
+        <div className="lesson-prompt">
+          <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
+          <div className="lesson-bubble">
+            <div className="lesson-bubble__hint">{instructions || t.defaultInstructions}</div>
+            <button className="lesson-listen" onClick={listen} disabled={!canReplay}>
+              <span className="lesson-listen__icon"><SpeakerIcon /></span>
+              <span>{speaking ? t.playing : replays[current] < maxReplays ? `${t.listen} (${maxReplays - replays[current]} ${t.left})` : t.limit}</span>
             </button>
-          )}
-          {item.hint && hasListened && <p style={{ color: '#7A6050', fontSize: 13 }}><strong>{t.hint}:</strong> {item.hint}</p>}
-          <label htmlFor="dictation-answer" style={{ display: 'block', margin: '20px 0 8px', fontWeight: 900 }}>{t.prompt}</label>
-          <textarea
-            id="dictation-answer"
-            value={answer}
-            onChange={event => { setAnswer(event.target.value); setError('') }}
-            disabled={!!review || submitting}
-            rows={4}
-            autoCapitalize="sentences"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            style={{ boxSizing: 'border-box', width: '100%', resize: 'vertical', border: '2px solid #B9AF9F', borderRadius: 8, padding: 14, background: review || submitting ? '#E2DDD3' : '#FFFDF8', color: '#3D2B1F', font: '700 18px Nunito, system-ui, sans-serif' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, minHeight: 22, marginTop: 8, color: error ? '#B42318' : '#7A6050', fontSize: 13 }}>
-            <span role={error ? 'alert' : undefined}>{error || (!review ? guidance : '')}</span>
-            <span style={{ marginLeft: 'auto', color: wordCountColor, fontWeight: 900 }}>{wordCount} / {expectedWordCount} {expectedWordCount === 1 ? t.word : t.wordsCount}</span>
+            {item.hint && hasListened && <div className="lesson-bubble__hint">💡 {t.hint} : {item.hint}</div>}
           </div>
+        </div>
 
-          {!review && (
-            <button onClick={submit} disabled={!canCheck} style={{ width: '100%', minHeight: 48, marginTop: 12, border: 0, borderRadius: 8, background: canCheck ? '#C47A3C' : '#8A8A7E', color: 'white', fontWeight: 900, cursor: canCheck ? 'pointer' : 'not-allowed' }}>
-              {t.check}
-            </button>
-          )}
+        <label htmlFor="dictation-answer" className="lesson-field-label">{t.prompt}</label>
+        <textarea
+          id="dictation-answer"
+          className={`lesson-textarea${review ? (good ? ' is-right' : ' is-wrong') : ''}`}
+          value={answer}
+          onChange={event => { setAnswer(event.target.value); setError('') }}
+          disabled={!!review}
+          rows={3}
+          autoCapitalize="sentences"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <div className="lesson-field-meta">
+          <span role={error ? 'alert' : undefined} className={error ? 'is-error' : ''}>{error || (!review ? guidance : '')}</span>
+          <span className={wordCount === 0 ? '' : wordCount === expectedWordCount ? 'is-ok' : 'is-off'}>{wordCount} / {expectedWordCount} {expectedWordCount === 1 ? t.word : t.wordsCount}</span>
+        </div>
 
-          {review && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ padding: 12, background: '#FFFDF8', borderLeft: '4px solid #C47A3C', marginBottom: 8 }}><strong>{t.yourSentence}:</strong> {review.answer}</div>
-              <div style={{ padding: 12, background: '#E7F3E8', borderLeft: '4px solid #1D6B2A', marginBottom: 12 }}><strong>{t.expected}:</strong> {item.text}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-                {scoreRows.map(([label, value]) => (
-                  <div key={label} style={{ padding: 10, background: '#FFFDF8', border: '1px solid #D0C8B8', textAlign: 'center' }}>
-                    <div style={{ fontSize: 11, color: '#7A6050', fontWeight: 800 }}>{label}</div>
-                    <strong style={{ color: value >= 80 ? '#1D6B2A' : value >= 50 ? '#9A5A22' : '#B42318' }}>{value}%</strong>
-                  </div>
-                ))}
-              </div>
-              <button onClick={continueAfterReview} disabled={submitting} style={{ width: '100%', minHeight: 48, marginTop: 12, border: 0, borderRadius: 8, background: submitting ? '#8A8A7E' : '#1D6B2A', color: 'white', fontWeight: 900, cursor: submitting ? 'wait' : 'pointer' }}>
-                {submitting ? 'Saving...' : current < content.items.length - 1 ? t.continue : t.finish}
-              </button>
+        {review && (
+          <div className="lesson-review-card">
+            <div className="lesson-review-card__row"><strong>{t.expected} :</strong> {item.text}</div>
+            <div className="lesson-scores">
+              {scoreRows.map(([label, value]) => (
+                <div key={label} className={`lesson-score ${value >= 80 ? 'is-ok' : value >= 50 ? 'is-mid' : 'is-low'}`}>
+                  <span>{label}</span><strong>{value}%</strong>
+                </div>
+              ))}
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className={`lesson-footer${review ? (good ? ' is-right' : ' is-wrong') : ''}`} key={review ? `v${current}` : `q${current}`}>
+        <div className="lesson-footer__inner">
+          {review ? (
+            <div className="lesson-verdict" role="status">
+              <img className="lesson-verdict__judi" src={good ? JUDI.celebrate : JUDI.encourage} alt="" />
+              <div>
+                <div className="lesson-verdict__title">{good ? review.praise : t.keepGoing} · {review.breakdown.score}%</div>
+                {!good && <div className="lesson-verdict__detail">{item.text}</div>}
+              </div>
+            </div>
+          ) : <span />}
+          {review ? (
+            <button className={`lesson-btn${good ? '' : ' lesson-btn--red'}`} onClick={next} autoFocus>{isLast ? L.finish : L.continue}</button>
+          ) : (
+            <button ref={checkBtn} className="lesson-btn" onClick={check} disabled={!canCheck}>{L.check}</button>
           )}
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
   )
 }
