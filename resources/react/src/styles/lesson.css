@@ -713,9 +713,10 @@
   .lesson-verdict__title { font-size: 20px; }
   .lesson-end__judi { width: 130px; height: 170px; }
   .lesson-stat__value { font-size: 18px; }
-  .lesson-slate { bottom: 150px; width: 46px; height: 46px; }
-  .lesson-footer.is-right ~ .lesson-slate,
-  .lesson-footer.is-wrong ~ .lesson-slate { display: none; }
+  /* Téléphone : l'ardoise passe en haut à droite, hors de la zone des réponses. */
+  .lesson-top { padding-right: 64px; }
+  .lesson-slate { top: 12px; bottom: auto; right: 14px; width: 40px; height: 40px; box-shadow: 0 3px 0 #9c5e2b; }
+  .lesson-slate svg { width: 18px; height: 18px; }
 }
 
 /* ── Animations ────────────────────────────────────────────────────────── */
