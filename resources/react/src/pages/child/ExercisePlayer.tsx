@@ -516,13 +516,6 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
 
 export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) {
-  const childId = (() => {
-    try {
-      return Number(JSON.parse(localStorage.getItem('edumaison_session') || '{}')?.id || 0)
-    } catch {
-      return 0
-    }
-  })()
 
 
 
@@ -616,7 +609,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <OralDrill exerciseId={exercise.id} childId={childId} title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
+    return <OralDrill title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
 
 
 

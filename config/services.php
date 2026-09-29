@@ -35,11 +35,4 @@ return [
         ],
     ],
 
-    'azure_speech' => [
-        'key' => env('AZURE_SPEECH_KEY'),
-        'region' => env('AZURE_SPEECH_REGION'),
-        'endpoint' => env('AZURE_SPEECH_ENDPOINT'),
-        'timeout' => (int) env('AZURE_SPEECH_TIMEOUT', 15),
-    ],
-
 ];
