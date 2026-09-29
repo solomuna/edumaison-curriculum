@@ -23,9 +23,7 @@ use App\Http\Controllers\Api\FamilyRevisionController;
 use App\Http\Controllers\Api\AcademicCalendarController;
 use App\Http\Controllers\Api\LearningPackController;
 use App\Http\Controllers\Api\LanguageReviewController;
-use App\Http\Controllers\Api\SpeakingAssessmentController;
 use App\Http\Controllers\Api\NationalLanguageProfileController;
-use App\Http\Controllers\Api\LanguageContributionController;
 
 Route::prefix('/family-auth')->middleware('throttle:10,1')->group(function () {
     Route::post('/register', [FamilyAuthController::class, 'register']);
@@ -49,8 +47,6 @@ Route::post('/family-auth/claim-legacy', [FamilyAuthController::class, 'claimLeg
 
 Route::middleware('family.access')->group(function () {
 Route::get('/language-practice/settings', [LanguageReviewController::class, 'settings']);
-Route::post('/children/{childId}/exercises/{exercise}/speaking-assessment', [SpeakingAssessmentController::class, 'store'])
-    ->middleware(['child.family', 'throttle:20,1']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/parent/language-reviews/settings', [LanguageReviewController::class, 'updateSettings']);
     Route::get('/parent/language-reviews', [LanguageReviewController::class, 'index']);
@@ -59,11 +55,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/parent/pronunciation-reviews/{attempt}/audio', [LanguageReviewController::class, 'pronunciationAudio']);
     Route::post('/parent/pronunciation-reviews/{attempt}', [LanguageReviewController::class, 'reviewPronunciation']);
     Route::delete('/parent/pronunciation-reviews/{attempt}/audio', [LanguageReviewController::class, 'deletePronunciationAudio']);
-    Route::get('/parent/language-contributions', [LanguageContributionController::class, 'index']);
-    Route::post('/parent/language-contributions', [LanguageContributionController::class, 'store']);
-    Route::put('/parent/language-contributions/{contribution}', [LanguageContributionController::class, 'update']);
-    Route::post('/parent/language-contributions/{contribution}/submit', [LanguageContributionController::class, 'submit']);
-    Route::delete('/parent/language-contributions/{contribution}', [LanguageContributionController::class, 'destroy']);
 });
 Route::get('/academic-calendar', [AcademicCalendarController::class, 'index']);
 Route::get('/family/settings', [FamilySettingsController::class, 'show'])->middleware('auth:sanctum');

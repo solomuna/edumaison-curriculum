@@ -1,5 +1,7 @@
 # Consignes agents — EduMaison Curriculum
 
+**Lire d'abord [MANIFESTE.md](MANIFESTE.md)** : règles non négociables pour quiconque travaille sur la stack. Ce fichier en est le résumé opérationnel.
+
 ## Source de vérité : ce dépôt git
 
 - Le seul emplacement de travail est ce dépôt (`C:\laragon\www\edumaison`, remote `solomuna/edumaison-curriculum`).
