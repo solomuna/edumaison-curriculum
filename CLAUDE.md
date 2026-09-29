@@ -1,0 +1,2 @@
+@MANIFESTE.md
+@AGENTS.md
