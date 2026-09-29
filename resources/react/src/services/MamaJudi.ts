@@ -1,5 +1,6 @@
 // MamaJudi.ts - TTS service: Web Speech API (browser) + Capacitor TTS (Android)
 import { TextToSpeech } from '@capacitor-community/text-to-speech'
+import { SoundService } from './SoundService'
 
 const CHILD_KEY: Record<string, string> = {
   Irma: 'gabi',
@@ -34,14 +35,40 @@ class MamaJudiClass {
     return CHILD_KEY[name] ?? ''
   }
 
-  private playMp3(event: MamaEvent): boolean {
+  private clipUrl(event: MamaEvent): string | null {
     const key = this.getKey()
-    if (!key) return false
-    const src = `/sounds/mama/${event}_${key}.mp3`
+    return key ? `/sounds/mama/${event}_${key}.mp3` : null
+  }
+
+  private playMp3(event: MamaEvent): boolean {
+    const src = this.clipUrl(event)
+    if (!src) return false
     this.stopAudio()
+    // Clip déjà décodé : lecture instantanée. Sinon lecture classique (moins réactive).
+    if (SoundService.play(src, { exclusive: true })) return true
     this.currentAudio = new Audio(src)
     this.currentAudio.play().catch(() => {})
     return true
+  }
+
+  /** Précharge les voix enregistrées de l'enfant courant (lecture instantanée ensuite). */
+  preloadVoices(events: MamaEvent[] = ['correct', 'wrong', 'streak3', 'streak5', 'session_good', 'session_perfect', 'session_retry']) {
+    events.reduce<Promise<void>>((p, event) => {
+      const src = this.clipUrl(event)
+      return src ? p.then(() => SoundService.load(src)) : p
+    }, Promise.resolve())
+  }
+
+  /**
+   * Réaction immédiate (bonne réponse, erreur, série) : joue la voix enregistrée
+   * seulement si elle est prête. Jamais de synthèse vocale ici : elle démarre
+   * trop tard et arriverait décalée par rapport à l'écran.
+   */
+  react(event: MamaEvent): boolean {
+    const src = this.clipUrl(event)
+    if (!src || !SoundService.isReady(src)) return false
+    this.stopAudio()
+    return SoundService.play(src, { exclusive: true })
   }
 
   private async ttsCapacitor(text: string, lang = 'fr-FR', rate = 0.9): Promise<boolean> {
@@ -183,6 +210,7 @@ class MamaJudiClass {
   stop() {
     this.cancelScheduledSpeech()
     this.stopAudio()
+    SoundService.stopClip()
     this.currentUtterance = null
     if (isCapacitor()) TextToSpeech.stop().catch(() => {})
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()

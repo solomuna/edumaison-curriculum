@@ -35,7 +35,7 @@ export default function SentenceOrder({ content, onComplete }: Props) {
     const ok = sentence.join(' ') === answer.join(' ')
     setResult(ok)
     setChecked(true)
-    setTimeout(() => onComplete(ok, { words: sentence }), 1400)
+    onComplete(ok, { words: sentence })
   }
 
   return (

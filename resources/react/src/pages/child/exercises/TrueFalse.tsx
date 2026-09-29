@@ -1,6 +1,5 @@
 // TrueFalse.tsx — Moteur Vrai/Faux (TRUE/FALSE en anglais)
 import React, { useState } from "react"
-import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
@@ -16,16 +15,7 @@ export default function TrueFalse({ content, onComplete }: Props) {
     setAnswered(true)
     setChosen(v)
     const ok = v === content.answer
-    if (ok) {
-      // Celebration "exageree" : confetti + +XP depuis le bouton cliquE
-      const rect = ev?.currentTarget?.getBoundingClientRect?.()
-      fireSuccess({
-        xp: 10,
-        x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2,
-        y: rect ? rect.top + rect.height / 2 : window.innerHeight / 2,
-      })
-    }
-    setTimeout(() => onComplete(ok, { selected: v }), 1000)
+    onComplete(ok, { selected: v })
   }
 
   const isCorrect = chosen !== null && chosen === content.answer

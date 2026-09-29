@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
@@ -41,8 +40,8 @@ export default function VennDiagram({ content, onComplete }: Props) {
     })
     setResult(ok)
     setChecked(true)
-    if (ok) fireSuccess({ xp: 10 })
-    setTimeout(() => onComplete(ok, { placements: placed }), 1200)
+    
+    onComplete(ok, { placements: placed })
   }
 
   const zoneItems = (zone: 'A' | 'B' | 'AB') =>

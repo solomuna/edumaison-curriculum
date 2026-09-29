@@ -68,7 +68,7 @@ export default function ClockReading({ content, onComplete }: Props) {
     if (sel === null) return
     setChecked(true)
     const ok = sel === ans
-    setTimeout(() => onComplete(ok, { selected_index: sel }), 1200)
+    onComplete(ok, { selected_index: sel })
   }
 
   const optStyle = (i: number): React.CSSProperties => {

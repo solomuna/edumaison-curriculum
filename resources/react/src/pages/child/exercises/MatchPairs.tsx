@@ -1,6 +1,4 @@
 import { useState } from "react"
-import Confetti from '../../../components/Confetti'
-import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Pair {
   word?: string
@@ -56,7 +54,12 @@ export default function MatchPairs({ content, onComplete }: Props) {
     })
     setResult(ok)
     setChecked(true)
-    if (ok) fireSuccess({ xp: 10 })
+    onComplete(ok, {
+      pairs: Object.entries(matches).map(([leftIndex, rightIndex]) => ({
+        left: pairs[Number(leftIndex)].word,
+        right: rightOrder[Number(rightIndex)].image,
+      })),
+    })
   }
 
   const isEmojiMode = pairs.length > 0 && pairs.every(p => (p.image || '').length <= 4)
@@ -138,7 +141,6 @@ export default function MatchPairs({ content, onComplete }: Props) {
         </button>
       )}
 
-      {checked && result === true && <Confetti active={true} />}
       {checked && result !== null && (
         <div style={{ marginTop: 14 }}>
           <div style={{
@@ -166,23 +168,6 @@ export default function MatchPairs({ content, onComplete }: Props) {
               ))}
             </div>
           )}
-          <button
-            onClick={() => onComplete(result ?? false, {
-              pairs: Object.entries(matches).map(([leftIndex, rightIndex]) => ({
-                left: pairs[Number(leftIndex)].word,
-                right: rightOrder[Number(rightIndex)].image,
-              })),
-            })}
-            style={{
-              width: '100%', padding: '13px 0',
-              borderRadius: 16, border: 'none',
-              background: result ? '#10B981' : '#F59E0B',
-              color: 'white', fontSize: 15, fontWeight: 800,
-              cursor: 'pointer'
-            }}
-          >
-            Next
-          </button>
         </div>
       )}
     </div>

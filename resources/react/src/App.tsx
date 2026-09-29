@@ -55,10 +55,8 @@ function EduMaisonApp() {
 
   if (isMama) return <ThemeProvider><MamaSpace onExit={() => window.location.href = '/'} /></ThemeProvider>
 
-  // Unlock audio on first interaction
-  if (typeof window !== 'undefined') {
-    document.addEventListener('click', () => SoundService.unlock(), { once: true })
-  }
+  // Débloque l'audio au premier geste et précharge les sons (idempotent)
+  if (typeof window !== 'undefined') SoundService.init()
 
   const shell: Record<string, string | number> = {
     maxWidth: SHELL_MAX_WIDTH, margin: '0 auto', minHeight: '100vh',

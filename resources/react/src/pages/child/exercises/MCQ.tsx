@@ -1,1121 +1,279 @@
-import { useState, useEffect, useMemo } from 'react'
-
-
-
-import Confetti from '../../../components/Confetti'
-
-
-
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import LessonEnd from '../../../components/lesson/LessonEnd'
 import { MamaJudi } from '../../../services/MamaJudi'
-
-
-
 import { SoundService } from '../../../services/SoundService'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
 import { fireSuccess } from '../../../components/SuccessFx'
-import MamaJudiPose from '../../../components/MamaJudiPose'
-
-
-
 import type { ExerciseCompletionHandler, MCQContent } from '../../../types/exercise'
 import { useAssetLibrary } from '../../../hooks/useAssetLibrary'
-
-
-
 import Ardoise from './Ardoise'
 
-
-
-
-
-
-
 interface Props {
-
-
-
   title: string
-
-
-
   instructions: string
-
-
-
   content: MCQContent
-
-
-
   subject?: string
-
-
-
   onComplete: ExerciseCompletionHandler
-
-
-
   onBack: () => void
-
-
-
 }
 
-
-
-
-
-
-
-const STARS = ['☆', '☆', '☆', '☆', '☆']
-
-
-
-
-
-
-
-function starCount(pct: number) {
-
-
-
-  if (pct >= 90) return 5
-
-
-
-  if (pct >= 75) return 4
-
-
-
-  if (pct >= 55) return 3
-
-
-
-  if (pct >= 35) return 2
-
-
-
-  return 1
-
-
-
-}
-
-
-
-
-
-
+interface Result { correct: boolean; title: string; question_index: number; selected_index: number }
 
 function shuffleOptions(options: any, answerIndex: number) {
-
-
-
   const safeOptions = Array.isArray(options) ? options : []
   const indexed = safeOptions.map((opt, i) => ({ opt, originalIndex: i, isCorrect: i === answerIndex }))
-
-
-
   for (let i = indexed.length - 1; i > 0; i--) {
-
-
-
     const j = Math.floor(Math.random() * (i + 1));
-
-
-
     [indexed[i], indexed[j]] = [indexed[j], indexed[i]]
-
-
-
   }
-
-
-
   return {
     options: indexed.map(x => x.opt),
     originalIndexes: indexed.map(x => x.originalIndex),
     answerIndex: indexed.findIndex(x => x.isCorrect),
   }
-
-
-
 }
 
-
-
-
-
-
+const SpeakerIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" />
+  </svg>
+)
 
 export default function MCQ({ title, instructions, content, subject, onComplete, onBack }: Props) {
-
-
-
   const [current, setCurrent] = useState(0)
-
-
-
-  const [selected, setSelected] = useState<string | null>(null)
-
-
-
-  const [results, setResults] = useState<{ correct: boolean; title: string; question_index: number; selected_index: number }[]>([])
-
-
-
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
+  const [checked, setChecked] = useState(false)
+  const [results, setResults] = useState<Result[]>([])
+  const [streak, setStreak] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
+  const [combo, setCombo] = useState<{ id: number; n: number } | null>(null)
+  const [praise, setPraise] = useState('')
   const [showResult, setShowResult] = useState(false)
-
-
-
   const [showArdoise, setShowArdoise] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const checkBtn = useRef<HTMLButtonElement>(null)
   const { getSubjectIcon } = useAssetLibrary()
-
-
-
-
-
-
-
-  useEffect(() => {
-
-
-
-    if (!showResult) return
-
-
-
-    const correct2 = results.filter(r => r.correct).length
-
-
-
-    const pct2 = Math.round(correct2 / questions.length * 100)
-
-
-
-    if (pct2 === 100)      { setTimeout(() => SoundService.fanfare(),  300); MamaJudi.sessionPerfect() }
-
-
-
-    else if (pct2 >= 70)   { setTimeout(() => SoundService.applause(), 300); MamaJudi.sessionGood() }
-
-
-
-    else if (pct2 < 50)    { setTimeout(() => SoundService.heartLost(),300); MamaJudi.sessionRetry() }
-
-
-
-  }, [showResult])
-
-
 
   // Guard complet: string JSON, undefined, ou format sans questions[]
   const rawContent: any = !content ? {} : typeof content === 'string' ? (() => { try { return JSON.parse(content) } catch { return {} } })() : content
-  // Normaliser format plat {question, options, answer} -> questions[]
-  // Detecter langue selon matiere
   const FRENCH_SUBJECTS = ['French', 'Francais', 'NLC', 'National Languages']
   const isFrenchSubject = FRENCH_SUBJECTS.some(s => (subject || '').toLowerCase().includes(s.toLowerCase()))
   const ttsLang = isFrenchSubject ? 'fr-FR' : 'en-GB'
-
+  const L = labelsFor(isFrenchSubject)
   const questions: any[] = Array.isArray(rawContent.questions) ? rawContent.questions
     : rawContent.question && rawContent.options ? [{ text: rawContent.question, question: rawContent.question, options: rawContent.options, answer: rawContent.answer ?? 0 }]
     : []
-
-
-
   const shuffled = useMemo(() =>
-
-
-
     questions.map(q => { const idx = typeof q.answer === 'number' ? q.answer : (q.options||[]).indexOf(q.answer); return shuffleOptions(q.options, idx >= 0 ? idx : 0) })
-
-
-
   , [questions.length])
-
-
-
-
-
-
-
   const q = questions[current]
-
-
-
   const shuffledQ = shuffled[current] || { options: q?.options || [], originalIndexes: (q?.options || []).map((_: unknown, index: number) => index), answerIndex: 0 }
+  const questionText: string = q?.text || q?.question || ''
+  const isLast = current === questions.length - 1
+  const lastResult = results[results.length - 1]
+  const isRight = checked && !!lastResult?.correct
+
+  const cancelVoice = useRef<() => void>(() => {})
+  const clearVoice = () => { cancelVoice.current(); cancelVoice.current = () => {} }
+
+  // Sons et voix décodés à l'avance, pendant que l'enfant lit la première question.
+  useEffect(() => {
+    prepareLessonAudio()
+    return () => { clearVoice(); MamaJudi.stop() }
+  }, [])
+  useEffect(() => { if (q) MamaJudi.speakLangAfter(current === 0 ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [current])
 
 
+  const select = (idx: number) => {
+    if (checked) return
+    SoundService.click()
+    setSelectedIdx(idx)
+  }
 
-
-
-
-
-  useEffect(() => { MamaJudi.speakLang(instructions, ttsLang) }, [])
-
-
-
-  useEffect(() => { if (q) MamaJudi.speakLang(q.text || q.question || '', ttsLang) }, [current])
-
-
-
-
-
-
-
-  const choose = (opt: string, idx: number, ev?: React.MouseEvent<HTMLElement>) => {
-
-
-
-    if (selected) return
-
-
-
-    setSelected(opt)
-
-
-
-    const correct = idx === shuffledQ.answerIndex
-
-
-
-    const correctText = shuffledQ.options[shuffledQ.answerIndex]
-
-
-
-    if (correct) {
-      MamaJudi.correct(); SoundService.correct()
-      // Celebration "exageree" : confetti + +XP flottant depuis la zone tapee
-      const rect = ev?.currentTarget?.getBoundingClientRect?.()
-      fireSuccess({
-        xp: 10,
-        x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2,
-        y: rect ? rect.top + rect.height / 2 : window.innerHeight / 2,
-      })
-    }
-
-
-
-    else { MamaJudi.wrong(); SoundService.wrong() }
-
-
-
+  const check = useCallback(() => {
+    if (checked || selectedIdx === null || !q) return
+    const correct = selectedIdx === shuffledQ.answerIndex
+    setChecked(true)
     setResults(r => [...r, {
       correct,
-      title: q.text || q.question || '',
+      title: questionText,
       question_index: current,
-      selected_index: shuffledQ.originalIndexes[idx],
+      selected_index: shuffledQ.originalIndexes[selectedIdx],
     }])
-
-
-
-  }
-
-
-
-
-
-
-
-  const next = () => {
-
-
-
-    setSelected(null)
-
-
-
-    if (current < questions.length - 1) {
-
-
-
-      setCurrent(c => c + 1)
-
-
-
-    } else {
-
-
-
-      setShowResult(true)
-
-
-
-      const total = results.filter(r => r.correct).length
-
-
-
-      onComplete(Math.round(total / questions.length * 100), {
-        verification_status: 'auto_checked',
-        answers: { items: results.map(result => ({ question_index: result.question_index, selected_index: result.selected_index })) },
-        evidence: { method: 'answer_key' },
+    clearVoice()
+    if (correct) {
+      const next = streak + 1
+      setStreak(next)
+      setBestStreak(b => Math.max(b, next))
+      setPraise(randomPraise(L))
+      if (isStreakMilestone(next)) setCombo({ id: Date.now(), n: next })
+      cancelVoice.current = playVerdict(true, next)
+      const rect = checkBtn.current?.getBoundingClientRect()
+      fireSuccess({
+        xp: XP_PER_CORRECT,
+        x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2,
+        y: rect ? rect.top : window.innerHeight * 0.8,
       })
-
-
-
+    } else {
+      setStreak(0)
+      cancelVoice.current = playVerdict(false)
     }
+  }, [checked, selectedIdx, q, shuffledQ, questionText, current, streak, L])
 
+  const next = useCallback(() => {
+    if (!checked) return
+    clearVoice()
+    setSelectedIdx(null)
+    setChecked(false)
+    if (!isLast) {
+      setCurrent(c => c + 1)
+      return
+    }
+    setShowResult(true)
+  }, [checked, isLast])
 
-
+  // La tentative est enregistrée quand l'enfant quitte l'écran de fin :
+  // le parent change d'écran dès l'enregistrement, l'enfant doit d'abord voir son bilan.
+  const submit = () => {
+    if (submitted) return
+    setSubmitted(true)
+    const total = results.filter(r => r.correct).length
+    onComplete(Math.round(total / questions.length * 100), {
+      verification_status: 'auto_checked',
+      answers: { items: results.map(result => ({ question_index: result.question_index, selected_index: result.selected_index })) },
+      evidence: { method: 'answer_key' },
+    })
   }
 
+  // Clavier : 1-9 pour choisir, Entrée pour vérifier puis continuer.
+  useEffect(() => {
+    if (showResult || showArdoise) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return
+      const n = Number(e.key)
+      if (n >= 1 && n <= shuffledQ.options.length) { select(n - 1); return }
+      if (e.key === 'Enter') { e.preventDefault(); checked ? next() : check() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showResult, showArdoise, shuffledQ, checked, check, next])
 
-
-
-
-
-
-  // ── Session complete screen ───────────────────────────────────────────────
-
-
+  useEffect(() => {
+    if (!combo) return
+    const t = setTimeout(() => setCombo(null), 1700)
+    return () => clearTimeout(t)
+  }, [combo])
 
   if (showResult) {
-
-
-
-    const correct = results.filter(r => r.correct).length
-
-
-
-    const total = questions.length
-
-
-
-    const pct = Math.round(correct / total * 100)
-
-
-
-    const stars = starCount(pct)
-
-
-
-    const perfect = pct === 100
-
-
-
-    const judiMsg = pct >= 80
-
-
-
-      ? 'Excellent work! Keep it up!'
-
-
-
-      : pct >= 50
-
-
-
-        ? 'Bonne tentative, Belle m\u00e8re. Les corrections reviendront en r\u00e9vision SRS.'
-
-
-
-        : 'Ne te d\u00e9courage pas ! Revois le cours et r\u00e9essaie.'
-
-
-
-
-
-
-
-    return (
-
-
-
-      <div className="adventure-result-page" style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: 40 }}>
-
-
-
-        <Confetti active={perfect} />
-
-
-
-
-
-
-
-        {/* Header */}
-
-
-
-        <div style={{ background: '#E8DCC8', padding: '18px 18px 14px' }}>
-
-
-
-          <div style={{ fontSize: 24, fontWeight: 900, color: '#3D2B1F' }}>Session complete!</div>
-
-
-
-          <div style={{ fontSize: 14, color: '#7A6050', marginTop: 2 }}>{correct}/{total} correct</div>
-
-
-
-
-
-
-
-          {/* Stars */}
-
-
-
-          <div style={{ display: 'flex', gap: 6, marginTop: 12, marginBottom: 4 }}>
-
-
-
-            {[1,2,3,4,5].map(i => (
-
-
-
-              <span key={i} style={{ fontSize: 28 }}>{i <= stars ? '⭐' : '☆'}</span>
-
-
-
-            ))}
-
-
-
-          </div>
-
-
-
-
-
-
-
-          {/* Stars earned badge */}
-
-
-
-          <div style={{ display: 'inline-block', background: '#FEF3C7', border: '1.5px solid #F59E0B', borderRadius: 20, padding: '4px 14px', fontSize: 13, fontWeight: 700, color: '#B45309', marginTop: 6 }}>
-
-
-
-            +{correct * 5} stars earned ⭐
-
-
-
-          </div>
-
-
-
-        </div>
-
-
-
-
-
-
-
-        {/* Mama Judi message */}
-
-
-
-        <div style={{ margin: '14px 16px', background: '#F0E8D8', borderRadius: 18, padding: '14px 16px', border: '1.5px solid #D0C8B8', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-
-
-
-          <MamaJudiPose pose={pct >= 80 ? 'celebrate' : 'encourage'} className="adventure-judi-feedback" decorative />
-
-
-
-          <div style={{ fontSize: 14, color: '#3D2B1F', lineHeight: 1.5, fontWeight: 600, flex: 1 }}>{judiMsg}</div>
-
-
-
-        </div>
-
-
-
-
-
-
-
-        {/* Summary */}
-
-
-
-        <div style={{ margin: '0 16px' }}>
-
-
-
-          <div style={{ fontSize: 11, fontWeight: 900, color: '#7A6050', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 10 }}>Summary</div>
-
-
-
-          {results.map((r, i) => (
-
-
-
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', marginBottom: 6, background: '#F0E8D8', borderRadius: 12, border: '1px solid #D0C8B8' }}>
-
-
-
-              <span style={{ fontSize: 13, color: '#3D2B1F', flex: 1, marginRight: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-
-
-
-                {r.title.length > 38 ? r.title.slice(0, 38) + '...' : r.title}
-
-
-
-              </span>
-
-
-
-              <span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20, flexShrink: 0, background: r.correct ? '#D1FAE5' : '#FEE2E2', color: r.correct ? '#065F46' : '#991B1B' }}>
-
-
-
-                {r.correct ? 'Ma\u00eetris\u00e9' : '\u00c0 revoir'}
-
-
-
-              </span>
-
-
-
-            </div>
-
-
-
-          ))}
-
-
-
-        </div>
-
-
-
-
-
-
-
-        {/* Buttons */}
-
-
-
-        <div style={{ padding: '18px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-
-
-          <button onClick={onBack} style={{ width: '100%', padding: '14px 0', borderRadius: 16, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 15, fontWeight: 900, cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
-
-
-
-            ← Back au tableau de bord
-
-
-
-          </button>
-
-
-
-          <button onClick={() => { setCurrent(0); setSelected(null); setResults([]); setShowResult(false) }}
-
-
-
-            style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: '2px solid #1D6B2A', background: 'transparent', color: '#1D6B2A', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
-
-
-
-            ↺ Try again
-
-
-
-          </button>
-
-
-
-        </div>
-
-
-
-      </div>
-
-
-
-    )
-
-
-
+    return <LessonEnd isFrench={isFrenchSubject} results={results} total={questions.length} bestStreak={bestStreak} submitted={submitted} onContinue={submit} />
   }
 
+  if (!q) return null
 
-
-
-
-
-
-  // ── Exercise screen ───────────────────────────────────────────────────────
-
-
-
-  const isCorrectSelected = selected !== null && shuffledQ.options.indexOf(selected) === shuffledQ.answerIndex
-
-
-
-  const isLast = current === questions.length - 1
-
-
-
-
-
-
+  // ── Écran de question ────────────────────────────────────────────────────
+  const answered = current + (checked ? 1 : 0)
+  const progress = Math.max(4, Math.round(answered / questions.length * 100))
+  const shortOptions = shuffledQ.options.length === 4 && shuffledQ.options.every((o: string) => String(o).length <= 18)
+  const correctText = shuffledQ.options[shuffledQ.answerIndex]
 
   return (
-
-
-
-    <div className="adventure-exercise-shell adventure-mcq-page" style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif' }}>
-
-
-
-
-
-
-
+    <div className="lesson">
       {showArdoise && <Ardoise onClose={() => setShowArdoise(false)} />}
 
-
-
-      {/* Header */}
-
-
-
-      <div className="adventure-exercise-header" style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)', padding: '10px 14px 8px' }}>
-
-
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-
-
-
-          <button onClick={onBack} style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 800, color: '#C47A3C', cursor: 'pointer', padding: '4px 0' }}>
-
-
-
-            ← Back
-
-
-
-          </button>
-
-
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-
-
-
-            <button onClick={() => MamaJudi.speakLangAfter(q?.text || q?.question || instructions, ttsLang, 100, 0.85)} style={{ background: '#1D6B2A', border: 'none', borderRadius: 8, padding: '4px 10px', fontSize: 16, cursor: 'pointer' }} title="Listen again">&#128266;</button>
-
-
-
-            <span style={{ fontSize: 13, fontWeight: 800, color: '#1D6B2A' }}>{subject || ''}</span>
-
-
-
-          </div>
-
-
-
+      <div className="lesson-top">
+        <button className="lesson-icon-btn" onClick={onBack} aria-label={L.close} title={L.close}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+        </button>
+        <div className={`lesson-progress${streak >= 3 ? ' is-streak' : ''}`} role="progressbar" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={answered}>
+          <div className="lesson-progress__fill" style={{ width: `${progress}%` }} />
         </div>
-
-
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-
-
-
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#7A6050', flexShrink: 0 }}>{current + 1} / {questions.length}</span>
-
-
-
-          <div style={{ flex: 1, height: 5, background: 'var(--border)', borderRadius: 3 }}>
-
-
-
-            <div style={{ height: 5, borderRadius: 3, background: '#1D6B2A', width: `${Math.round(((current + 1) / questions.length) * 100)}%`, transition: 'width 0.3s' }}/>
-
-
-
-          </div>
-
-
-
-        </div>
-
-
-
-        <div style={{ fontSize: 11, color: '#7A6050', marginTop: 4, fontWeight: 600 }}>
-
-
-
-          {subject} — {title}
-
-
-
-        </div>
-
-
-
+        <div className={`lesson-streak${streak >= 2 ? ' is-on' : ''}`} aria-live="polite">🔥 {streak}</div>
       </div>
 
+      <div className="lesson-body">
+        <div className="lesson-kicker">{instructions || title}</div>
 
-
-
-
-
-
-      <div className="adventure-exercise-content adventure-mcq-content" style={{ padding: '14px 16px' }}>
-
-
-
-
-
-
-
-        {/* Image URL — grande image visuelle (exercices C1/C2 animaux, fruits, formes) */}
-        {content.image_url && (
-          <div style={{ borderRadius: 20, overflow: 'hidden', marginBottom: 12, background: 'white', border: '1px solid #FFD4B0', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-            <img
-              src={content.image_url}
-              alt={title}
-              style={{ width: '100%', maxHeight: 280, objectFit: 'contain', display: 'block' }}
-              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-            />
+        {rawContent.image_url && (
+          <div className="lesson-media">
+            <img src={rawContent.image_url} alt={title} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           </div>
         )}
-
-        {/* Illustration - bibliotheque si manquant */}
-        {!content.image_url && (content.illustration || subject) && (
-          <div className="adventure-exercise-panel" style={{ background: '#FFF0E6', borderRadius: 16, padding: '14px', textAlign: 'center', fontSize: 52, marginBottom: 12, border: '1px solid #FFD4B0', lineHeight: 1 }}>
-            {content.illustration || getSubjectIcon(subject || '')}
-          </div>
+        {!rawContent.image_url && rawContent.illustration && (
+          <div className="lesson-media lesson-media--emoji" aria-hidden="true">{rawContent.illustration}</div>
         )}
-
-
-
-
-
-
-
+        {!rawContent.image_url && !rawContent.illustration && !q.svg && !rawContent.passage && subject && (
+          <div className="lesson-media lesson-media--emoji" aria-hidden="true">{getSubjectIcon(subject)}</div>
+        )}
+        {q.svg && (
+          <div className="lesson-media lesson-media--svg" dangerouslySetInnerHTML={{ __html: q.svg }} />
+        )}
         {rawContent.passage && (
-
-          <article style={{ background: '#FFFDF8', borderLeft: '4px solid #C47A3C', padding: '14px 16px', marginBottom: 14, lineHeight: 1.65, fontSize: 16, color: 'var(--text-dark)' }}>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-
-              <strong>Reading passage</strong>
-
-              <button onClick={() => MamaJudi.speakLang(rawContent.passage, ttsLang, 0.82)} aria-label="Listen to the passage" style={{ border: 0, background: '#1D6B2A', color: 'white', width: 38, height: 38, borderRadius: 8, cursor: 'pointer' }}>&#128266;</button>
-
+          <article className="lesson-passage">
+            <div className="lesson-passage__head">
+              <span>{L.passage}</span>
+              <button className="lesson-speak" onClick={() => MamaJudi.speakLang(rawContent.passage, ttsLang, 0.82)} aria-label={L.listen}><SpeakerIcon /></button>
             </div>
-
             {rawContent.passage}
-
           </article>
-
         )}
 
-        {/* Question card */}
-
-
-
-        <div className="adventure-exercise-panel" style={{ background: 'var(--card)', borderRadius: 16, padding: '14px 16px', marginBottom: 14, border: '1.5px solid var(--border)' }}>
-
-
-
-          {/* French subtitle */}
-
-
-
-          {(q as any).french && (
-
-
-
-            <div style={{ fontSize: 12, color: '#C47A3C', fontWeight: 600, marginBottom: 6, lineHeight: 1.4 }}>
-
-
-
-              {(q as any).french}
-
-
-
+        <div className="lesson-prompt">
+          <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
+          <div className="lesson-bubble">
+            {q.french && <div className="lesson-bubble__hint">{q.french}</div>}
+            <div className="lesson-bubble__row">
+              <button className="lesson-speak" onClick={() => MamaJudi.speakLangAfter(questionText || instructions, ttsLang, 100, 0.85)} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <span>{questionText}</span>
             </div>
-
-
-
-          )}
-
-
-
-          {/* SVG illustration par question */}
-
-
-
-          {(q as any).svg && (
-
-
-
-            <div style={{ textAlign: 'center' as const, marginBottom: 10 }}
-
-
-
-              dangerouslySetInnerHTML={{ __html: (q as any).svg.replace('<svg', '<svg style="display:block;margin:auto"') }}
-
-
-
-            />
-
-
-
-          )}
-
-
-
-          {/* English question */}
-
-
-
-          <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--text-dark)', lineHeight: 1.4 }}>
-
-
-
-            {q.text || q.question}
-
-
-
           </div>
-
-
-
         </div>
 
-
-
-
-
-
-
-        {/* Options */}
-
-
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 14 }}>
-
-
-
+        <div className={`lesson-choices${shortOptions ? ' is-grid' : ''}`} role="radiogroup">
           {shuffledQ.options.map((opt: string, i: number) => {
-
-
-
-            const isCorrect = i === shuffledQ.answerIndex
-
-
-
-            const isChosen = selected === opt
-
-
-
-            let bg = 'var(--card)', border = 'var(--border)', color = 'var(--text-dark)'
-
-
-
-            if (selected) {
-
-
-
-              if (isCorrect) { bg = '#ECFDF5'; border = '#10B981'; color = '#065F46' }
-
-
-
-              else if (isChosen) { bg = '#FEF2F2'; border = '#EF4444'; color = '#991B1B' }
-
-
-
-            }
-
-
-
+            const isAnswer = i === shuffledQ.answerIndex
+            const isChosen = selectedIdx === i
+            let state = ''
+            if (checked) state = isAnswer ? ' is-right' : isChosen ? ' is-wrong' : ' is-faded'
+            else if (isChosen) state = ' is-selected'
             return (
-
-
-
-              <div className="adventure-mcq-option" key={i} onClick={(e) => choose(opt, i, e)} style={{
-
-
-
-                borderRadius: 14, padding: '13px 16px', cursor: selected ? 'default' : 'pointer',
-
-
-
-                border: `1.5px solid ${border}`, background: bg, transition: 'all 0.15s'
-
-
-
-              }}>
-
-
-
-                <span style={{ fontSize: 15, fontWeight: 700, color }}>{opt}</span>
-
-
-
-              </div>
-
-
-
+              <button key={`${current}-${i}`} className={`lesson-choice${state}`} onClick={() => select(i)} disabled={checked} role="radio" aria-checked={isChosen}>
+                <span className="lesson-choice__key">{i + 1}</span>
+                <span>{opt}</span>
+              </button>
             )
-
-
-
           })}
-
-
-
         </div>
-
-
-
-
-
-
-
-        {/* Feedback + explanation */}
-
-
-
-        {selected && (
-
-
-
-          <div style={{
-
-
-
-            borderRadius: 14, padding: '12px 14px', marginBottom: 14,
-
-
-
-            background: isCorrectSelected ? '#ECFDF5' : '#FEF2F2',
-
-
-
-            border: `1.5px solid ${isCorrectSelected ? '#6EE7B7' : '#FCA5A5'}`,
-
-
-
-            display: 'flex', gap: 10, alignItems: 'flex-start'
-
-
-
-          }}>
-
-
-
-            <span style={{ fontSize: 18, flexShrink: 0 }}>{isCorrectSelected ? '✅' : '\u{1F4A1}'}</span>
-
-
-
-            <div style={{ fontSize: 13, fontWeight: 700, color: isCorrectSelected ? '#065F46' : '#991B1B', lineHeight: 1.5 }}>
-
-
-
-              {(q as any).explanation
-
-
-
-                ? (isCorrectSelected ? 'Correct! ' : 'Almost! ') + (q as any).explanation
-
-
-
-                : isCorrectSelected
-
-
-
-                  ? 'Correct ! Bonne r\u00e9ponse !'
-
-
-
-                  : `La bonne r\u00e9ponse est : ${shuffledQ.options[shuffledQ.answerIndex]}`
-
-
-
-              }
-
-
-
-            </div>
-
-
-
-          </div>
-
-
-
-        )}
-
-
-
-
-
-
-
-        {/* Next / See results button */}
-
-
-
-        {selected && (
-
-
-
-          <button onClick={next} style={{
-
-
-
-            width: '100%', padding: '15px 0', borderRadius: 16, border: 'none',
-
-
-
-            background: '#1D6B2A', color: 'white', fontSize: 15, fontWeight: 900,
-
-
-
-            cursor: 'pointer', fontFamily: 'Nunito, system-ui, sans-serif',
-
-
-
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-
-
-
-          }}>
-
-
-
-            {isLast ? 'See results ⭐' : 'Next exercise →'}
-
-
-
-          </button>
-
-
-
-        )}
-
-
-
       </div>
 
+      <div className={`lesson-footer${checked ? (isRight ? ' is-right' : ' is-wrong') : ''}`} key={checked ? `v${current}` : `q${current}`}>
+        <div className="lesson-footer__inner">
+          {checked ? (
+            <div className="lesson-verdict" role="status">
+              <img className="lesson-verdict__judi" src={isRight ? JUDI.celebrate : JUDI.encourage} alt="" />
+              <div>
+                <div className="lesson-verdict__title">{isRight ? praise : L.wrong}</div>
+                {!isRight && <div className="lesson-verdict__detail">{correctText}</div>}
+                {q.explanation && <div className="lesson-verdict__detail">{q.explanation}</div>}
+              </div>
+            </div>
+          ) : <span />}
+          {checked ? (
+            <button className={`lesson-btn${isRight ? '' : ' lesson-btn--red'}`} onClick={next} autoFocus>
+              {isLast ? L.finish : L.continue}
+            </button>
+          ) : (
+            <button ref={checkBtn} className="lesson-btn" onClick={check} disabled={selectedIdx === null}>
+              {L.check}
+            </button>
+          )}
+        </div>
+      </div>
 
+      {combo && <div key={combo.id} className="lesson-combo">🔥 {L.streak(combo.n)}</div>}
 
-      <button onClick={() => setShowArdoise(true)} style={{ position: 'fixed', bottom: 110, right: 16, zIndex: 100, width: 52, height: 52, borderRadius: '50%', background: '#C47A3C', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Ardoise brouillon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-
-
-
+      <button className="lesson-slate" onClick={() => setShowArdoise(true)} title="Ardoise brouillon" aria-label="Ardoise brouillon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
     </div>
-
-
-
   )
-
-
-
 }

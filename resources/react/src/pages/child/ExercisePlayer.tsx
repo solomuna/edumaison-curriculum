@@ -66,6 +66,8 @@ import Ardoise from './exercises/Ardoise'
 
 import MamaJudiPose from '../../components/MamaJudiPose'
 
+import LessonShell, { type ReportResult } from '../../components/lesson/LessonShell'
+
 
 
 
@@ -551,7 +553,8 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    if (type === 'oral_drill') return
+    // Ces moteurs lisent eux-mêmes consigne et questions.
+    if (['oral_drill', 'mcq', 'multiple_choice', 'fill_in'].includes(type) || (!type && Array.isArray(content.questions))) return
 
 
 
@@ -604,6 +607,24 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
+
+  // Cadre « Duolingo » commun aux moteurs à une question : verdict immédiat,
+  // son synchronisé, enregistrement sur « Continuer ».
+  const shell = (render: (report: ReportResult) => React.ReactNode) => (
+    <LessonShell
+      title={exercise.title}
+      instructions={exercise.instructions}
+      isFrench={isFrench}
+      onBack={onBack}
+      onSubmit={handleBool}
+      extras={<>
+        {exercise.id && <BookHint exerciseId={exercise.id} />}
+        {exercise.category === 'ict' && <div className="lesson-media"><IctIllustration keyword={exercise.title} /></div>}
+      </>}
+    >
+      {render}
+    </LessonShell>
+  )
 
   if (type === 'oral_drill') {
 
@@ -805,15 +826,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <MatchPairs content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <MatchPairs content={content} onComplete={report} />)
 
 
 
@@ -837,15 +850,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <SentenceOrder content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <SentenceOrder content={content} onComplete={report} />)
 
 
 
@@ -869,15 +874,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <TrueFalse content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <TrueFalse content={content} onComplete={report} />)
 
 
 
@@ -901,15 +898,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <ClockReading content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <ClockReading content={content} onComplete={report} />)
 
 
 
@@ -929,15 +918,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <Geometry content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <Geometry content={content} onComplete={report} />)
 
 
 
@@ -961,15 +942,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <VennDiagram content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <VennDiagram content={content} onComplete={report} />)
 
 
 
@@ -993,15 +966,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <NumberLine content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <NumberLine content={content} onComplete={report} />)
 
 
 
@@ -1033,15 +998,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <MatchPairs content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <MatchPairs content={content} onComplete={report} />)
 
 
 
@@ -1061,15 +1018,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <SentenceOrder content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <SentenceOrder content={content} onComplete={report} />)
 
 
 
@@ -1089,15 +1038,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-      <ExerciseShell title={exercise.title} onBack={onBack} category={exercise.category} keyword={exercise.title} exerciseId={exercise.id} instructions={exercise.instructions} isFrench={isFrench}>
-
-
-
-        <TrueFalse content={content} onComplete={handleBool} />
-
-
-
-      </ExerciseShell>
+      shell(report => <TrueFalse content={content} onComplete={report} />)
 
 
 
