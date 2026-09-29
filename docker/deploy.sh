@@ -43,7 +43,7 @@ mkdir -p "$BK"
 docker exec curriculum-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "$BK/db.dump"
 docker exec -i curriculum-postgres pg_restore -l < "$BK/db.dump" | grep -c ' TABLE DATA ' | xargs -I{} echo "dump : {} tables de données"
 [ -s "$BK/db.dump" ]
-tar czf "$BK/code.tgz" --exclude=./vendor --exclude=./node_modules --exclude='./public/react*' --exclude=./storage/logs .
+tar czf "$BK/code.tgz" --exclude=./vendor --exclude=./node_modules --exclude='./public/react*' --exclude=./storage .
 tar czf "$BK/vendor.tgz" vendor
 sha256sum "$BK"/* > "$BK/SHA256SUMS"
 echo "$PREV_SHA" > "$BK/PREVIOUS_HEAD"
