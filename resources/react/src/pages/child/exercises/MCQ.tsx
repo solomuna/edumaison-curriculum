@@ -118,8 +118,16 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const lastResult = results[results.length - 1]
   const isRight = checked && !!lastResult?.correct
 
-  useEffect(() => { MamaJudi.speakLang(instructions, ttsLang) }, [])
-  useEffect(() => { if (q) MamaJudi.speakLang(questionText, ttsLang) }, [current])
+  const voiceTimer = useRef<number | null>(null)
+  const clearVoice = () => { if (voiceTimer.current !== null) { clearTimeout(voiceTimer.current); voiceTimer.current = null } }
+
+  // Sons et voix décodés à l'avance, pendant que l'enfant lit la première question.
+  useEffect(() => {
+    SoundService.init()
+    MamaJudi.preloadVoices()
+    return () => { clearVoice(); MamaJudi.stop() }
+  }, [])
+  useEffect(() => { if (q) MamaJudi.speakLangAfter(current === 0 ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [current])
 
   useEffect(() => {
     if (!showResult) return
@@ -145,18 +153,25 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
       question_index: current,
       selected_index: shuffledQ.originalIndexes[selectedIdx],
     }])
+    // Ordre fixe : on coupe la lecture de la question, le son part avec le
+    // bandeau (t=0), la voix de Mama Judi suit 250 ms plus tard.
+    MamaJudi.stop()
+    clearVoice()
+    const say = (event: 'correct' | 'wrong' | 'streak3' | 'streak5') => {
+      voiceTimer.current = window.setTimeout(() => { voiceTimer.current = null; MamaJudi.react(event) }, 250)
+    }
     if (correct) {
       const next = streak + 1
       setStreak(next)
       setBestStreak(b => Math.max(b, next))
       setPraise(L.praise[Math.floor(Math.random() * L.praise.length)])
-      SoundService.correct()
       if (next === 3 || next === 5 || (next > 5 && next % 5 === 0)) {
-        setTimeout(() => SoundService.streak(), 350)
+        SoundService.streak()
         setCombo({ id: Date.now(), n: next })
-        if (next === 3) MamaJudi.streak3(); else MamaJudi.streak5()
+        say(next === 3 ? 'streak3' : 'streak5')
       } else {
-        MamaJudi.correct()
+        SoundService.correct()
+        say('correct')
       }
       const rect = checkBtn.current?.getBoundingClientRect()
       fireSuccess({
@@ -167,13 +182,14 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     } else {
       setStreak(0)
       SoundService.wrong()
-      MamaJudi.wrong()
+      say('wrong')
       if ('vibrate' in navigator) navigator.vibrate?.(120)
     }
   }, [checked, selectedIdx, q, shuffledQ, questionText, current, streak, L])
 
   const next = useCallback(() => {
     if (!checked) return
+    clearVoice()
     setSelectedIdx(null)
     setChecked(false)
     if (!isLast) {
