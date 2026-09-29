@@ -15,16 +15,20 @@ SWITCHED=0
 log() { printf '\n== %s\n' "$*"; }
 
 rollback() {
+  trap - ERR
+  set +e
   log "ÉCHEC — rollback"
   if [ "$SWITCHED" = 1 ]; then
     cd "$APP"
-    git reset -q --hard "$PREV_SHA"
-    tar xzf "$BK/code.tgz" -C "$APP"
-    rm -rf "$APP/vendor" && tar xzf "$BK/vendor.tgz" -C "$APP"
+    git reset -q --hard "$PREV_SHA" || echo "ATTENTION : git reset a échoué"
+    tar xzf "$BK/code.tgz" -C "$APP" || echo "ATTENTION : restauration du code incomplète"
+    # vendor appartient à root : on le reconstruit dans le conteneur depuis l'ancien composer.lock.
+    docker exec curriculum-app sh -c 'cd /var/www/html && composer install --no-dev --no-interaction --optimize-autoloader --quiet' \
+      || echo "ATTENTION : composer install a échoué (archive : $BK/vendor.tgz)"
     if [ -d "$APP/public/react-before-deploy-$TS" ]; then
       rm -rf "$APP/public/react" && mv "$APP/public/react-before-deploy-$TS" "$APP/public/react"
     fi
-    docker exec curriculum-app kill -USR2 1 || true
+    docker exec curriculum-app kill -USR2 1
     echo "Code, vendor et bundle restaurés depuis $BK."
   fi
   rm -rf "$BUILD"
@@ -43,7 +47,7 @@ mkdir -p "$BK"
 docker exec curriculum-postgres sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "$BK/db.dump"
 docker exec -i curriculum-postgres pg_restore -l < "$BK/db.dump" | grep -c ' TABLE DATA ' | xargs -I{} echo "dump : {} tables de données"
 [ -s "$BK/db.dump" ]
-tar czf "$BK/code.tgz" --exclude=./vendor --exclude=./node_modules --exclude='./public/react*' --exclude=./storage .
+tar czf "$BK/code.tgz" --exclude=./vendor --exclude=./node_modules --exclude='./public/react*' --exclude=./storage --exclude=./bootstrap/cache --exclude=./public/storage .
 tar czf "$BK/vendor.tgz" vendor
 sha256sum "$BK"/* > "$BK/SHA256SUMS"
 echo "$PREV_SHA" > "$BK/PREVIOUS_HEAD"
