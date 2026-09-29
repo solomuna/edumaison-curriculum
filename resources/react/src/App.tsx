@@ -1,5 +1,5 @@
 import './styles/anglofun.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { SoundService } from './services/SoundService'
 import { ThemeProvider } from './context/ThemeContext'
 import ChildLogin from './pages/child/ChildLogin'
@@ -11,6 +11,10 @@ import DesktopApp from './DesktopApp'
 import SuccessFx from './components/SuccessFx'
 import AccessGate from './components/AccessGate'
 import type { Child } from './types/child'
+
+// Espace Mama : normalement servi par mama.html ; chargé à la demande si l'app
+// principale est ouverte sur /mama (ex. application Android).
+const MamaJudiApp = lazy(() => import('./pages/mama/MamaJudiApp'))
 
 const isTV = window.location.pathname.startsWith('/tv') ||
   navigator.userAgent.toLowerCase().includes('webos') ||
@@ -53,7 +57,7 @@ function EduMaisonApp() {
   if (isAdmin) return <AdminApp />
   if (isTV) return <ThemeProvider><TVApp /></ThemeProvider>
 
-  if (isMama) return <ThemeProvider><MamaSpace onExit={() => window.location.href = '/'} /></ThemeProvider>
+  if (isMama) return <Suspense fallback={null}><MamaJudiApp /></Suspense>
 
   // Débloque l'audio au premier geste et précharge les sons (idempotent)
   if (typeof window !== 'undefined') SoundService.init()
