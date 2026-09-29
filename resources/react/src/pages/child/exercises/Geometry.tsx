@@ -1,11 +1,11 @@
-import { useState } from "react"
+import { useState } from 'react'
+import { useLesson, useLessonCheck, tapSound, type ReportResult } from '../../../components/lesson/LessonShell'
 
 interface Props {
   content: any
-  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
+  onComplete: ReportResult
 }
 
-const OPTION_LABELS = ['A', 'B', 'C', 'D']
 
 function GeometrySVG({ content }: { content: any }) {
   const subtype = content.subtype || 'identify_shape'
@@ -69,125 +69,55 @@ function GeometrySVG({ content }: { content: any }) {
   )
 }
 
-const bgColors: Record<string, string> = {
-  identify_shape: '#EDE9FE',
-  identify_line:  '#DBEAFE',
-  identify_angle: '#FEF3C7',
-  draw_line:      '#DBEAFE',
+const panelTone: Record<string, string> = {
+  identify_shape: 'lesson-panel--violet',
+  identify_line: 'lesson-panel--sky',
+  identify_angle: 'lesson-panel--sun',
+  draw_line: 'lesson-panel--sky',
 }
 
 export default function Geometry({ content, onComplete }: Props) {
+  const { t, L, checked } = useLesson()
   const [sel, setSel] = useState<number | null>(null)
-  const [checked, setChecked] = useState(false)
-
   const subtype: string = content.subtype || 'identify_shape'
   const question: string = content.question || ''
   const opts: string[] = content.options || []
   const ans: number = content.answer ?? 0
-  const illBg = bgColors[subtype] || '#F3F4F6'
+  const tone = panelTone[subtype] || 'lesson-panel--sky'
+  const practiceOnly = opts.length === 0
 
-  const check = () => {
+  // Sans choix (activité de tracé) : entraînement, pas de correction automatique.
+  useLessonCheck(practiceOnly || sel !== null, () => {
+    if (practiceOnly) { onComplete(false, { practice_only: true }); return }
     if (sel === null) return
-    setChecked(true)
-    
-    onComplete(sel === ans, { selected_index: sel })
-  }
+    const ok = sel === ans
+    onComplete(ok, { selected_index: sel }, ok ? undefined : `${t('The correct answer is', 'La bonne réponse est')} : ${opts[ans]}`)
+  })
 
-  // Si pas d'options (ex: draw exercise) -- skip automatique
-  if (opts.length === 0) {
-    return (
-      <div>
-        {question && <p style={{ fontSize: 14, fontWeight: 800, color: '#2D1B0E', marginBottom: 14, textAlign: 'center' }}>{question}</p>}
-        <div style={{ background: illBg, borderRadius: 20, padding: '16px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <GeometrySVG content={content} />
-        </div>
-        <button onClick={() => onComplete(false, { practice_only: true })} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
-          Next →
-        </button>
-      </div>
-    )
-  }
-
-  // Si pas d'options (ex: draw exercise) -- skip automatique
-  if (opts.length === 0) {
-    return (
-      <div>
-        {question && <p style={{ fontSize: 14, fontWeight: 800, color: '#2D1B0E', marginBottom: 14, textAlign: 'center' }}>{question}</p>}
-        <div style={{ background: illBg, borderRadius: 20, padding: '16px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <GeometrySVG content={content} />
-        </div>
-        <button onClick={() => onComplete(false, { practice_only: true })} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
-          Next →
-        </button>
-      </div>
-    )
+  const state = (i: number) => {
+    if (!checked) return sel === i ? ' is-selected' : ''
+    if (i === ans) return ' is-right'
+    return i === sel ? ' is-wrong' : ' is-faded'
   }
 
   return (
     <div>
-      {question && (
-        <p style={{ fontSize: 14, fontWeight: 800, color: '#2D1B0E', marginBottom: 14, textAlign: 'center', lineHeight: 1.4 }}>
-          {question}
-        </p>
-      )}
-
-      <div style={{
-        background: illBg, borderRadius: 20, padding: '16px 12px',
-        marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
+      {question && <p className="lesson-question">{question}</p>}
+      <div className={`lesson-panel ${tone}`}>
         <GeometrySVG content={content} />
       </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-        {opts.map((opt, i) => {
-          let bg = 'white', border = '#F0E4D8', textColor = '#2D1B0E'
-          let labelBg = '#EDE9FE', labelColor = '#8B5CF6'
-          if (checked) {
-            if (i === ans) { bg = '#ECFDF5'; border = '#10B981'; textColor = '#065F46'; labelBg = '#10B981'; labelColor = 'white' }
-            else if (i === sel) { bg = '#FEF2F2'; border = '#EF4444'; textColor = '#991B1B'; labelBg = '#EF4444'; labelColor = 'white' }
-          } else if (i === sel) {
-            bg = '#EDE9FE'; border = '#8B5CF6'; labelBg = '#8B5CF6'; labelColor = 'white'
-          }
-          return (
-            <div key={i} onClick={() => { if (!checked) setSel(i) }} style={{
-              borderRadius: 14, padding: '11px 14px', cursor: checked ? 'default' : 'pointer',
-              border: `2px solid ${border}`, background: bg,
-              display: 'flex', alignItems: 'center', gap: 10
-            }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 9, flexShrink: 0,
-                background: labelBg, display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontWeight: 900, fontSize: 12, color: labelColor
-              }}>
-                {OPTION_LABELS[i]}
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: textColor }}>{opt}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      {checked && (
-        <div style={{
-          borderRadius: 14, padding: '11px 14px', marginBottom: 12,
-          background: sel === ans ? '#ECFDF5' : '#FEF2F2',
-          border: `1.5px solid ${sel === ans ? '#6EE7B7' : '#FCA5A5'}`,
-          fontWeight: 800, fontSize: 13,
-          color: sel === ans ? '#065F46' : '#991B1B'
-        }}>
-          {sel === ans ? '🎉 Correct! Well done!' : `The correct answer is: ${opts[ans]}`}
+      {practiceOnly ? (
+        <p className="lesson-question">{t('Look at the figure, then press', 'Observe la figure, puis appuie sur')} {L.check}.</p>
+      ) : (
+        <div className="lesson-choices">
+          {opts.map((opt, i) => (
+            <button key={i} className={`lesson-choice${state(i)}`} onClick={() => { if (!checked) { tapSound(); setSel(i) } }}
+              disabled={checked} role="radio" aria-checked={sel === i}>
+              <span className="lesson-choice__key">{i + 1}</span>
+              <span>{opt}</span>
+            </button>
+          ))}
         </div>
-      )}
-
-      {!checked && (
-        <button onClick={check} disabled={sel === null} style={{
-          width: '100%', padding: '13px 0', borderRadius: 16, border: 'none',
-          background: sel !== null ? '#8B5CF6' : '#E0D4CA',
-          color: 'white', fontSize: 15, fontWeight: 800,
-          cursor: sel !== null ? 'pointer' : 'default'
-        }}>
-          Vérifier
-        </button>
       )}
     </div>
   )

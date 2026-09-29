@@ -1,83 +1,42 @@
-// TrueFalse.tsx — Moteur Vrai/Faux (TRUE/FALSE en anglais)
-import React, { useState } from "react"
+// TrueFalse.tsx — Moteur Vrai/Faux : choisir puis VÉRIFIER (bouton du cadre).
+import { useState } from 'react'
+import { useLesson, useLessonCheck, tapSound, type ReportResult } from '../../../components/lesson/LessonShell'
 
 interface Props {
   content: any
-  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
+  onComplete: ReportResult
 }
 
 export default function TrueFalse({ content, onComplete }: Props) {
-  const [answered, setAnswered] = useState(false)
+  const { t, checked } = useLesson()
   const [chosen, setChosen] = useState<boolean | null>(null)
+  const label = (v: boolean) => (v ? t('TRUE', 'VRAI') : t('FALSE', 'FAUX'))
 
-  const answer = (v: boolean, ev?: React.MouseEvent<HTMLElement>) => {
-    if (answered) return
-    setAnswered(true)
-    setChosen(v)
-    const ok = v === content.answer
-    onComplete(ok, { selected: v })
-  }
+  useLessonCheck(chosen !== null, () => {
+    if (chosen === null) return
+    const ok = chosen === content.answer
+    onComplete(ok, { selected: chosen }, ok ? undefined : `${t('The correct answer is', 'La bonne réponse est')} ${label(!!content.answer)}.`)
+  })
 
-  const isCorrect = chosen !== null && chosen === content.answer
-
-  const btnStyle = (v: boolean): React.CSSProperties => {
-    const base: React.CSSProperties = {
-      padding: 18, borderRadius: 18, fontSize: 18, fontWeight: 900,
-      cursor: answered ? 'default' : 'pointer', border: '2.5px solid',
-      width: '100%', fontFamily: 'Nunito, system-ui, sans-serif'
-    }
-    if (!answered) {
-      return {
-        ...base,
-        borderColor: v ? '#10B981' : '#EF4444',
-        background: v ? '#ECFDF5' : '#FEF2F2',
-        color: v ? '#065F46' : '#991B1B'
-      }
-    }
-    if (v === content.answer) {
-      return { ...base, borderColor: '#10B981', background: '#ECFDF5', color: '#065F46' }
-    }
-    if (v === chosen) {
-      return { ...base, borderColor: '#EF4444', background: '#FEF2F2', color: '#991B1B' }
-    }
-    return { ...base, borderColor: '#E0D4CA', background: '#fff', color: '#9CA3AF' }
+  const state = (v: boolean) => {
+    if (!checked) return chosen === v ? ' is-selected' : ''
+    if (v === content.answer) return ' is-right'
+    return v === chosen ? ' is-wrong' : ' is-faded'
   }
 
   return (
     <div>
-      {/* Énoncé */}
-      <div style={{
-        fontSize: 17, fontWeight: 800, color: '#2D1B0E',
-        textAlign: 'center', margin: '0 0 20px', lineHeight: 1.4
-      }}>
-        &ldquo;{content.statement}&rdquo;
+      <div className="lesson-statement">{t(`“${content.statement}”`, `« ${content.statement} »`)}</div>
+      <div className="lesson-choices is-grid is-grid-2">
+        {[true, false].map((v, i) => (
+          <button key={String(v)} className={`lesson-choice lesson-choice--center${state(v)}`}
+            onClick={() => { if (!checked) { tapSound(); setChosen(v) } }} disabled={checked}
+            role="radio" aria-checked={chosen === v}>
+            <span className="lesson-choice__key">{i + 1}</span>
+            <span>{label(v)} {v ? '✓' : '✗'}</span>
+          </button>
+        ))}
       </div>
-
-      {/* Boutons TRUE / FALSE */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <button onClick={(e) => answer(true, e)} disabled={answered} style={btnStyle(true)}>
-          TRUE {'\u2713'}
-        </button>
-        <button onClick={(e) => answer(false, e)} disabled={answered} style={btnStyle(false)}>
-          FALSE {'\u2717'}
-        </button>
-      </div>
-
-      {/* Feedback */}
-      {answered && chosen !== null && (
-        <div style={{
-          borderRadius: 16, padding: '12px 16px', marginTop: 14,
-          background: isCorrect ? '#ECFDF5' : '#FEF2F2',
-          border: `1.5px solid ${isCorrect ? '#6EE7B7' : '#FCA5A5'}`,
-          fontWeight: 800, fontSize: 14,
-          color: isCorrect ? '#065F46' : '#991B1B',
-          textAlign: 'center'
-        }}>
-          {isCorrect
-            ? '\uD83C\uDF89 Correct! Well done!'
-            : `The correct answer is: ${content.answer ? 'TRUE' : 'FALSE'}`}
-        </div>
-      )}
     </div>
   )
 }

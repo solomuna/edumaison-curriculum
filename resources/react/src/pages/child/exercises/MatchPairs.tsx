@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState } from 'react'
+import { useLesson, useLessonCheck, tapSound, type ReportResult } from '../../../components/lesson/LessonShell'
 
 interface Pair {
   word?: string
@@ -9,12 +10,12 @@ interface Pair {
 
 interface Props {
   content: any
-  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
+  onComplete: ReportResult
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EC4899']
 
 export default function MatchPairs({ content, onComplete }: Props) {
+  const { t, checked } = useLesson()
   // Guard: content peut arriver comme string JSON depuis FastAPI
   const raw: any = typeof content === 'string' ? (() => { try { return JSON.parse(content) } catch { return {} } })() : content
   const pairs: Pair[] = (raw.pairs || []).map((p: any) => {
@@ -29,145 +30,89 @@ export default function MatchPairs({ content, onComplete }: Props) {
   const [rightOrder] = useState<Pair[]>(() => [...pairs].sort(() => Math.random() - 0.5))
   const [selLeft, setSelLeft] = useState<number | null>(null)
   const [matches, setMatches] = useState<Record<number, number>>({})
-  const [checked, setChecked] = useState(false)
   const [result, setResult] = useState<boolean | null>(null)
 
   const allMatched = Object.keys(matches).length === pairs.length
 
   const pickLeft = (i: number) => {
     if (checked || matches[i] !== undefined) return
+    tapSound()
     setSelLeft(prev => prev === i ? null : i)
   }
 
   const pickRight = (i: number) => {
     if (checked || selLeft === null) return
     if (Object.values(matches).includes(i)) return
+    tapSound()
     setMatches(prev => ({ ...prev, [selLeft]: i }))
     setSelLeft(null)
   }
 
-  const check = () => {
-    if (!allMatched) return
+  useLessonCheck(allMatched, () => {
     let ok = true
     Object.entries(matches).forEach(([li, ri]) => {
       if (pairs[Number(li)].word !== rightOrder[Number(ri)].word) ok = false
     })
     setResult(ok)
-    setChecked(true)
     onComplete(ok, {
       pairs: Object.entries(matches).map(([leftIndex, rightIndex]) => ({
         left: pairs[Number(leftIndex)].word,
         right: rightOrder[Number(rightIndex)].image,
       })),
-    })
+    }, ok ? undefined : t('Here are the correct pairs above.', 'Les bonnes paires sont affichées au-dessus.'))
+  })
+
+  // Toucher une paire déjà formée la défait (avant vérification).
+  const unmatch = (leftIndex: number) => {
+    if (checked) return
+    tapSound()
+    setMatches(prev => { const next = { ...prev }; delete next[leftIndex]; return next })
   }
 
   const isEmojiMode = pairs.length > 0 && pairs.every(p => (p.image || '').length <= 4)
 
+  const pairOf = (rightIndex: number) => Object.entries(matches).find(([, ri]) => Number(ri) === rightIndex)
+  const tone = (leftIndex: number) => {
+    if (!checked || result === null) return ''
+    const ri = matches[leftIndex]
+    return ri !== undefined && pairs[leftIndex].word === rightOrder[ri].word ? ' is-right' : ' is-wrong'
+  }
+
   return (
     <div>
-      {content.question && (
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', fontWeight: 700, marginBottom: 12 }}>
-          {content.question}
-        </p>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div>
+      {content.question && <p className="lesson-question">{content.question}</p>}
+      <div className="lesson-match">
+        <div className="lesson-match__col">
           {pairs.map((p, i) => {
-            const mi = matches[i]
-            const isMatched = mi !== undefined
-            const col = isMatched ? COLORS[i % 4] : undefined
+            const matched = matches[i] !== undefined
             return (
-              <div
-                key={i}
-                onClick={() => pickLeft(i)}
-                style={{
-                  borderRadius: 14, padding: '10px 8px', marginBottom: 8,
-                  cursor: isMatched ? 'default' : 'pointer',
-                  border: `2px solid ${isMatched ? col : selLeft === i ? '#3B82F6' : '#E0D4CA'}`,
-                  background: isMatched ? col + '22' : selLeft === i ? '#EFF6FF' : '#fff',
-                  textAlign: 'center', fontSize: 14, fontWeight: 800, color: '#3D2B1F',
-                  minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}
-              >
+              <button key={i} className={`lesson-tile${selLeft === i ? ' is-selected' : ''}${matched ? ` is-paired c${i % 4}` : ''}${tone(i)}`}
+                onClick={() => (matched ? unmatch(i) : pickLeft(i))} disabled={checked}>
                 {p.word}
-              </div>
+              </button>
             )
           })}
         </div>
-
-        <div>
+        <div className="lesson-match__col">
           {rightOrder.map((p, i) => {
-            const entry = Object.entries(matches).find(([, ri]) => Number(ri) === i)
-            const isMatched = entry !== undefined
-            const col = isMatched ? COLORS[Number(entry![0]) % 4] : undefined
+            const entry = pairOf(i)
+            const li = entry ? Number(entry[0]) : -1
             return (
-              <div
-                key={i}
-                onClick={() => pickRight(i)}
-                style={{
-                  borderRadius: 14, padding: 8, marginBottom: 8,
-                  cursor: isMatched ? 'default' : 'pointer',
-                  border: `2px solid ${isMatched ? col : '#E0D4CA'}`,
-                  background: isMatched ? col + '22' : '#fff',
-                  textAlign: 'center',
-                  fontSize: isEmojiMode ? 28 : 13,
-                  fontWeight: isEmojiMode ? 400 : 800,
-                  lineHeight: 1.3,
-                  minHeight: 54, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}
-              >
+              <button key={i} className={`lesson-tile${isEmojiMode ? ' is-emoji' : ''}${entry ? ` is-paired c${li % 4}` : ''}${entry ? tone(li) : ''}`}
+                onClick={() => (entry ? unmatch(li) : pickRight(i))} disabled={checked}>
                 {p.image}
-              </div>
+              </button>
             )
           })}
         </div>
       </div>
-
-      {!checked && (
-        <button
-          onClick={check}
-          disabled={!allMatched}
-          style={{
-            width: '100%', padding: '13px 0', marginTop: 14,
-            borderRadius: 16, border: 'none',
-            background: allMatched ? '#3B82F6' : '#E0D4CA',
-            color: 'white', fontSize: 15, fontWeight: 800,
-            cursor: allMatched ? 'pointer' : 'default'
-          }}
-        >
-          Check
-        </button>
-      )}
-
-      {checked && result !== null && (
-        <div style={{ marginTop: 14 }}>
-          <div style={{
-            borderRadius: 16, padding: '12px 16px',
-            background: result ? '#ECFDF5' : '#FEF2F2',
-            border: `1.5px solid ${result ? '#6EE7B7' : '#FCA5A5'}`,
-            fontWeight: 800, fontSize: 14,
-            color: result ? '#065F46' : '#991B1B',
-            marginBottom: 10
-          }}>
-            {result ? 'Perfect! All pairs are correct!' : 'Not quite! Here are the correct answers:'}
-          </div>
-          {!result && (
-            <div style={{ marginBottom: 10 }}>
-              {pairs.map((p, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  background: '#FFF7ED', borderRadius: 12, padding: '8px 12px', marginBottom: 6,
-                  border: '1.5px solid #FCD34D'
-                }}>
-                  <span style={{ fontWeight: 800, color: '#92400E', flex: 1 }}>{p.word}</span>
-                  <span style={{ color: '#B45309' }}>&#8594;</span>
-                  <span style={{ fontWeight: 700, color: '#1D6B2A', flex: 1, textAlign: 'right' }}>{p.image}</span>
-                </div>
-              ))}
+      {checked && result === false && (
+        <div className="lesson-correction">
+          {pairs.map((p, i) => (
+            <div key={i} className="lesson-correction__row">
+              <span>{p.word}</span><span aria-hidden="true">→</span><span>{p.image}</span>
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

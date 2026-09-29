@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useState } from 'react'
+import { useLesson, useLessonCheck, tapSound, type ReportResult } from '../../../components/lesson/LessonShell'
 
 interface Props {
   content: any
-  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
+  onComplete: ReportResult
 }
 
 function ClockSVG({ hours, minutes, accentColor }: { hours: number, minutes: number, accentColor: string }) {
@@ -56,95 +57,42 @@ function ClockSVG({ hours, minutes, accentColor }: { hours: number, minutes: num
 }
 
 export default function ClockReading({ content, onComplete }: Props) {
+  const { t, checked } = useLesson()
   const [sel, setSel] = useState<number | null>(null)
-  const [checked, setChecked] = useState(false)
-
   const opts: string[] = content.options || []
   const ans: number = content.answer ?? 0
   const hours: number = content.hours || 0
   const minutes: number = content.minutes || 0
 
-  const check = () => {
+  useLessonCheck(sel !== null, () => {
     if (sel === null) return
-    setChecked(true)
     const ok = sel === ans
-    onComplete(ok, { selected_index: sel })
-  }
+    onComplete(ok, { selected_index: sel },
+      ok ? t(`Yes, it is ${opts[ans]}!`, `Oui, il est ${opts[ans]} !`)
+         : t(`It is ${opts[ans]}. Look carefully at the hands!`, `Il est ${opts[ans]}. Regarde bien les aiguilles !`))
+  })
 
-  const optStyle = (i: number): React.CSSProperties => {
-    const base: React.CSSProperties = {
-      borderRadius: 14, padding: '11px 14px', cursor: checked ? 'default' : 'pointer',
-      border: '2px solid', background: '#fff',
-      display: 'flex', alignItems: 'center', gap: 10,
-      fontSize: 14, fontWeight: 700, color: '#2D1B0E'
-    }
-    if (!checked) {
-      return { ...base, borderColor: sel === i ? '#F59E0B' : '#F0E4D8',
-        background: sel === i ? '#FFFBEB' : '#fff' }
-    }
-    if (i === ans) return { ...base, borderColor: '#10B981', background: '#ECFDF5', color: '#065F46' }
-    if (i === sel && sel !== ans) return { ...base, borderColor: '#EF4444', background: '#FEF2F2', color: '#991B1B' }
-    return { ...base, borderColor: '#F0E4D8' }
+  const state = (i: number) => {
+    if (!checked) return sel === i ? ' is-selected' : ''
+    if (i === ans) return ' is-right'
+    return i === sel ? ' is-wrong' : ' is-faded'
   }
 
   return (
     <div>
-      {content.question && (
-        <p style={{ fontSize: 13, color: '#8A6050', fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>
-          {content.question}
-        </p>
-      )}
-
-      <div style={{
-        textAlign: 'center', background: '#FEF3C7', borderRadius: 18,
-        padding: 16, marginBottom: 14
-      }}>
+      {content.question && <p className="lesson-question">{content.question}</p>}
+      <div className="lesson-panel lesson-panel--sun">
         <ClockSVG hours={hours} minutes={minutes} accentColor="#F59E0B" />
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+      <div className="lesson-choices is-grid">
         {opts.map((o, i) => (
-          <div key={i} onClick={() => { if (!checked) setSel(i) }} style={optStyle(i)}>
-            <div style={{
-              width: 26, height: 26, borderRadius: 9, flexShrink: 0,
-              background: '#FEF3C7', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', fontWeight: 900, fontSize: 12, color: '#F59E0B'
-            }}>
-              {'ABCD'[i]}
-            </div>
-            {o}
-          </div>
+          <button key={i} className={`lesson-choice${state(i)}`} onClick={() => { if (!checked) { tapSound(); setSel(i) } }}
+            disabled={checked} role="radio" aria-checked={sel === i}>
+            <span className="lesson-choice__key">{i + 1}</span>
+            <span>{o}</span>
+          </button>
         ))}
       </div>
-
-      {!checked && (
-        <button
-          onClick={check}
-          disabled={sel === null}
-          style={{
-            width: '100%', padding: '13px 0', borderRadius: 16, border: 'none',
-            background: sel !== null ? '#F59E0B' : '#E0D4CA',
-            color: 'white', fontSize: 15, fontWeight: 800,
-            cursor: sel !== null ? 'pointer' : 'default'
-          }}
-        >
-          Vérifier
-        </button>
-      )}
-
-      {checked && (
-        <div style={{
-          borderRadius: 16, padding: '12px 16px',
-          background: sel === ans ? '#ECFDF5' : '#FEF2F2',
-          border: `1.5px solid ${sel === ans ? '#6EE7B7' : '#FCA5A5'}`,
-          fontWeight: 800, fontSize: 14,
-          color: sel === ans ? '#065F46' : '#991B1B'
-        }}>
-          {sel === ans
-            ? `🎉 Bravo ! Il est bien ${opts[ans]} !`
-            : `Il est ${opts[ans]}. Regarde bien les aiguilles !`}
-        </div>
-      )}
     </div>
   )
 }
