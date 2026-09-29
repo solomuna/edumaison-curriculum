@@ -23,7 +23,6 @@ use App\Http\Controllers\Api\FamilyRevisionController;
 use App\Http\Controllers\Api\AcademicCalendarController;
 use App\Http\Controllers\Api\LearningPackController;
 use App\Http\Controllers\Api\LanguageReviewController;
-use App\Http\Controllers\Api\SpeakingAssessmentController;
 use App\Http\Controllers\Api\NationalLanguageProfileController;
 
 Route::prefix('/family-auth')->middleware('throttle:10,1')->group(function () {
@@ -48,8 +47,6 @@ Route::post('/family-auth/claim-legacy', [FamilyAuthController::class, 'claimLeg
 
 Route::middleware('family.access')->group(function () {
 Route::get('/language-practice/settings', [LanguageReviewController::class, 'settings']);
-Route::post('/children/{childId}/exercises/{exercise}/speaking-assessment', [SpeakingAssessmentController::class, 'store'])
-    ->middleware(['child.family', 'throttle:20,1']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/parent/language-reviews/settings', [LanguageReviewController::class, 'updateSettings']);
     Route::get('/parent/language-reviews', [LanguageReviewController::class, 'index']);

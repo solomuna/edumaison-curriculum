@@ -6,7 +6,6 @@ use App\Http\Controllers\Api\ExerciseController;
 use Tests\TestCase;
 use ReflectionMethod;
 use Illuminate\Validation\ValidationException;
-use App\Services\Speech\PronunciationAssessmentService;
 
 class LanguageAttemptVerificationTest extends TestCase
 {
@@ -205,32 +204,6 @@ class LanguageAttemptVerificationTest extends TestCase
         $this->assertSame('pronunciation_assessment', $answers['items'][0]['method']);
         $this->assertSame('Good morning.', $answers['items'][0]['transcript']);
         $this->assertTrue($evidence['pronunciation_verified']);
-    }
-
-    public function test_pronunciation_provider_result_is_reduced_to_safe_feedback(): void
-    {
-        $result = (new PronunciationAssessmentService())->normalizeResult([
-            'RecognitionStatus' => 'Success',
-            'DisplayText' => 'Good morning.',
-            'NBest' => [[
-                'PronunciationAssessment' => [
-                    'AccuracyScore' => 81.4,
-                    'FluencyScore' => 72.2,
-                    'CompletenessScore' => 100,
-                    'PronScore' => 79.6,
-                ],
-                'Words' => [[
-                    'Word' => 'morning',
-                    'PronunciationAssessment' => ['AccuracyScore' => 58.4, 'ErrorType' => 'Mispronunciation'],
-                ]],
-            ]],
-        ]);
-
-        $this->assertSame(80, $result['pronunciation_score']);
-        $this->assertSame(81, $result['accuracy_score']);
-        $this->assertSame(72, $result['fluency_score']);
-        $this->assertSame(58, $result['words'][0]['accuracy']);
-        $this->assertArrayNotHasKey('NBest', $result);
     }
 
     public function test_written_response_stays_pending_review_without_a_score(): void
