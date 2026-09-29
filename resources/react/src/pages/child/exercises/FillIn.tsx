@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
+import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
 import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler } from '../../../types/exercise'
 
@@ -43,7 +44,7 @@ const SpeakerIcon = () => (
 const normalized = (s: string) => s.trim().toLowerCase().replace(/[‘’]/g, "'")
 
 export default function FillIn({ title, instructions, content, isFrench = false, onComplete, onBack }: Props) {
-  const [current, setCurrent] = useState(0)
+  const [lastAnswer, setLastAnswer] = useState('')
   const [input, setInput] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [scores, setScores] = useState<boolean[]>([])
@@ -64,11 +65,14 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const rawContent = content as any
   const flatItem: FillInItem[] = rawContent.sentence ? [{ sentence: rawContent.sentence, answer: rawContent.answer, alternatives: rawContent.alternatives }] : []
   const items: FillInItem[] = content.items || content.sentences || flatItem
+  // Phrases ratées reprises en fin de leçon ; seule la 1re réponse est notée.
+  const rq = useRetryQueue(items.length)
+  const current = rq.current
   const item = items[current]
   const text = item?.prompt || item?.text || item?.sentence || ''
   const parts = text.split('___')
   const spoken = text.replace('___', C.blank)
-  const isLast = current === items.length - 1
+  const isLast = rq.isLastStep
 
   useEffect(() => {
     prepareLessonAudio()
@@ -79,16 +83,20 @@ export default function FillIn({ title, instructions, content, isFrench = false,
     setInput('')
     setFeedback(null)
     setHintUsed(false)
-    if (item) MamaJudi.speakLangAfter(current === 0 && instructions ? `${instructions}. ${spoken}` : spoken, lang, 250, 0.85)
-  }, [current])
+    if (item) MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions}. ${spoken}` : spoken, lang, 250, 0.85)
+  }, [rq.step])
 
   const check = () => {
     if (feedback || !input.trim() || !item) return
     const answer = normalized(input)
     const correct = answer === normalized(item.answer) || (item.alternatives || []).map(normalized).includes(answer)
     setFeedback(correct ? 'correct' : 'wrong')
-    setScores(s => [...s, correct])
-    setResponses(r => [...r, input.trim()])
+    setLastAnswer(input.trim())
+    if (!rq.isRetry) {
+      setScores(s => [...s, correct])
+      setResponses(r => [...r, input.trim()])
+    }
+    rq.record(correct)
     cancelVoice.current()
     if (correct) {
       const next = streak + 1
@@ -108,7 +116,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const next = () => {
     if (!feedback) return
     cancelVoice.current()
-    if (!isLast) setCurrent(c => c + 1)
+    if (!isLast) rq.advance()
     else setDone(true)
   }
 
@@ -133,7 +141,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); next() } }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [feedback, done, current])
+  }, [feedback, done, rq.step])
 
   useEffect(() => {
     if (!combo) return
@@ -156,7 +164,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
 
   if (!item) return null
 
-  const answered = current + (feedback ? 1 : 0)
+  const answered = rq.resolvedCount
   const progress = Math.max(4, Math.round(answered / items.length * 100))
   const isRight = feedback === 'correct'
 
@@ -176,6 +184,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
         <div className="lesson-kicker">{C.complete}</div>
         {content.illustration && <div className="lesson-media lesson-media--emoji" aria-hidden="true">{content.illustration}</div>}
 
+        {rq.isRetry && <div className="lesson-retry-tag">🔁 {L.again}</div>}
         <div className="lesson-prompt">
           <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
           <div className="lesson-bubble">
@@ -216,7 +225,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
         )}
       </div>
 
-      <div className={`lesson-footer${feedback ? (isRight ? ' is-right' : ' is-wrong') : ''}`} key={feedback ? `v${current}` : `q${current}`}>
+      <div className={`lesson-footer${feedback ? (isRight ? ' is-right' : ' is-wrong') : ''}`} key={feedback ? `v${rq.step}` : `q${rq.step}`}>
         <div className="lesson-footer__inner">
           {feedback ? (
             <div className="lesson-verdict" role="status">
@@ -224,7 +233,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
               <div>
                 <div className="lesson-verdict__title">{isRight ? praise : L.wrong}</div>
                 {!isRight && <div className="lesson-verdict__detail">{item.answer}</div>}
-                {!isRight && responses[current] && <div className="lesson-verdict__detail">{C.youWrote} <s>{responses[current]}</s></div>}
+                {!isRight && lastAnswer && <div className="lesson-verdict__detail">{C.youWrote} <s>{lastAnswer}</s></div>}
               </div>
             </div>
           ) : <span />}

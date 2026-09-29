@@ -21,7 +21,7 @@ const EN = {
     doneMsg: (p: number): string => p === 100 ? 'Perfect score, you are a star!' : p >= 70 ? 'Great work, keep it up!' : 'Every try makes you stronger. Let’s go again!',
     xp: 'Total XP', accuracy: 'Accuracy', best: 'Best streak', review: 'See my answers', ok: 'Mastered', ko: 'To review',
     listen: 'Listen', close: 'Leave the lesson', passage: 'Reading passage',
-    saving: 'Saving…', retrySave: 'Try again', saveError: 'Could not save. Check the connection and try again.',
+    again: 'Let’s try this one again', saving: 'Saving…', retrySave: 'Try again', saveError: 'Could not save. Check the connection and try again.',
 }
 
 export type LessonLabels = typeof EN
@@ -35,7 +35,7 @@ const FR: LessonLabels = {
     doneMsg: (p: number) => p === 100 ? 'Sans faute, tu es une étoile !' : p >= 70 ? 'Beau travail, continue comme ça !' : 'Chaque essai te rend plus fort. On recommence ?',
     xp: 'XP gagnés', accuracy: 'Précision', best: 'Meilleure série', review: 'Voir mes réponses', ok: 'Maîtrisé', ko: 'À revoir',
     listen: 'Écouter', close: 'Quitter la leçon', passage: 'Texte à lire',
-    saving: 'Enregistrement…', retrySave: 'Réessayer', saveError: 'Enregistrement impossible. Vérifie la connexion et réessaie.',
+    again: 'On réessaie celle-ci', saving: 'Enregistrement…', retrySave: 'Réessayer', saveError: 'Enregistrement impossible. Vérifie la connexion et réessaie.',
 }
 
 export const LABELS = { en: EN, fr: FR }

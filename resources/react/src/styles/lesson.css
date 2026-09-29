@@ -879,3 +879,18 @@
 }
 
 .lesson-verdict--note .lesson-verdict__detail { color: var(--l-muted); }
+
+/* Reprise d'une question ratée */
+.lesson-retry-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: #fff4d6;
+  color: #9a5a22;
+  font-size: 14px;
+  font-weight: 900;
+  animation: lesson-pop 0.3s ease-out;
+}
