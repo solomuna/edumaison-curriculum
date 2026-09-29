@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import Confetti from '../../../components/Confetti'
+import LessonEnd from '../../../components/lesson/LessonEnd'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { SoundService } from '../../../services/SoundService'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
 import { fireSuccess } from '../../../components/SuccessFx'
 import type { ExerciseCompletionHandler, MCQContent } from '../../../types/exercise'
 import { useAssetLibrary } from '../../../hooks/useAssetLibrary'
 import Ardoise from './Ardoise'
-import '../../../styles/lesson.css'
 
 interface Props {
   title: string
@@ -18,35 +18,6 @@ interface Props {
 }
 
 interface Result { correct: boolean; title: string; question_index: number; selected_index: number }
-
-const JUDI = {
-  explain: '/images/adventure/characters/mama-judi/explain-v1.webp',
-  encourage: '/images/adventure/characters/mama-judi/encourage-v1.webp',
-  celebrate: '/images/adventure/characters/mama-judi/celebrate-v1.webp',
-}
-
-const XP_PER_CORRECT = 10
-
-const LABELS = {
-  en: {
-    check: 'Check', continue: 'Continue', finish: 'Finish', retry: 'Try again', back: 'Back to my missions',
-    praise: ['Excellent!', 'Well done!', 'Amazing!', 'Great job!', 'Perfect!'],
-    wrong: 'Correct answer:', streak: (n: number) => `${n} in a row!`,
-    doneTitle: 'Lesson complete!', retryTitle: 'Keep practising!',
-    doneMsg: (p: number) => p === 100 ? 'Perfect score, you are a star!' : p >= 70 ? 'Great work, keep it up!' : 'Every try makes you stronger. Let’s go again!',
-    xp: 'Total XP', accuracy: 'Accuracy', best: 'Best streak', review: 'See my answers', ok: 'Mastered', ko: 'To review',
-    listen: 'Listen', close: 'Leave the lesson', passage: 'Reading passage',
-  },
-  fr: {
-    check: 'Vérifier', continue: 'Continuer', finish: 'Terminer', retry: 'Recommencer', back: 'Retour à mes missions',
-    praise: ['Excellent !', 'Bravo !', 'Super !', 'Très bien !', 'Parfait !'],
-    wrong: 'Bonne réponse :', streak: (n: number) => `${n} d’affilée !`,
-    doneTitle: 'Leçon terminée !', retryTitle: 'Continue à t’entraîner !',
-    doneMsg: (p: number) => p === 100 ? 'Sans faute, tu es une étoile !' : p >= 70 ? 'Beau travail, continue comme ça !' : 'Chaque essai te rend plus fort. On recommence ?',
-    xp: 'XP gagnés', accuracy: 'Précision', best: 'Meilleure série', review: 'Voir mes réponses', ok: 'Maîtrisé', ko: 'À revoir',
-    listen: 'Écouter', close: 'Quitter la leçon', passage: 'Texte à lire',
-  },
-}
 
 function shuffleOptions(options: any, answerIndex: number) {
   const safeOptions = Array.isArray(options) ? options : []
@@ -60,23 +31,6 @@ function shuffleOptions(options: any, answerIndex: number) {
     originalIndexes: indexed.map(x => x.originalIndex),
     answerIndex: indexed.findIndex(x => x.isCorrect),
   }
-}
-
-function useCountUp(target: number, delay: number, run: boolean) {
-  const [value, setValue] = useState(0)
-  useEffect(() => {
-    if (!run) { setValue(0); return }
-    let frame = 0
-    const start = performance.now() + delay
-    const tick = (now: number) => {
-      const t = Math.min(1, Math.max(0, (now - start) / 700))
-      setValue(Math.round(target * (1 - Math.pow(1 - t, 3))))
-      if (t < 1) frame = requestAnimationFrame(tick)
-    }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [target, delay, run])
-  return value
 }
 
 const SpeakerIcon = () => (
@@ -96,6 +50,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const [praise, setPraise] = useState('')
   const [showResult, setShowResult] = useState(false)
   const [showArdoise, setShowArdoise] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const checkBtn = useRef<HTMLButtonElement>(null)
   const { getSubjectIcon } = useAssetLibrary()
 
@@ -104,7 +59,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const FRENCH_SUBJECTS = ['French', 'Francais', 'NLC', 'National Languages']
   const isFrenchSubject = FRENCH_SUBJECTS.some(s => (subject || '').toLowerCase().includes(s.toLowerCase()))
   const ttsLang = isFrenchSubject ? 'fr-FR' : 'en-GB'
-  const L = isFrenchSubject ? LABELS.fr : LABELS.en
+  const L = labelsFor(isFrenchSubject)
   const questions: any[] = Array.isArray(rawContent.questions) ? rawContent.questions
     : rawContent.question && rawContent.options ? [{ text: rawContent.question, question: rawContent.question, options: rawContent.options, answer: rawContent.answer ?? 0 }]
     : []
@@ -118,24 +73,16 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const lastResult = results[results.length - 1]
   const isRight = checked && !!lastResult?.correct
 
-  const voiceTimer = useRef<number | null>(null)
-  const clearVoice = () => { if (voiceTimer.current !== null) { clearTimeout(voiceTimer.current); voiceTimer.current = null } }
+  const cancelVoice = useRef<() => void>(() => {})
+  const clearVoice = () => { cancelVoice.current(); cancelVoice.current = () => {} }
 
   // Sons et voix décodés à l'avance, pendant que l'enfant lit la première question.
   useEffect(() => {
-    SoundService.init()
-    MamaJudi.preloadVoices()
+    prepareLessonAudio()
     return () => { clearVoice(); MamaJudi.stop() }
   }, [])
   useEffect(() => { if (q) MamaJudi.speakLangAfter(current === 0 ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [current])
 
-  useEffect(() => {
-    if (!showResult) return
-    const pct = Math.round(results.filter(r => r.correct).length / questions.length * 100)
-    if (pct === 100)    { setTimeout(() => SoundService.fanfare(),  300); MamaJudi.sessionPerfect() }
-    else if (pct >= 70) { setTimeout(() => SoundService.applause(), 300); MamaJudi.sessionGood() }
-    else if (pct < 50)  { setTimeout(() => SoundService.heartLost(),300); MamaJudi.sessionRetry() }
-  }, [showResult])
 
   const select = (idx: number) => {
     if (checked) return
@@ -153,26 +100,14 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
       question_index: current,
       selected_index: shuffledQ.originalIndexes[selectedIdx],
     }])
-    // Ordre fixe : on coupe la lecture de la question, le son part avec le
-    // bandeau (t=0), la voix de Mama Judi suit 250 ms plus tard.
-    MamaJudi.stop()
     clearVoice()
-    const say = (event: 'correct' | 'wrong' | 'streak3' | 'streak5') => {
-      voiceTimer.current = window.setTimeout(() => { voiceTimer.current = null; MamaJudi.react(event) }, 250)
-    }
     if (correct) {
       const next = streak + 1
       setStreak(next)
       setBestStreak(b => Math.max(b, next))
-      setPraise(L.praise[Math.floor(Math.random() * L.praise.length)])
-      if (next === 3 || next === 5 || (next > 5 && next % 5 === 0)) {
-        SoundService.streak()
-        setCombo({ id: Date.now(), n: next })
-        say(next === 3 ? 'streak3' : 'streak5')
-      } else {
-        SoundService.correct()
-        say('correct')
-      }
+      setPraise(randomPraise(L))
+      if (isStreakMilestone(next)) setCombo({ id: Date.now(), n: next })
+      cancelVoice.current = playVerdict(true, next)
       const rect = checkBtn.current?.getBoundingClientRect()
       fireSuccess({
         xp: XP_PER_CORRECT,
@@ -181,9 +116,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
       })
     } else {
       setStreak(0)
-      SoundService.wrong()
-      say('wrong')
-      if ('vibrate' in navigator) navigator.vibrate?.(120)
+      cancelVoice.current = playVerdict(false)
     }
   }, [checked, selectedIdx, q, shuffledQ, questionText, current, streak, L])
 
@@ -197,17 +130,19 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
       return
     }
     setShowResult(true)
+  }, [checked, isLast])
+
+  // La tentative est enregistrée quand l'enfant quitte l'écran de fin :
+  // le parent change d'écran dès l'enregistrement, l'enfant doit d'abord voir son bilan.
+  const submit = () => {
+    if (submitted) return
+    setSubmitted(true)
     const total = results.filter(r => r.correct).length
     onComplete(Math.round(total / questions.length * 100), {
       verification_status: 'auto_checked',
       answers: { items: results.map(result => ({ question_index: result.question_index, selected_index: result.selected_index })) },
       evidence: { method: 'answer_key' },
     })
-  }, [checked, isLast, results, questions.length, onComplete])
-
-  const restart = () => {
-    setCurrent(0); setSelectedIdx(null); setChecked(false); setResults([])
-    setStreak(0); setBestStreak(0); setShowResult(false)
   }
 
   // Clavier : 1-9 pour choisir, Entrée pour vérifier puis continuer.
@@ -229,54 +164,8 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     return () => clearTimeout(t)
   }, [combo])
 
-  // ── Écran de fin ─────────────────────────────────────────────────────────
-  const correctCount = results.filter(r => r.correct).length
-  const pct = questions.length ? Math.round(correctCount / questions.length * 100) : 0
-  const xpShown = useCountUp(correctCount * XP_PER_CORRECT, 550, showResult)
-  const pctShown = useCountUp(pct, 700, showResult)
-  const bestShown = useCountUp(bestStreak, 850, showResult)
-
   if (showResult) {
-    const good = pct >= 70
-    return (
-      <div className="lesson">
-        <Confetti active={pct >= 80} />
-        <div className="lesson-end">
-          <img className="lesson-end__judi" src={good ? JUDI.celebrate : JUDI.encourage} alt="" />
-          <h1 className={`lesson-end__title${good ? '' : ' is-retry'}`}>{good ? L.doneTitle : L.retryTitle}</h1>
-          <p className="lesson-end__msg">{L.doneMsg(pct)}</p>
-          <div className="lesson-stats">
-            <div className="lesson-stat" style={{ '--c': '#ffc800' } as React.CSSProperties}>
-              <div className="lesson-stat__label">{L.xp}</div>
-              <div className="lesson-stat__value">⚡ {xpShown}</div>
-            </div>
-            <div className="lesson-stat" style={{ '--c': '#58cc02' } as React.CSSProperties}>
-              <div className="lesson-stat__label">{L.accuracy}</div>
-              <div className="lesson-stat__value">🎯 {pctShown}%</div>
-            </div>
-            <div className="lesson-stat" style={{ '--c': '#ff9600' } as React.CSSProperties}>
-              <div className="lesson-stat__label">{L.best}</div>
-              <div className="lesson-stat__value">🔥 {bestShown}</div>
-            </div>
-          </div>
-          <details className="lesson-review">
-            <summary>{L.review}</summary>
-            {results.map((r, i) => (
-              <div key={i} className="lesson-review__item">
-                <span>{r.title}</span>
-                <span className={`lesson-review__tag ${r.correct ? 'is-right' : 'is-wrong'}`}>{r.correct ? L.ok : L.ko}</span>
-              </div>
-            ))}
-          </details>
-        </div>
-        <div className="lesson-footer lesson-footer--end">
-          <div className="lesson-footer__inner">
-            <button className="lesson-btn lesson-btn--ghost" onClick={restart}>{L.retry}</button>
-            <button className="lesson-btn" onClick={onBack}>{L.back}</button>
-          </div>
-        </div>
-      </div>
-    )
+    return <LessonEnd isFrench={isFrenchSubject} results={results} total={questions.length} bestStreak={bestStreak} submitted={submitted} onContinue={submit} />
   }
 
   if (!q) return null

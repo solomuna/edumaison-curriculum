@@ -503,6 +503,62 @@
 .lesson-review__tag.is-wrong { color: var(--l-red-ink); }
 .lesson-footer--end .lesson-footer__inner { justify-content: center; gap: 12px; flex-wrap: wrap; }
 
+/* ── Cadre des moteurs à une question (LessonShell) ────────────────────── */
+.lesson-body--wide { width: min(900px, 100%); }
+.lesson--shell .lesson-kicker { margin-bottom: 14px; }
+.lesson--shell .lesson-prompt { margin-bottom: 20px; }
+.lesson--shell .lesson-bubble { font-size: 17px; }
+.lesson-engine { position: relative; }
+/* Une fois vérifié, le moteur reste visible (correction) mais n'est plus modifiable. */
+.lesson-engine.is-locked button,
+.lesson-engine.is-locked [role='button'] { pointer-events: none; }
+
+/* ── Texte à trous ─────────────────────────────────────────────────────── */
+.lesson-fill__sentence {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1.8;
+}
+.lesson-fill__input {
+  min-width: 4ch;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 0;
+  border-bottom: 3px solid var(--l-blue);
+  border-radius: 6px 6px 0 0;
+  background: var(--l-blue-bg);
+  color: var(--l-blue-dark);
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+}
+.lesson-fill__input:focus { border-bottom-color: var(--l-blue-dark); }
+.lesson-fill__slot {
+  padding: 0 10px;
+  border-radius: 8px;
+  font-weight: 900;
+}
+.lesson-fill__slot.is-right { background: var(--l-green-bg); color: var(--l-green-ink); animation: lesson-pop 0.25s ease-out; }
+.lesson-fill__slot.is-wrong { background: var(--l-red-bg); color: var(--l-red-ink); animation: lesson-shake 0.4s ease-in-out; }
+.lesson-hint {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px dashed #f5c26b;
+  border-radius: 14px;
+  background: #fffbeb;
+  color: #92400e;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+.lesson-hint.is-used { border-style: solid; opacity: 0.8; cursor: default; }
+
 /* ── Petits écrans ─────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .lesson-top { padding: 14px 14px 6px; gap: 10px; }

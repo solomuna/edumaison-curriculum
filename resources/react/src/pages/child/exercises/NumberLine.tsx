@@ -29,7 +29,7 @@ export default function NumberLine({ content, onComplete }: Props) {
     if (sel === null) return
     setChecked(true)
     const ok = sel === correctAnswer
-    setTimeout(() => onComplete(ok, { selected_value: sel }), 1200)
+    onComplete(ok, { selected_value: sel })
   }
 
   const tickCount = Math.min(max - min + 1, 21)
