@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
+import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
 import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
 import type { DictationContent, ExerciseCompletionHandler } from '../../../types/exercise'
 
@@ -100,12 +101,14 @@ const SpeakerIcon = () => (
 )
 
 export default function Dictation({ title, instructions, content, onComplete, onBack }: Props) {
-  const [current, setCurrent] = useState(0)
+  // Écoutes des reprises : comptées à part, jamais envoyées (le serveur vérifie
+  // les écoutes de la première tentative de chaque phrase).
+  const [retryListens, setRetryListens] = useState(0)
   const [answer, setAnswer] = useState('')
   const [answers, setAnswers] = useState<string[]>([])
   const [completedScores, setCompletedScores] = useState<ScoreBreakdown[]>([])
   const [replays, setReplays] = useState<number[]>(() => content.items.map(() => 0))
-  const [review, setReview] = useState<{ answer: string; breakdown: ScoreBreakdown; praise: string } | null>(null)
+  const [review, setReview] = useState<{ answer: string; breakdown: ScoreBreakdown; praise: string; retry: boolean } | null>(null)
   const [error, setError] = useState('')
   const [speaking, setSpeaking] = useState(false)
   const [done, setDone] = useState(false)
@@ -115,14 +118,18 @@ export default function Dictation({ title, instructions, content, onComplete, on
   const recordedAudioRef = useRef<HTMLAudioElement | null>(null)
   const cancelVoice = useRef<() => void>(() => {})
   const checkBtn = useRef<HTMLButtonElement>(null)
+  // Phrases ratées reprises en fin de dictée ; seule la 1re réponse est notée.
+  const rq = useRetryQueue(content.items.length)
+  const current = rq.current
   const item = content.items[current]
   const isFrench = content.language === 'fr-FR'
   const t = isFrench ? labels.fr : labels.en
   const L = labelsFor(isFrench)
   const maxReplays = Math.max(1, Math.min(5, content.max_replays ?? 3))
-  const canReplay = replays[current] < maxReplays && !review && !speaking
-  const hasListened = replays[current] > 0
-  const isLast = current === content.items.length - 1
+  const listens = rq.isRetry ? retryListens : replays[current]
+  const canReplay = listens < maxReplays && !review && !speaking
+  const hasListened = listens > 0
+  const isLast = rq.isLastStep
   const wordCount = useMemo(() => answer.trim().split(/\s+/).filter(Boolean).length, [answer])
   const expectedWordCount = useMemo(() => normalizeDictation(item.text).split(' ').filter(Boolean).length, [item.text])
   const guidance = !hasListened ? t.listenFirst : !answer.trim() ? t.empty : ''
@@ -158,7 +165,8 @@ export default function Dictation({ title, instructions, content, onComplete, on
     if (!canReplay) return
     setError('')
     setSpeaking(true)
-    setReplays(values => values.map((value, index) => index === current ? value + 1 : value))
+    if (rq.isRetry) setRetryListens(value => value + 1)
+    else setReplays(values => values.map((value, index) => index === current ? value + 1 : value))
     MamaJudi.stop()
     let played = item.audio_url ? await playRecordedAudio(item.audio_url) : false
     if (!played) played = await MamaJudi.speakLang(item.text, content.language ?? 'en-GB', 0.72)
@@ -174,7 +182,8 @@ export default function Dictation({ title, instructions, content, onComplete, on
     const submitted = answer.trim()
     const breakdown = scoreDictation(item.text, submitted)
     const good = breakdown.score >= PASS
-    setReview({ answer: submitted, breakdown, praise: randomPraise(L) })
+    setReview({ answer: submitted, breakdown, praise: randomPraise(L), retry: rq.isRetry })
+    rq.record(good)
     setError('')
     cancelVoice.current()
     if (good) {
@@ -193,10 +202,13 @@ export default function Dictation({ title, instructions, content, onComplete, on
   const next = () => {
     if (!review) return
     cancelVoice.current()
-    setAnswers(values => [...values, review.answer])
-    setCompletedScores(values => [...values, review.breakdown])
+    if (!review.retry) {
+      setAnswers(values => [...values, review.answer])
+      setCompletedScores(values => [...values, review.breakdown])
+    }
     if (isLast) { setDone(true); return }
-    setCurrent(value => value + 1)
+    rq.advance()
+    setRetryListens(0)
     setAnswer('')
     setReview(null)
     setError('')
@@ -245,7 +257,7 @@ export default function Dictation({ title, instructions, content, onComplete, on
     )
   }
 
-  const answered = current + (review ? 1 : 0)
+  const answered = rq.resolvedCount
   const progress = Math.max(4, Math.round(answered / content.items.length * 100))
   const good = !!review && review.breakdown.score >= PASS
   const scoreRows = review ? [
@@ -270,13 +282,14 @@ export default function Dictation({ title, instructions, content, onComplete, on
       <div className="lesson-body">
         <div className="lesson-kicker">{title}</div>
 
+        {rq.isRetry && <div className="lesson-retry-tag">🔁 {L.again}</div>}
         <div className="lesson-prompt">
           <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
           <div className="lesson-bubble">
             <div className="lesson-bubble__hint">{instructions || t.defaultInstructions}</div>
             <button className="lesson-listen" onClick={listen} disabled={!canReplay}>
               <span className="lesson-listen__icon"><SpeakerIcon /></span>
-              <span>{speaking ? t.playing : replays[current] < maxReplays ? `${t.listen} (${maxReplays - replays[current]} ${t.left})` : t.limit}</span>
+              <span>{speaking ? t.playing : listens < maxReplays ? `${t.listen} (${maxReplays - listens} ${t.left})` : t.limit}</span>
             </button>
             {item.hint && hasListened && <div className="lesson-bubble__hint">💡 {t.hint} : {item.hint}</div>}
           </div>
@@ -314,7 +327,7 @@ export default function Dictation({ title, instructions, content, onComplete, on
         )}
       </div>
 
-      <div className={`lesson-footer${review ? (good ? ' is-right' : ' is-wrong') : ''}`} key={review ? `v${current}` : `q${current}`}>
+      <div className={`lesson-footer${review ? (good ? ' is-right' : ' is-wrong') : ''}`} key={review ? `v${rq.step}` : `q${rq.step}`}>
         <div className="lesson-footer__inner">
           {review ? (
             <div className="lesson-verdict" role="status">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import LessonEnd from '../../../components/lesson/LessonEnd'
+import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { SoundService } from '../../../services/SoundService'
 import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
@@ -40,7 +41,6 @@ const SpeakerIcon = () => (
 )
 
 export default function MCQ({ title, instructions, content, subject, onComplete, onBack }: Props) {
-  const [current, setCurrent] = useState(0)
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
   const [results, setResults] = useState<Result[]>([])
@@ -48,6 +48,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const [bestStreak, setBestStreak] = useState(0)
   const [combo, setCombo] = useState<{ id: number; n: number } | null>(null)
   const [praise, setPraise] = useState('')
+  const [lastCorrect, setLastCorrect] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [showArdoise, setShowArdoise] = useState(false)
   const checkBtn = useRef<HTMLButtonElement>(null)
@@ -65,12 +66,14 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const shuffled = useMemo(() =>
     questions.map(q => { const idx = typeof q.answer === 'number' ? q.answer : (q.options||[]).indexOf(q.answer); return shuffleOptions(q.options, idx >= 0 ? idx : 0) })
   , [questions.length])
+  // Questions ratées reprises en fin de leçon ; seule la 1re réponse est notée.
+  const rq = useRetryQueue(questions.length)
+  const current = rq.current
   const q = questions[current]
   const shuffledQ = shuffled[current] || { options: q?.options || [], originalIndexes: (q?.options || []).map((_: unknown, index: number) => index), answerIndex: 0 }
   const questionText: string = q?.text || q?.question || ''
-  const isLast = current === questions.length - 1
-  const lastResult = results[results.length - 1]
-  const isRight = checked && !!lastResult?.correct
+  const isLast = rq.isLastStep
+  const isRight = checked && lastCorrect
 
   const cancelVoice = useRef<() => void>(() => {})
   const clearVoice = () => { cancelVoice.current(); cancelVoice.current = () => {} }
@@ -80,7 +83,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     prepareLessonAudio()
     return () => { clearVoice(); MamaJudi.stop() }
   }, [])
-  useEffect(() => { if (q) MamaJudi.speakLangAfter(current === 0 ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [current])
+  useEffect(() => { if (q) MamaJudi.speakLangAfter(rq.step === 0 ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [rq.step])
 
 
   const select = (idx: number) => {
@@ -93,12 +96,14 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     if (checked || selectedIdx === null || !q) return
     const correct = selectedIdx === shuffledQ.answerIndex
     setChecked(true)
-    setResults(r => [...r, {
+    setLastCorrect(correct)
+    if (!rq.isRetry) setResults(r => [...r, {
       correct,
       title: questionText,
       question_index: current,
       selected_index: shuffledQ.originalIndexes[selectedIdx],
     }])
+    rq.record(correct)
     clearVoice()
     if (correct) {
       const next = streak + 1
@@ -117,7 +122,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
       setStreak(0)
       cancelVoice.current = playVerdict(false)
     }
-  }, [checked, selectedIdx, q, shuffledQ, questionText, current, streak, L])
+  }, [checked, selectedIdx, q, shuffledQ, questionText, current, streak, L, rq])
 
   const next = useCallback(() => {
     if (!checked) return
@@ -125,11 +130,11 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     setSelectedIdx(null)
     setChecked(false)
     if (!isLast) {
-      setCurrent(c => c + 1)
+      rq.advance()
       return
     }
     setShowResult(true)
-  }, [checked, isLast])
+  }, [checked, isLast, rq])
 
   // La tentative est enregistrée quand l'enfant quitte l'écran de fin :
   // le parent change d'écran dès l'enregistrement, l'enfant doit d'abord voir son bilan.
@@ -168,7 +173,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   if (!q) return null
 
   // ── Écran de question ────────────────────────────────────────────────────
-  const answered = current + (checked ? 1 : 0)
+  const answered = rq.resolvedCount
   const progress = Math.max(4, Math.round(answered / questions.length * 100))
   const shortOptions = shuffledQ.options.length === 4 && shuffledQ.options.every((o: string) => String(o).length <= 18)
   const correctText = shuffledQ.options[shuffledQ.answerIndex]
@@ -214,6 +219,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
           </article>
         )}
 
+        {rq.isRetry && <div className="lesson-retry-tag">🔁 {L.again}</div>}
         <div className="lesson-prompt">
           <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
           <div className="lesson-bubble">
@@ -233,7 +239,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
             if (checked) state = isAnswer ? ' is-right' : isChosen ? ' is-wrong' : ' is-faded'
             else if (isChosen) state = ' is-selected'
             return (
-              <button key={`${current}-${i}`} className={`lesson-choice${state}`} onClick={() => select(i)} disabled={checked} role="radio" aria-checked={isChosen}>
+              <button key={`${rq.step}-${i}`} className={`lesson-choice${state}`} onClick={() => select(i)} disabled={checked} role="radio" aria-checked={isChosen}>
                 <span className="lesson-choice__key">{i + 1}</span>
                 <span>{opt}</span>
               </button>
@@ -242,7 +248,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
         </div>
       </div>
 
-      <div className={`lesson-footer${checked ? (isRight ? ' is-right' : ' is-wrong') : ''}`} key={checked ? `v${current}` : `q${current}`}>
+      <div className={`lesson-footer${checked ? (isRight ? ' is-right' : ' is-wrong') : ''}`} key={checked ? `v${rq.step}` : `q${rq.step}`}>
         <div className="lesson-footer__inner">
           {checked ? (
             <div className="lesson-verdict" role="status">
