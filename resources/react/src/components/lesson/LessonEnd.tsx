@@ -12,8 +12,10 @@ interface Props {
   results: { title: string; correct: boolean }[]
   total: number
   bestStreak: number
-  submitted: boolean
-  onContinue: () => void
+  /** Précision affichée si le score n'est pas binaire (ex. dictée) ; sinon bonnes réponses / total. */
+  accuracy?: number
+  /** Enregistre la tentative ; une erreur est affichée et le bouton réactivé. */
+  onContinue: () => void | Promise<unknown>
 }
 
 function useCountUp(target: number, delay: number) {
@@ -32,10 +34,27 @@ function useCountUp(target: number, delay: number) {
   return value
 }
 
-export default function LessonEnd({ isFrench, results, total, bestStreak, submitted, onContinue }: Props) {
+export default function LessonEnd({ isFrench, results, total, bestStreak, accuracy, onContinue }: Props) {
   const L = labelsFor(isFrench)
   const correct = results.filter(r => r.correct).length
-  const pct = total ? Math.round(correct / total * 100) : 0
+  const pct = accuracy ?? (total ? Math.round(correct / total * 100) : 0)
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
+
+  const finish = async () => {
+    if (busy || done) return
+    setBusy(true)
+    setError('')
+    try {
+      await onContinue()
+      setDone(true)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : L.saveError)
+    } finally {
+      setBusy(false)
+    }
+  }
   const good = pct >= 70
   const xp = useCountUp(correct * XP_PER_CORRECT, 550)
   const acc = useCountUp(pct, 700)
@@ -84,7 +103,8 @@ export default function LessonEnd({ isFrench, results, total, bestStreak, submit
       </div>
       <div className="lesson-footer lesson-footer--end">
         <div className="lesson-footer__inner">
-          <button className="lesson-btn" onClick={onContinue} disabled={submitted} autoFocus>{L.continue}</button>
+          {error && <div className="lesson-save-error" role="alert">{error}</div>}
+          <button className="lesson-btn" onClick={finish} disabled={busy || done} autoFocus>{busy ? L.saving : error ? L.retrySave : L.continue}</button>
         </div>
       </div>
     </div>

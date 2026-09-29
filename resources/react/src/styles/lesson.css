@@ -770,3 +770,15 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Erreur d'enregistrement (réseau, refus du serveur) */
+.lesson-save-error {
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff1f0;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 800;
+}
+.lesson-footer--end .lesson-save-error { width: 100%; text-align: center; }

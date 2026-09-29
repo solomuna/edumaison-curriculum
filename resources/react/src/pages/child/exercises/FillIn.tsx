@@ -49,7 +49,6 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const [scores, setScores] = useState<boolean[]>([])
   const [responses, setResponses] = useState<string[]>([])
   const [done, setDone] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [hintUsed, setHintUsed] = useState(false)
   const [streak, setStreak] = useState(0)
   const [bestStreak, setBestStreak] = useState(0)
@@ -115,10 +114,8 @@ export default function FillIn({ title, instructions, content, isFrench = false,
 
   // Enregistrement sur « Continuer » depuis l'écran de fin (voir LessonEnd).
   const submit = () => {
-    if (submitted) return
-    setSubmitted(true)
     const total = scores.filter(Boolean).length
-    onComplete(Math.round((total / items.length) * 100), {
+    return onComplete(Math.round((total / items.length) * 100), {
       verification_status: 'auto_checked',
       answers: { items: responses },
       evidence: { method: 'server_answer_key' },
@@ -151,7 +148,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
         results={items.map((it, i) => ({ title: (it.prompt || it.text || it.sentence || '').replace('___', '…'), correct: !!scores[i] }))}
         total={items.length}
         bestStreak={bestStreak}
-        submitted={submitted}
+       
         onContinue={submit}
       />
     )
