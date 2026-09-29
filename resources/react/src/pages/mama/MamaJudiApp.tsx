@@ -1,5 +1,18 @@
 ﻿// MamaJudiApp.tsx — Interface Mama Judi v3 (Mobile S9+ + Desktop sidebar)
 import { useState, useEffect, useRef, useCallback } from 'react'
+import '../../styles/mama-adventure.css'
+
+function csrfCookie(name: string) {
+  return decodeURIComponent(document.cookie.split('; ').find(v => v.startsWith(`${name}=`))?.split('=').slice(1).join('=') || '')
+}
+
+async function secureFetch(url: string, options: RequestInit = {}) {
+  await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+  return fetch(url, {
+    ...options, credentials: 'same-origin',
+    headers: { Accept: 'application/json', 'X-XSRF-TOKEN': csrfCookie('XSRF-TOKEN'), ...(options.headers || {}) },
+  })
+}
 
 // ── BREAKPOINT HOOK ───────────────────────────────────────────────────────────
 function useIsDesktop() {
@@ -23,7 +36,19 @@ interface Brief {
   summary: { total_exercises: number; active_today: number; needs_attention: string[] }
 }
 interface Subject { id: number; name: string; units: { id: number; name: string }[] }
-type Screen = 'home' | 'revision' | 'duel' | 'profile' | 'books' | 'tableau' | 'tableau'
+interface CompanionProfile {
+  avatar: string | null; display_name: string; relationship: string
+  child_address: string | null; tone: string; language: 'fr' | 'en'; has_pin: boolean
+}
+interface LearningPack {
+  id: number; name: string; slug: string; description: string | null; type: string
+  target_level: { id: number; name: string; slug: string } | null
+  target_subject: { id: number; name: string; slug: string } | null
+  exercise_count: number; is_enabled_for_family: boolean
+  assigned_children_count: number; assigned_child_ids: number[]
+  metadata: Record<string, string | number | boolean | null> | null
+}
+type Screen = 'home' | 'revision' | 'duel' | 'profile' | 'books' | 'tableau' | 'packs'
 
 // ── PALETTE ───────────────────────────────────────────────────────────────────
 const P = {
@@ -47,7 +72,7 @@ const T = {
     duel_exercises: "Nombre d'exercices", duel_duration: 'Durée',
     start_duel: 'Démarrer le duel !', sent: 'Envoyé ! Les enfants vont recevoir la révision.',
     duel_sent: 'Duel créé ! Les enfants vont être notifiés.', back: '← Retour',
-    reset: 'Réinitialiser', reset_confirm: 'Réinitialiser tous les exercices, examens et duels de %name% ? Les bulletins seront conservés.', reset_done: 'Réinitialisation effectuée — les exercices sont à nouveau disponibles.', reset_fail: 'Échec de la réinitialisation. Réessaie.',
+    reset: 'Réinitialiser', reset_confirm: 'Réinitialiser la progression des exercices de %name% pour l’année scolaire en cours ? Les bulletins et les années précédentes seront conservés.', reset_done: 'Progression réinitialisée — les exercices sont à nouveau disponibles.', reset_fail: 'Échec de la réinitialisation. Réessaie.',
     minutes: 'min', pin_title: 'Espace Mama Judi', pin_sub: 'Entrez votre code PIN',
     pin_error: 'Code incorrect', profile: 'Mon Profil',
     change_photo: 'Changer ma photo', change_pin: 'Changer mon PIN',
@@ -57,10 +82,10 @@ const T = {
     pin_wrong: 'PIN actuel incorrect', pin_success: 'PIN modifié !',
     photo_success: 'Photo mise à jour !', logout: 'Quitter',
     nav_brief: 'Résumé', nav_revision: 'Révision', nav_duel: 'Duel', nav_books: 'Livres', nav_profile: 'Profil',
+    nav_packs: 'Parcours', packs_title: 'Parcours complémentaires', packs_intro: 'Activez un parcours pour la famille, puis choisissez les enfants qui le suivront.',
+    packs_loading: 'Chargement des parcours...', packs_empty: 'Aucun parcours publié pour le moment.', packs_error: 'Impossible de charger les parcours.',
+    packs_enabled: 'Activé pour la famille', packs_disabled: 'Désactivé', packs_assign: 'Affecter aux enfants', packs_exercises: 'exercices', packs_level_mismatch: 'Niveau non compatible',
     today: "Aujourd'hui", active: 'actifs', attention: 'attention',
-    nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
-    auto_section: 'Révision automatique', auto_on: 'Activé', auto_off: 'Désactivé', auto_time: 'Heure', auto_trigger_now: 'Déclencher maintenant', auto_triggered: 'Envoyé !',
-    brief_vocal: 'Brief vocal', brief_stop: 'Arrêter', brief_speaking: 'En cours...',
     nav_tableau: 'Tableau', tableau_search: 'Chercher', tableau_no_results: 'Aucun exercice trouvé', tableau_exercises_found: 'exercices trouvés',
     auto_section: 'Révision automatique', auto_on: 'Activé', auto_off: 'Désactivé', auto_time: 'Heure', auto_trigger_now: 'Déclencher maintenant', auto_triggered: 'Envoyé !',
     brief_vocal: 'Brief vocal', brief_stop: 'Arrêter', brief_speaking: 'En cours...',
@@ -78,7 +103,7 @@ const T = {
     duel_exercises: 'Number of exercises', duel_duration: 'Duration',
     start_duel: 'Start the Duel!', sent: 'Sent! Children will receive the revision.',
     duel_sent: 'Duel created! Children will be notified.', back: '← Back',
-    reset: 'Reset', reset_confirm: 'Reset all exercises, exams and duels for %name%? Report cards are kept.', reset_done: 'Reset done — exercises are available again.', reset_fail: 'Reset failed. Try again.',
+    reset: 'Reset', reset_confirm: 'Reset %name%\'s exercise progress for the current school year? Report cards and previous years will be kept.', reset_done: 'Progress reset — exercises are available again.', reset_fail: 'Reset failed. Try again.',
     minutes: 'min', pin_title: 'Mama Judi Space', pin_sub: 'Enter your PIN code',
     pin_error: 'Incorrect PIN', profile: 'My Profile',
     change_photo: 'Change my photo', change_pin: 'Change my PIN',
@@ -88,49 +113,35 @@ const T = {
     pin_wrong: 'Current PIN incorrect', pin_success: 'PIN updated!',
     photo_success: 'Photo updated!', logout: 'Logout',
     nav_brief: 'Summary', nav_revision: 'Revision', nav_duel: 'Duel', nav_books: 'Books', nav_profile: 'Profile',
+    nav_packs: 'Learning paths', packs_title: 'Extra learning paths', packs_intro: 'Enable a path for the family, then choose which children will follow it.',
+    packs_loading: 'Loading learning paths...', packs_empty: 'No published learning path yet.', packs_error: 'Unable to load learning paths.',
+    packs_enabled: 'Enabled for the family', packs_disabled: 'Disabled', packs_assign: 'Assign to children', packs_exercises: 'exercises', packs_level_mismatch: 'Level not compatible',
     today: 'Today', active: 'active', attention: 'attention',
-    nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
-    auto_section: 'Auto Revision', auto_on: 'On', auto_off: 'Off', auto_time: 'Time', auto_trigger_now: 'Trigger now', auto_triggered: 'Sent!',
-    brief_vocal: 'Voice Brief', brief_stop: 'Stop', brief_speaking: 'Speaking...',
     nav_tableau: 'Blackboard', tableau_search: 'Search', tableau_no_results: 'No exercises found', tableau_exercises_found: 'exercises found',
     auto_section: 'Auto Revision', auto_on: 'On', auto_off: 'Off', auto_time: 'Time', auto_trigger_now: 'Trigger now', auto_triggered: 'Sent!',
     brief_vocal: 'Voice Brief', brief_stop: 'Stop', brief_speaking: 'Speaking...',
   }
 }
+type Translation = (typeof T)[keyof typeof T]
 
 // ── AVATAR ────────────────────────────────────────────────────────────────────
 function MamaAvatar({ size = 80, src }: { size?: number; src?: string | null }) {
   if (src) return <img src={src} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,.35)', flexShrink: 0 }} />
-  return (
-    <svg viewBox="0 0 84 104" width={size} height={size * 104 / 84} xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-      <circle cx="42" cy="36" r="28" fill="#2A1500"/>
-      <circle cx="16" cy="43" r="13" fill="#2A1500"/>
-      <circle cx="68" cy="43" r="13" fill="#2A1500"/>
-      <circle cx="42" cy="44" r="21" fill="#C8874A"/>
-      <ellipse cx="21" cy="44" rx="4" ry="5" fill="#B87A40"/>
-      <ellipse cx="63" cy="44" rx="4" ry="5" fill="#B87A40"/>
-      <circle cx="34" cy="40" r="3.5" fill="#1A0A00"/>
-      <circle cx="50" cy="40" r="3.5" fill="#1A0A00"/>
-      <circle cx="35.5" cy="38.8" r="1.3" fill="white"/>
-      <circle cx="51.5" cy="38.8" r="1.3" fill="white"/>
-      <path d="M30 54 Q42 65 54 54" stroke="#1A0A00" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-      <rect x="38" y="63" width="8" height="10" rx="4" fill="#C8874A"/>
-      <path d="M14 92 Q12 76 42 72 Q72 76 70 92 L68 104 L16 104 Z" fill="#6B4226"/>
-    </svg>
-  )
+  return <img src="/images/default-companion.webp" alt="Accompagnateur" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,.35)', flexShrink: 0 }} />
 }
 
 // ── PIN SCREEN ────────────────────────────────────────────────────────────────
-function PinScreen({ onUnlock, t, avatarSrc }: { onUnlock: () => void; t: typeof T['fr']; avatarSrc?: string | null }) {
+function PinScreen({ onUnlock, t, avatarSrc, companionName }: { onUnlock: () => void; t: Translation; avatarSrc?: string | null; companionName: string }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
+  const [showPinHelp, setShowPinHelp] = useState(false)
 
   const press = useCallback((d: string) => {
     setPin(prev => {
       if (prev.length >= 4) return prev
       const next = prev + d
       if (next.length === 4) {
-        fetch('/api/mama/profile/verify-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: next }) })
+        secureFetch('/api/mama/profile/verify-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: next }) })
           .then(r => r.json())
           .then(res => {
             if (res.valid) setTimeout(() => onUnlock(), 200)
@@ -157,24 +168,37 @@ function PinScreen({ onUnlock, t, avatarSrc }: { onUnlock: () => void; t: typeof
   }, [press])
 
   return (
-    <div style={{ minHeight: '100vh', background: P.bg, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Nunito, system-ui, sans-serif' }}>
+    <div className="mama-adventure-pin" style={{ minHeight: '100vh', background: P.bg, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'Nunito, system-ui, sans-serif' }}>
+      <div className="mama-adventure-pin__shade" aria-hidden="true" />
+      <main className="mama-adventure-pin__panel" aria-labelledby="mama-pin-title">
       <MamaAvatar size={80} src={avatarSrc} />
-      <div style={{ fontSize: 22, fontWeight: 900, color: P.dark, marginTop: 12, marginBottom: 4 }}>{t.pin_title}</div>
-      <div style={{ fontSize: 14, color: P.soft, marginBottom: 36 }}>{t.pin_sub}</div>
-      <div style={{ display: 'flex', gap: 16, marginBottom: 40 }}>
+      <div className="mama-adventure-pin__eyebrow" style={{ fontSize: 22, fontWeight: 900, color: P.dark, marginTop: 12, marginBottom: 4 }}>
+        {t === T.fr ? 'Espace accompagnateur' : 'Companion space'}
+      </div>
+      <h1 id="mama-pin-title" className="mama-adventure-pin__title" style={{ fontSize: 14, fontWeight: 800, color: P.brown, marginBottom: 4 }}>{companionName}</h1>
+      <div className="mama-adventure-pin__subtitle" style={{ fontSize: 14, color: P.soft, marginBottom: 36 }}>{t.pin_sub}</div>
+      <div className="mama-adventure-pin__dots" aria-live="polite" aria-label={t === T.fr ? `${pin.length} chiffres saisis sur 4` : `${pin.length} of 4 digits entered`} style={{ display: 'flex', gap: 16, marginBottom: 40 }}>
         {[0,1,2,3].map(i => (
           <div key={i} style={{ width: 16, height: 16, borderRadius: '50%', background: pin.length > i ? (error ? P.red : P.green) : 'transparent', border: '2px solid ' + (error ? P.red : P.green), transition: 'background .2s' }}/>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 72px)', gap: 12 }}>
+      <div className="mama-adventure-pin__keypad" aria-label={t === T.fr ? 'Clavier du code PIN' : 'PIN keypad'} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 72px)', gap: 12 }}>
         {keys.map((k, i) => (
-          <button key={i} onClick={() => k === '\u232b' ? setPin(p => p.slice(0,-1)) : k ? press(k) : undefined}
+          <button className="mama-adventure-pin__key" key={i} aria-label={k === '\u232b' ? (t === T.fr ? 'Effacer' : 'Delete') : k || undefined} onClick={() => k === '\u232b' ? setPin(p => p.slice(0,-1)) : k ? press(k) : undefined}
             style={{ height: 72, borderRadius: 16, border: '1.5px solid ' + P.border, background: k ? P.white : 'transparent', fontSize: k === '\u232b' ? 20 : 24, fontWeight: 900, color: P.dark, cursor: k ? 'pointer' : 'default', fontFamily: 'Nunito, sans-serif' }}>
             {k}
           </button>
         ))}
       </div>
-      {error && <div style={{ marginTop: 20, color: P.red, fontWeight: 800, fontSize: 13 }}>{t.pin_error}</div>}
+      {error && <div className="mama-adventure-pin__error" role="alert" style={{ marginTop: 20, color: P.red, fontWeight: 800, fontSize: 13 }}>{t.pin_error}</div>}
+      <div className="mama-adventure-pin__actions" style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <button className="mama-adventure-pin__back" type="button" onClick={() => { window.location.href = '/app' }} style={{ border: '1.5px solid ' + P.border, borderRadius: 14, padding: '10px 16px', background: P.white, color: P.dark, fontWeight: 800, cursor: 'pointer' }}>← {t === T.fr ? 'Retour à l’accueil' : 'Back home'}</button>
+        <button className="mama-adventure-pin__help-button" type="button" aria-expanded={showPinHelp} onClick={() => setShowPinHelp(v => !v)} style={{ border: 0, borderRadius: 14, padding: '10px 16px', background: 'transparent', color: P.green, fontWeight: 900, cursor: 'pointer' }}>{t === T.fr ? 'PIN oublié ?' : 'Forgot PIN?'}</button>
+      </div>
+      {showPinHelp && <div className="mama-adventure-pin__help" role="status" style={{ width: 'min(100%, 380px)', boxSizing: 'border-box', marginTop: 14, padding: '14px 16px', borderRadius: 16, background: P.card, border: '1.5px solid ' + P.border, color: P.soft, fontSize: 13, lineHeight: 1.5, textAlign: 'center' }}>
+        {t === T.fr ? 'Utilisez d’abord le PIN familial choisi à la création du compte. Pour définir un PIN différent, ouvrez ensuite Mon profil → Changer mon PIN.' : 'First use the family PIN chosen when the account was created. You can then set a different PIN under My profile → Change my PIN.'}
+      </div>}
+      </main>
     </div>
   )
 }
@@ -202,7 +226,7 @@ function generateBriefText(brief: Brief): string {
   return text
 }
 // ── BRIEF ─────────────────────────────────────────────────────────────────────
-function BriefScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
+function BriefScreen({ brief, t }: { brief: Brief; t: Translation }) {
   const [speaking, setSpeaking] = useState(false)
 
   const startVocal = () => {
@@ -251,7 +275,7 @@ function BriefScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
         </button>
       </div>
       {brief.children.map(c => (
-        <div key={c.id} style={{ background: P.white, borderRadius: 18, padding: 16, marginBottom: 12, border: `1.5px solid ${c.needs_attention ? '#FECACA' : P.border}`, background: c.needs_attention ? '#FFF5F5' : P.white }}>
+        <div key={c.id} style={{ borderRadius: 18, padding: 16, marginBottom: 12, border: `1.5px solid ${c.needs_attention ? '#FECACA' : P.border}`, background: c.needs_attention ? '#FFF5F5' : P.white }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ fontSize: 16, fontWeight: 900, color: P.dark }}>{c.name}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -286,16 +310,15 @@ function BriefScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
   )
 }
 
-// Bouton "Reinitialiser" -- supprime exercise_attempts / exams / duels pour cet enfant.
-// Garde school_results et remediation. Endpoint : POST /api/admin/children/{id}/reset.
-function ResetChildButton({ child, t }: { child: ChildBrief; t: typeof T['fr'] }) {
+// Supprime uniquement les tentatives de l'annee courante; les bulletins restent conserves.
+function ResetChildButton({ child, t }: { child: ChildBrief; t: Translation }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'fail'>('idle')
   const handle = async () => {
     const msg = t.reset_confirm.replace('%name%', child.name)
     if (!window.confirm(msg)) return
     setState('busy')
     try {
-      const r = await fetch(`/api/admin/children/${child.id}/reset`, { method: 'POST' })
+      const r = await fetch(`/api/children/${child.id}/reset-progress`, { method: 'POST' })
       if (!r.ok) throw new Error('http ' + r.status)
       setState('done')
       setTimeout(() => setState('idle'), 4000)
@@ -323,7 +346,7 @@ function ResetChildButton({ child, t }: { child: ChildBrief; t: typeof T['fr'] }
 
 
 // ── AUTO REVISION CARD ─────────────────────────────────────────────────────────────────
-function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
+function AutoRevisionCard({ t, children }: { t: Translation; children: ChildBrief[] }) {
   const [config, setConfig] = useState(null as any)
   const [triggering, setTriggering] = useState(false)
   const [triggered, setTriggered] = useState(false)
@@ -337,7 +360,7 @@ function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
 
   const saveConfig = async (next: any) => {
     setConfig(next)
-    await fetch('/api/evening-sessions/scheduler-config', {
+    await secureFetch('/api/evening-sessions/scheduler-config', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(next)
     }).catch(() => {})
@@ -346,7 +369,7 @@ function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
   const trigger = async () => {
     setTriggering(true)
     try {
-      await fetch('/api/evening-sessions/trigger-auto', { method: 'POST' })
+      await secureFetch('/api/evening-sessions/trigger-auto', { method: 'POST' })
       setTriggered(true)
       setTimeout(() => setTriggered(false), 3000)
     } finally { setTriggering(false) }
@@ -374,16 +397,20 @@ function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
         </button>
       </div>
       {config.enabled && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: P.soft, flexShrink: 0 }}>{t.auto_time}</div>
-          <input type="time" value={timeStr}
-            onChange={e => {
-              const parts = e.target.value.split(':')
-              saveConfig({ ...config, hour: parseInt(parts[0]), minute: parseInt(parts[1]) })
-            }}
-            style={{ padding: '6px 10px', borderRadius: 10, border: '1.5px solid ' + P.border,
-              fontFamily: 'Nunito, sans-serif', fontSize: 14, background: P.white, color: P.dark }} />
-        </div>
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{ fontSize: 12, color: P.soft, flexShrink: 0 }}>{t.auto_time}</div>
+            <input type="time" value={timeStr}
+              onChange={e => { const parts = e.target.value.split(':'); saveConfig({ ...config, hour: parseInt(parts[0]), minute: parseInt(parts[1]) }) }}
+              style={{ padding: '6px 10px', borderRadius: 10, border: '1.5px solid ' + P.border, fontFamily: 'Nunito, sans-serif', fontSize: 14, background: P.white, color: P.dark }} />
+          </div>
+          <div style={{ fontSize: 11, color: P.soft, marginBottom: 6 }}>Enfants concernés · aucun choix = tous les enfants</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const, marginBottom: 10 }}>
+            {children.map(child => { const active = (config.child_ids || []).includes(child.id); return <button key={child.id}
+              onClick={() => saveConfig({ ...config, child_ids: active ? config.child_ids.filter((id:number) => id !== child.id) : [...(config.child_ids || []), child.id] })}
+              style={{ border: 'none', borderRadius: 18, padding: '6px 11px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 800, background: active ? P.green : P.border, color: active ? 'white' : P.soft }}>{child.name}</button> })}
+          </div>
+        </>
       )}
       <button onClick={trigger} disabled={triggering}
         style={{ width: '100%', padding: 10, borderRadius: 14, border: 'none',
@@ -396,7 +423,7 @@ function AutoRevisionCard({ t }: { t: typeof T['fr'] }) {
 }
 
 // ── REVISION ──────────────────────────────────────────────────────────────────
-function RevisionScreen({ brief, t, lang }: { brief: Brief; t: typeof T['fr']; lang: 'fr' | 'en' }) {
+function RevisionScreen({ brief, t, lang }: { brief: Brief; t: Translation; lang: 'fr' | 'en' }) {
   const [selectedChildren, setSelectedChildren] = useState<number[]>(brief.children.map(c => c.id))
   const [subjectIds, setSubjectIds] = useState<number[]>([])
   const [unitId, setUnitId] = useState<number | null>(null)
@@ -404,11 +431,19 @@ function RevisionScreen({ brief, t, lang }: { brief: Brief; t: typeof T['fr']; l
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [schoolSuggestions, setSchoolSuggestions] = useState<any[]>([])
 
   useEffect(() => {
     const child = brief.children.find(c => selectedChildren.includes(c.id))
     if (child) fetch(`/api/mama/subjects/${child.level_id}`).then(r => r.json()).then(setSubjects).catch(() => {})
   }, [selectedChildren])
+
+  useEffect(() => {
+    Promise.all(brief.children.map(async child => {
+      const r = await fetch(`/api/children/${child.id}/revision-suggestions`, { headers: { Accept: 'application/json' } })
+      return r.ok ? { child, ...(await r.json()) } : null
+    })).then(rows => setSchoolSuggestions(rows.filter(Boolean))).catch(() => setSchoolSuggestions([]))
+  }, [brief.children])
 
   const toggleChild = (id: number) => setSelectedChildren(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   const toggleSubject = (id: number) => { setSubjectIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]); setUnitId(null) }
@@ -438,7 +473,29 @@ function RevisionScreen({ brief, t, lang }: { brief: Brief; t: typeof T['fr']; l
 
   return (
     <div>
-      <AutoRevisionCard t={t} />
+      <AutoRevisionCard t={t} children={brief.children} />
+      {schoolSuggestions.some(s => s.today.length || s.tomorrow.length || s.next?.length) && (
+        <div style={{ background: 'rgba(29,107,42,.07)', border: '1.5px solid rgba(29,107,42,.22)', borderRadius: 18, padding: '14px 16px', marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 900, color: P.dark, marginBottom: 4 }}>📚 Révisions selon l’emploi du temps</div>
+          <div style={{ fontSize: 11, color: P.soft, marginBottom: 10 }}>À partir du planning saisi par la famille, choisis une matière récente ou le prochain cours prévu.</div>
+          {schoolSuggestions.map(s => (s.today.length || s.tomorrow.length || s.next?.length) ? (
+            <div key={s.child.id} style={{ marginTop: 9 }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: P.brown, marginBottom: 5 }}>{s.child.name}</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
+                {[...s.today.map((x:any) => ({...x, when:'Aujourd’hui'})), ...s.tomorrow.map((x:any) => ({...x, when:'Demain'})), ...(s.next || []).map((x:any) => ({...x, when:`Prochain cours · ${new Date(s.next_date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long' })}`}))].map((x:any, i:number) => (
+                  <button key={`${x.when}-${x.timetable_id}-${i}`} disabled={!x.subject_id}
+                    title={x.subject_id ? `Sélectionner ${x.matched_name}` : 'Matière non encore rapprochée du programme EduMaison'}
+                    onClick={() => { setSelectedChildren([s.child.id]); setSubjectIds([x.subject_id]); setUnitId(null) }}
+                    style={{ border: 'none', borderRadius: 20, padding: '6px 10px', fontFamily: 'Nunito, sans-serif', fontSize: 11, fontWeight: 800,
+                      cursor: x.subject_id ? 'pointer' : 'default', background: x.subject_id ? P.green : P.border, color: x.subject_id ? 'white' : P.soft }}>
+                    {x.when} · {x.subject_name} {x.start_time}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null)}
+        </div>
+      )}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 800, color: P.soft, marginBottom: 8 }}>{t.choose_children}</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
@@ -478,7 +535,7 @@ function RevisionScreen({ brief, t, lang }: { brief: Brief; t: typeof T['fr']; l
 }
 
 // ── DUEL ──────────────────────────────────────────────────────────────────────
-function DuelScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
+function DuelScreen({ brief, t }: { brief: Brief; t: Translation }) {
   const [child1, setChild1] = useState<number | null>(null)
   const [child2, setChild2] = useState<number | null>(null)
   const [nbEx, setNbEx] = useState(10)
@@ -541,7 +598,7 @@ function DuelScreen({ brief, t }: { brief: Brief; t: typeof T['fr'] }) {
 }
 
 // ── PROFIL ────────────────────────────────────────────────────────────────────
-function ProfileScreen({ t, avatarSrc, onAvatarChange }: { t: typeof T['fr']; avatarSrc: string | null; onAvatarChange: (url: string) => void }) {
+function ProfileScreen({ t, avatarSrc, onAvatarChange, companion, onProfileChange }: { t: Translation; avatarSrc: string | null; onAvatarChange: (url: string) => void; companion: CompanionProfile; onProfileChange: (profile: CompanionProfile) => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
@@ -551,6 +608,14 @@ function ProfileScreen({ t, avatarSrc, onAvatarChange }: { t: typeof T['fr']; av
   const [photoMsg, setPhotoMsg] = useState('')
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(avatarSrc)
+  const [identityMsg, setIdentityMsg] = useState('')
+  const [identity, setIdentity] = useState({
+    display_name: companion.display_name,
+    relationship: companion.relationship,
+    child_address: companion.child_address || '',
+    tone: companion.tone,
+    language: companion.language,
+  })
 
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -560,7 +625,7 @@ function ProfileScreen({ t, avatarSrc, onAvatarChange }: { t: typeof T['fr']; av
     const form = new FormData()
     form.append('avatar', file)
     try {
-      const r = await fetch('/api/mama/profile/avatar', { method: 'POST', body: form })
+      const r = await secureFetch('/api/mama/profile/avatar', { method: 'POST', body: form })
       const d = await r.json()
       if (d.success) { onAvatarChange('/storage/' + d.avatar); setPhotoMsg(t.photo_success) }
     } catch (_) {} finally { setUploading(false) }
@@ -569,18 +634,46 @@ function ProfileScreen({ t, avatarSrc, onAvatarChange }: { t: typeof T['fr']; av
   const handlePin = async () => {
     if (newPin !== confirmPin) { setPinMsg(t.pin_mismatch); setPinOk(false); return }
     if (newPin.length !== 4 || !/^\d+$/.test(newPin)) { setPinMsg(t.new_pin); setPinOk(false); return }
-    const vr = await fetch('/api/mama/profile/verify-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: currentPin }) })
+    const vr = await secureFetch('/api/mama/profile/verify-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: currentPin }) })
     const vd = await vr.json()
     if (!vd.valid) { setPinMsg(t.pin_wrong); setPinOk(false); return }
-    const r = await fetch('/api/mama/profile/pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: newPin }) })
+    const r = await secureFetch('/api/mama/profile/pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: newPin }) })
     const d = await r.json()
     if (d.success) { setPinMsg(t.pin_success); setPinOk(true); setCurrentPin(''); setNewPin(''); setConfirmPin('') }
   }
 
   const inputStyle = { width: '100%', padding: '11px 14px', borderRadius: 12, border: '1.5px solid ' + P.border, fontFamily: 'Nunito, sans-serif', fontSize: 14, background: P.card, color: P.dark, marginBottom: 10 }
 
+  const saveIdentity = async () => {
+    setIdentityMsg('')
+    const response = await secureFetch('/api/mama/profile', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(identity),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) return setIdentityMsg(data.message || 'Impossible d’enregistrer le profil.')
+    onProfileChange(data.profile)
+    setIdentityMsg('Profil mis à jour !')
+  }
+
   return (
     <div>
+      <div style={{ background: P.white, borderRadius: 20, padding: '20px 18px', marginBottom: 16, border: '1.5px solid ' + P.border }}>
+        <div style={{ fontSize: 14, fontWeight: 900, color: P.dark, marginBottom: 14 }}>Identité de l’accompagnateur</div>
+        <input style={inputStyle} placeholder="Nom affiché" value={identity.display_name} onChange={e => setIdentity({ ...identity, display_name: e.target.value })} />
+        <input style={inputStyle} placeholder="Comment les enfants m’appellent" value={identity.child_address} onChange={e => setIdentity({ ...identity, child_address: e.target.value })} />
+        <select style={inputStyle} value={identity.relationship} onChange={e => setIdentity({ ...identity, relationship: e.target.value })}>
+          <option value="mama">Maman</option><option value="papa">Papa</option><option value="tata">Tata</option>
+          <option value="oncle">Oncle</option><option value="grand_parent">Grand-parent</option><option value="tuteur">Tuteur</option><option value="coach">Coach</option><option value="parent">Parent</option>
+        </select>
+        <select style={inputStyle} value={identity.tone} onChange={e => setIdentity({ ...identity, tone: e.target.value })}>
+          <option value="gentle">Doux</option><option value="encouraging">Encourageant</option><option value="dynamic">Dynamique</option><option value="firm_kind">Ferme et bienveillant</option>
+        </select>
+        <select style={inputStyle} value={identity.language} onChange={e => setIdentity({ ...identity, language: e.target.value as 'fr' | 'en' })}>
+          <option value="fr">Français</option><option value="en">English</option>
+        </select>
+        {identityMsg && <div style={{ fontSize: 13, fontWeight: 800, color: identityMsg.includes('jour') ? P.green : P.red, marginBottom: 10 }}>{identityMsg}</div>}
+        <button onClick={saveIdentity} style={{ width: '100%', padding: 12, borderRadius: 14, border: 'none', background: P.green, color: 'white', fontFamily: 'Nunito, sans-serif', fontSize: 15, fontWeight: 900, cursor: 'pointer' }}>Enregistrer le profil</button>
+      </div>
       <div style={{ background: P.white, borderRadius: 20, padding: '20px 18px', marginBottom: 16, border: '1.5px solid ' + P.border }}>
         <div style={{ fontSize: 14, fontWeight: 900, color: P.dark, marginBottom: 14 }}>{t.change_photo}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -617,7 +710,7 @@ interface BookRef {
   level_id: number
 }
 
-function BooksScreen({ t }: { t: typeof T['fr'] }) {
+function BooksScreen({ t }: { t: Translation }) {
   const [books, setBooks] = useState<BookRef[]>([])
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -725,7 +818,7 @@ function BooksScreen({ t }: { t: typeof T['fr'] }) {
 
 
 // ── TABLEAU NOIR ─────────────────────────────────────────────────────────────────────────────
-function TableauScreen({ t, brief }: { t: typeof T['fr']; brief: Brief | null }) {
+function TableauScreen({ t, brief }: { t: Translation; brief: Brief | null }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null as any)
   const [loading, setLoading] = useState(false)
@@ -818,20 +911,118 @@ function TableauScreen({ t, brief }: { t: typeof T['fr']; brief: Brief | null })
 
 
 
-function ScreenContent({ screen, brief, t, lang, avatarSrc, onAvatarChange }: { screen: Screen; brief: Brief | null; t: typeof T['fr']; lang: 'fr'|'en'; avatarSrc: string | null; onAvatarChange: (url: string) => void }) {
-  if (!brief && screen !== 'profile' && screen !== 'tableau') return <div style={{ padding: 40, textAlign: 'center', color: P.soft }}>Chargement...</div>
+function LearningPacksScreen({ brief, t, lang }: { brief: Brief | null; t: Translation; lang: 'fr' | 'en' }) {
+  const [packs, setPacks] = useState<LearningPack[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState('')
+
+  const load = async () => {
+    setError('')
+    try {
+      const response = await secureFetch('/api/family/learning-packs', { headers: { Accept: 'application/json' } })
+      if (!response.ok) throw new Error((await response.json().catch(() => null))?.message || t.packs_error)
+      const data = await response.json()
+      setPacks(Array.isArray(data.packs) ? data.packs : [])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t.packs_error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  const mutate = async (key: string, url: string, method: 'POST' | 'DELETE') => {
+    setBusy(key)
+    setError('')
+    try {
+      const response = await secureFetch(url, { method, headers: { Accept: 'application/json' } })
+      if (!response.ok) throw new Error((await response.json().catch(() => null))?.message || t.packs_error)
+      await load()
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t.packs_error)
+    } finally {
+      setBusy('')
+    }
+  }
+
+  if (loading) return <div style={{ color: P.soft, padding: 20 }}>{t.packs_loading}</div>
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 20, fontWeight: 900, color: P.dark }}>{t.packs_title}</div>
+        <div style={{ fontSize: 14, color: P.soft, marginTop: 5, lineHeight: 1.5 }}>{t.packs_intro}</div>
+      </div>
+      {error && <div role="alert" style={{ background: '#FDECEC', border: '1px solid #E8A5A5', borderRadius: 6, color: '#8A1C1C', padding: '10px 12px', marginBottom: 14, fontSize: 13 }}>{error}</div>}
+      {!packs.length && <div style={{ background: P.white, border: '1px solid ' + P.border, borderRadius: 8, padding: 20, color: P.soft }}>{t.packs_empty}</div>}
+      <div style={{ display: 'grid', gap: 14 }}>
+        {packs.map(pack => {
+          const assigned = new Set(pack.assigned_child_ids || [])
+          const name = lang === 'fr' ? String(pack.metadata?.name_fr || pack.name) : pack.name
+          const description = lang === 'fr' ? String(pack.metadata?.description_fr || pack.description || '') : (pack.description || '')
+          return (
+            <section key={pack.id} style={{ background: P.white, border: '1px solid ' + P.border, borderLeft: '4px solid ' + (pack.is_enabled_for_family ? P.green : P.border), borderRadius: 8, padding: 16 }}>
+              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: P.dark, overflowWrap: 'anywhere' }}>{name}</div>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 7, color: P.soft, fontSize: 12, fontWeight: 700 }}>
+                    {pack.target_level && <span>{pack.target_level.name}</span>}
+                    {pack.target_subject && <span>· {pack.target_subject.name}</span>}
+                    <span>· {pack.exercise_count} {t.packs_exercises}</span>
+                  </div>
+                  {description && <div style={{ color: P.soft, fontSize: 13, lineHeight: 1.5, marginTop: 9 }}>{description}</div>}
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, color: pack.is_enabled_for_family ? P.green : P.soft, cursor: busy ? 'wait' : 'pointer' }}>
+                  <input type="checkbox" checked={pack.is_enabled_for_family} disabled={!!busy}
+                    onChange={() => mutate(`pack-${pack.id}`, `/api/family/learning-packs/${pack.id}/activate`, pack.is_enabled_for_family ? 'DELETE' : 'POST')}
+                    style={{ width: 19, height: 19, accentColor: P.green }} />
+                  {pack.is_enabled_for_family ? t.packs_enabled : t.packs_disabled}
+                </label>
+              </div>
+
+              <div style={{ borderTop: '1px solid ' + P.border, marginTop: 14, paddingTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 900, color: P.soft, textTransform: 'uppercase', marginBottom: 8 }}>{t.packs_assign}</div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {(brief?.children || []).map(child => {
+                    const compatible = !pack.target_level || child.level_id === pack.target_level.id
+                    const checked = assigned.has(child.id)
+                    return (
+                      <label key={child.id} style={{ display: 'flex', alignItems: 'center', gap: 9, minHeight: 34, color: compatible ? P.dark : P.soft, cursor: compatible && pack.is_enabled_for_family && !busy ? 'pointer' : 'not-allowed', fontSize: 14 }}>
+                        <input type="checkbox" checked={checked} disabled={!compatible || !pack.is_enabled_for_family || !!busy}
+                          onChange={() => mutate(`child-${child.id}-pack-${pack.id}`, `/api/children/${child.id}/learning-packs/${pack.id}`, checked ? 'DELETE' : 'POST')}
+                          style={{ width: 18, height: 18, accentColor: P.green }} />
+                        <span style={{ fontWeight: 800 }}>{child.name}</span>
+                        <span style={{ color: P.soft, fontSize: 12 }}>{child.level}</span>
+                        {!compatible && <span style={{ marginLeft: 'auto', color: P.red, fontSize: 11 }}>{t.packs_level_mismatch}</span>}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ScreenContent({ screen, brief, t, lang, avatarSrc, onAvatarChange, companion, onProfileChange }: { screen: Screen; brief: Brief | null; t: Translation; lang: 'fr'|'en'; avatarSrc: string | null; onAvatarChange: (url: string) => void; companion: CompanionProfile; onProfileChange: (profile: CompanionProfile) => void }) {
+  if (!brief && screen !== 'profile' && screen !== 'tableau' && screen !== 'packs') return <div style={{ padding: 40, textAlign: 'center', color: P.soft }}>Chargement...</div>
   if (screen === 'home' && brief) return <BriefScreen brief={brief} t={t} />
   if (screen === 'revision' && brief) return <RevisionScreen brief={brief} t={t} lang={lang} />
   if (screen === 'duel' && brief) return <DuelScreen brief={brief} t={t} />
   if (screen === 'books') return <BooksScreen t={t} />
   if (screen === 'tableau') return <TableauScreen t={t} brief={brief} />
-  if (screen === 'tableau') return <TableauScreen t={t} brief={brief} />
-  if (screen === 'profile') return <ProfileScreen t={t} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} />
+  if (screen === 'packs') return <LearningPacksScreen brief={brief} t={t} lang={lang} />
+  if (screen === 'profile') return <ProfileScreen t={t} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} companion={companion} onProfileChange={onProfileChange} />
   return null
 }
 
 // ── MOBILE LAYOUT ─────────────────────────────────────────────────────────────
-function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onAvatarChange, onLogout }: any) {
+function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, companion, onProfileChange, onAvatarChange, onLogout }: any) {
   const hour = new Date().getHours()
 
   const NAV = [
@@ -841,6 +1032,7 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
     { id: 'books' as Screen, icon: '📖', label: t.nav_books },
     { id: 'profile' as Screen, icon: '👤', label: t.nav_profile },
     { id: 'tableau' as Screen, icon: '📝', label: t.nav_tableau },
+    { id: 'packs' as Screen, icon: '🎯', label: t.nav_packs },
   ]
 
   return (
@@ -853,7 +1045,7 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
               <MamaAvatar size={42} src={avatarSrc} />
             </button>
             <div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)', fontWeight: 700 }}>{t.title}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.7)', fontWeight: 700 }}>{companion.display_name}</div>
               <div style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>{t.greeting(hour)}</div>
             </div>
           </div>
@@ -882,16 +1074,16 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
 
       {/* Content */}
       <div style={{ flex: 1, padding: '18px 16px', overflowY: 'auto', paddingBottom: 80 }}>
-        <ScreenContent screen={screen} brief={brief} t={t} lang={lang} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} />
+        <ScreenContent screen={screen} brief={brief} t={t} lang={lang} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} companion={companion} onProfileChange={onProfileChange} />
       </div>
 
       {/* Bottom nav */}
-      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 640, background: P.white, borderTop: '1.5px solid ' + P.border, display: 'flex', zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 640, background: P.white, borderTop: '1.5px solid ' + P.border, display: 'flex', overflowX: 'auto', zIndex: 100 }}>
         {NAV.map(item => (
           <button key={item.id} onClick={() => setScreen(item.id)}
-            style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', padding: '10px 0 14px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 3, color: screen === item.id ? P.brown : P.soft, fontFamily: 'Nunito, sans-serif' }}>
+            style={{ flex: '1 0 70px', minWidth: 0, background: 'none', border: 'none', cursor: 'pointer', padding: '10px 3px 14px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 3, color: screen === item.id ? P.brown : P.soft, fontFamily: 'Nunito, sans-serif' }}>
             <span style={{ fontSize: 20 }}>{item.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: screen === item.id ? 900 : 600 }}>{item.label}</span>
+            <span style={{ fontSize: 10, lineHeight: 1.15, fontWeight: screen === item.id ? 900 : 600, overflowWrap: 'anywhere' }}>{item.label}</span>
           </button>
         ))}
       </div>
@@ -900,7 +1092,7 @@ function MobileMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onA
 }
 
 // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────
-function DesktopMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, onAvatarChange, onLogout }: any) {
+function DesktopMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, companion, onProfileChange, onAvatarChange, onLogout }: any) {
   const hour = new Date().getHours()
 
   const NAV = [
@@ -910,6 +1102,7 @@ function DesktopMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, on
     { id: 'books' as Screen, icon: '📖', label: t.nav_books },
     { id: 'profile' as Screen, icon: '👤', label: t.profile },
     { id: 'tableau' as Screen, icon: '📝', label: t.nav_tableau },
+    { id: 'packs' as Screen, icon: '🎯', label: t.nav_packs },
   ]
 
   const screenTitle = screen === 'books' ? t.nav_books : NAV.find(n => n.id === screen)?.label || t.title
@@ -924,7 +1117,7 @@ function DesktopMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, on
           <button onClick={() => setScreen('profile')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-block' }}>
             <MamaAvatar size={72} src={avatarSrc} />
           </button>
-          <div style={{ fontSize: 18, fontWeight: 900, color: 'white', marginTop: 10 }}>Mama Judi</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: 'white', marginTop: 10 }}>{companion.display_name}</div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,.65)', marginTop: 3 }}>{t.greeting(hour)}</div>
         </div>
 
@@ -971,7 +1164,7 @@ function DesktopMama({ t, lang, setLang, brief, screen, setScreen, avatarSrc, on
       <div style={{ flex: 1, overflowY: 'auto', minHeight: '100vh' }}>
         <div style={{ padding: '32px 40px', maxWidth: 800 }}>
           <div style={{ fontSize: 24, fontWeight: 900, color: P.dark, marginBottom: 24 }}>{screenTitle}</div>
-          <ScreenContent screen={screen} brief={brief} t={t} lang={lang} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} />
+          <ScreenContent screen={screen} brief={brief} t={t} lang={lang} avatarSrc={avatarSrc} onAvatarChange={onAvatarChange} companion={companion} onProfileChange={onProfileChange} />
         </div>
       </div>
     </div>
@@ -983,27 +1176,61 @@ export default function MamaJudiApp() {
   const [lang, setLang] = useState<'fr' | 'en'>('fr')
   const [unlocked, setUnlocked] = useState(false)
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
+  const [companion, setCompanion] = useState<CompanionProfile>({ avatar: null, display_name: 'Mon accompagnateur', relationship: 'parent', child_address: null, tone: 'encouraging', language: 'fr', has_pin: false })
   const [brief, setBrief] = useState<Brief | null>(null)
+  const [briefError, setBriefError] = useState('')
   const [screen, setScreen] = useState<Screen>('home')
   const isDesktop = useIsDesktop()
   const t = T[lang]
 
   useEffect(() => {
     fetch('/api/mama/profile').then(r => r.json()).then(d => {
+      setCompanion(current => ({
+        ...current,
+        ...d,
+        display_name: typeof d.display_name === 'string' && d.display_name.trim() ? d.display_name : current.display_name,
+      }))
       if (d.avatar) setAvatarSrc('/storage/' + d.avatar)
     }).catch(() => {})
   }, [])
 
-  useEffect(() => {
-    if (unlocked) {
-      fetch('/api/mama/brief').then(r => r.json()).then(setBrief).catch(() => {})
+  const loadBrief = useCallback(async () => {
+    setBriefError('')
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 15000)
+    try {
+      const response = await fetch('/api/mama/brief', { signal: controller.signal })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const data = await response.json()
+      if (!data || !Array.isArray(data.children) || !data.summary) throw new Error('Réponse invalide')
+      setBrief(data)
+    } catch {
+      setBriefError('Le résumé ne peut pas être chargé pour le moment.')
+    } finally {
+      window.clearTimeout(timeout)
     }
-  }, [unlocked])
+  }, [])
 
-  if (!unlocked) return <PinScreen onUnlock={() => setUnlocked(true)} t={t} avatarSrc={avatarSrc} />
+  useEffect(() => {
+    if (unlocked) void loadBrief()
+  }, [unlocked, loadBrief])
 
-  const props = { t, lang, setLang, brief, screen, setScreen, avatarSrc, onAvatarChange: setAvatarSrc, onLogout: () => setUnlocked(false) }
+  if (!unlocked) return <PinScreen onUnlock={() => setUnlocked(true)} t={t} avatarSrc={avatarSrc} companionName={companion.display_name} />
+
+  if (!brief && briefError) return (
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, background: P.card, fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ width: 'min(100%, 440px)', padding: 28, borderRadius: 24, background: 'white', textAlign: 'center', boxShadow: '0 18px 50px rgba(91,52,30,.15)' }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>🌿</div>
+        <div style={{ color: P.dark, fontSize: 21, fontWeight: 900, marginBottom: 8 }}>Petit souci de connexion</div>
+        <div style={{ color: P.soft, fontSize: 15, marginBottom: 22 }}>{briefError}</div>
+        <button onClick={() => void loadBrief()} style={{ border: 0, borderRadius: 16, padding: '13px 24px', background: P.green, color: 'white', fontSize: 16, fontWeight: 900, cursor: 'pointer' }}>
+          Réessayer
+        </button>
+      </div>
+    </div>
+  )
+
+  const props = { t, lang, setLang, brief, screen, setScreen, avatarSrc, companion, onProfileChange: setCompanion, onAvatarChange: setAvatarSrc, onLogout: () => setUnlocked(false) }
 
   return isDesktop ? <DesktopMama {...props} /> : <MobileMama {...props} />
 }
-

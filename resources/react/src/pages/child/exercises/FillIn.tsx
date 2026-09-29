@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Confetti from '../../../components/Confetti'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
+import type { ExerciseCompletionHandler } from '../../../types/exercise'
 
 interface FillInItem {
   prompt?: string
@@ -22,7 +23,7 @@ interface Props {
   title: string
   instructions: string
   content: FillInContent
-  onComplete: (score: number) => void
+  onComplete: ExerciseCompletionHandler
   onBack: () => void
 }
 
@@ -31,6 +32,7 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
   const [input, setInput] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [scores, setScores] = useState<boolean[]>([])
+  const [responses, setResponses] = useState<string[]>([])
   const [done, setDone] = useState(false)
   const [hintUsed, setHintUsed] = useState(false)
   const [userInput, setUserInput] = useState('')  // garde la saisie pour l'afficher dans le feedback
@@ -64,6 +66,7 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
     setUserInput(input.trim())  // garder la saisie avant reset
     setFeedback(correct ? 'correct' : 'wrong')
     setScores([...scores, correct])
+    setResponses([...responses, input.trim()])
     if (correct) {
       MamaJudi.speak('Correct! Well done!')
       // Celebration "exageree" : confetti + +XP au centre de l'ecran
@@ -78,8 +81,12 @@ export default function FillIn({ title, instructions, content, onComplete, onBac
       setCurrent(current + 1)
     } else {
       setDone(true)
-      const total = scores.filter(Boolean).length + (feedback === 'correct' ? 1 : 0)
-      onComplete(Math.round((total / items.length) * 100))
+      const total = scores.filter(Boolean).length
+      onComplete(Math.round((total / items.length) * 100), {
+        verification_status: 'auto_checked',
+        answers: { items: responses },
+        evidence: { method: 'server_answer_key' },
+      })
     }
   }
 

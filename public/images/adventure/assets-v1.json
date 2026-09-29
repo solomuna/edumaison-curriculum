@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "environments": {
+    "schoolCampus": {
+      "desktop": {
+        "src": "/images/adventure/environments/school-campus/desktop-v1.webp",
+        "width": 1672,
+        "height": 941,
+        "safeZones": ["left-mission", "upper-right-progress", "center-path"]
+      },
+      "mobile": {
+        "src": "/images/adventure/environments/school-campus/mobile-v1.webp",
+        "width": 853,
+        "height": 1844,
+        "safeZones": ["top-progress", "center-path", "lower-character"]
+      }
+    },
+    "scienceGarden": {
+      "desktop": {
+        "src": "/images/adventure/environments/science-garden/desktop-v1.webp",
+        "width": 1672,
+        "height": 941,
+        "safeZones": ["left-content", "upper-right-progress", "center-path"]
+      },
+      "mobile": {
+        "src": "/images/adventure/environments/science-garden/mobile-v1.webp",
+        "width": 853,
+        "height": 1844,
+        "safeZones": ["top-progress", "center-path", "lower-character"]
+      }
+    },
+    "library": {
+      "desktop": {
+        "src": "/images/adventure/environments/library/desktop-v1.webp",
+        "width": 1672,
+        "height": 941,
+        "safeZones": ["left-content", "upper-right-progress", "center-route"]
+      },
+      "mobile": {
+        "src": "/images/adventure/environments/library/mobile-v1.webp",
+        "width": 853,
+        "height": 1844,
+        "safeZones": ["top-progress", "center-route", "lower-character"]
+      }
+    },
+    "creativeWorkshop": {
+      "desktop": {
+        "src": "/images/adventure/environments/creative-workshop/desktop-v1.webp",
+        "width": 1672,
+        "height": 941,
+        "safeZones": ["left-content", "upper-right-progress", "center-route"]
+      },
+      "mobile": {
+        "src": "/images/adventure/environments/creative-workshop/mobile-v1.webp",
+        "width": 853,
+        "height": 1844,
+        "safeZones": ["top-content", "center-route", "lower-character"]
+      }
+    },
+    "communitySquare": {
+      "desktop": {
+        "src": "/images/adventure/environments/community-square/desktop-v1.webp",
+        "width": 1672,
+        "height": 941,
+        "safeZones": ["left-content", "upper-right-progress", "center-route"]
+      },
+      "mobile": {
+        "src": "/images/adventure/environments/community-square/mobile-v1.webp",
+        "width": 853,
+        "height": 1844,
+        "safeZones": ["top-content", "center-route", "lower-character"]
+      }
+    },
+    "sportsField": {
+      "desktop": {
+        "src": "/images/adventure/environments/sports-field/desktop-v1.webp",
+        "width": 1672,
+        "height": 941,
+        "safeZones": ["left-content", "upper-right-progress", "center-track"]
+      },
+      "mobile": {
+        "src": "/images/adventure/environments/sports-field/mobile-v1.webp",
+        "width": 853,
+        "height": 1844,
+        "safeZones": ["top-content", "center-track", "lower-character"]
+      }
+    }
+  },
+  "characters": {
+    "mamaJudi": {
+      "identityMaster": "docs/design/characters/mama-judi-master-v1.png",
+      "poses": {
+        "explain": {
+          "src": "/images/adventure/characters/mama-judi/explain-v1.webp",
+          "width": 1024,
+          "height": 1536,
+          "focalPoint": [0.5, 0.35],
+          "alt": "Mama Judi points toward the next lesson"
+        },
+        "encourage": {
+          "src": "/images/adventure/characters/mama-judi/encourage-v1.webp",
+          "width": 1024,
+          "height": 1536,
+          "focalPoint": [0.5, 0.35],
+          "alt": "Mama Judi gives an encouraging thumbs-up"
+        },
+        "celebrate": {
+          "src": "/images/adventure/characters/mama-judi/celebrate-v1.webp",
+          "width": 1024,
+          "height": 1536,
+          "focalPoint": [0.5, 0.35],
+          "alt": "Mama Judi celebrates a learning success"
+        }
+      }
+    },
+    "childGuideBoy": {
+      "identityMaster": "docs/design/characters/child-guide-boy-master-v1.png",
+      "poses": {
+        "explore": {
+          "src": "/images/adventure/characters/child-guide-boy/explore-v1.webp",
+          "width": 1024,
+          "height": 1536,
+          "focalPoint": [0.5, 0.32],
+          "alt": "The boy guide points toward the next learning destination"
+        },
+        "think": {
+          "src": "/images/adventure/characters/child-guide-boy/think-v1.webp",
+          "width": 1024,
+          "height": 1536,
+          "focalPoint": [0.5, 0.32],
+          "alt": "The boy guide thinks while looking at his notebook"
+        }
+      }
+    },
+    "childGuideGirl": {
+      "identityMaster": "docs/design/characters/child-guide-girl-master-v1.png",
+      "poses": {
+        "read": {
+          "src": "/images/adventure/characters/child-guide-girl/read-v1.webp",
+          "width": 1122,
+          "height": 1402,
+          "focalPoint": [0.5, 0.32],
+          "alt": "The girl guide reads an illustrated book"
+        },
+        "discover": {
+          "src": "/images/adventure/characters/child-guide-girl/discover-v1.webp",
+          "width": 1122,
+          "height": 1402,
+          "focalPoint": [0.5, 0.32],
+          "alt": "The girl guide spots the next learning destination"
+        }
+      }
+    }
+  }
+}

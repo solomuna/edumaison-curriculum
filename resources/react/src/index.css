@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'Schoolbell';
+  src: url('./assets/fonts/Schoolbell-Regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
 :root {
   --color-primary: #00C48C;
   --color-bg: #0D1B2A;

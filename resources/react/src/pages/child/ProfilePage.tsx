@@ -4,7 +4,7 @@ import { getChildProfile } from '../../services/api'
 import type { Child } from '../../types/child'
 import CertificatePage from '../../components/CertificatePage'
 
-interface Props { child: Child; onLogout: () => void; onBack: () => void; isDesktop?: boolean }
+interface Props { child: Child; onLogout: () => void; onBack: () => void; onOpenProgress?: () => void; isDesktop?: boolean }
 
 const AVATARS = ['\u{1F466}','\u{1F467}','\u{1F9D2}','\u{1F476}','\u{1F9D1}','\u{1F469}','\u{1F466}\u{1F3FD}','\u{1F467}\u{1F3FD}','\u{1F9D2}\u{1F3FD}','\u{1F9D1}\u{1F3FD}']
 
@@ -18,8 +18,9 @@ const CERT   = '\u{1F3C5}'
 const DOOR   = '\u{1F6AA}'
 const MUSCLE = '\u{1F4AA}'
 const PENCIL = '\u270F'
+const CHART  = '\u{1F4CA}'
 
-export default function ProfilePage({ child, onLogout, onBack, isDesktop }: Props) {
+export default function ProfilePage({ child, onLogout, onBack, onOpenProgress, isDesktop }: Props) {
   const { isDark, toggle } = useTheme()
   const [avatarUrl, setAvatarUrl] = useState<string | null>(child.avatar || null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -51,16 +52,16 @@ export default function ProfilePage({ child, onLogout, onBack, isDesktop }: Prop
   if (showCerts) return <CertificatePage child={child} onBack={() => setShowCerts(false)} />
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: isDesktop ? 20 : 80 }}>
+    <div className="adventure-secondary-page" style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: isDesktop ? 20 : 80 }}>
       {!isDesktop && (
-        <div style={{ background: '#1D6B2A', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="adventure-page-header" style={{ background: '#1D6B2A', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 10, padding: '6px 14px', color: 'white', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>Back</button>
           <div style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>{PENCIL} My Profile</div>
         </div>
       )}
       {isDesktop && <div style={{ padding: '20px 18px 4px', fontSize: 20, fontWeight: 900, color: 'var(--text-dark)' }}>{PENCIL} My Profile</div>}
-      <div style={{ padding: '16px 18px' }}>
-        <div style={{ background: 'var(--card)', borderRadius: 20, padding: '24px 16px', marginBottom: 14, textAlign: 'center', border: '2px solid ' + accent }}>
+      <div className="adventure-secondary-content" style={{ padding: '16px 18px' }}>
+        <div className="adventure-secondary-card" style={{ background: 'var(--card)', borderRadius: 20, padding: '24px 16px', marginBottom: 14, textAlign: 'center', border: '2px solid ' + accent }}>
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: 8 }} onClick={() => fileRef.current?.click()}>
             {avatarUrl
               ? <img src={avatarUrl.startsWith('http') ? avatarUrl : '/storage/' + avatarUrl} alt="avatar"
@@ -88,17 +89,17 @@ export default function ProfilePage({ child, onLogout, onBack, isDesktop }: Prop
         </div>
         {!loading && profile && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div style={{ background: 'var(--card)', borderRadius: 18, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
+            <div className="adventure-secondary-card" style={{ background: 'var(--card)', borderRadius: 18, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
               <div style={{ fontSize: 32, fontWeight: 900, color: '#1D6B2A' }}>{profile.completed}</div>
               <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Completed</div>
             </div>
-            <div style={{ background: 'var(--card)', borderRadius: 18, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
+            <div className="adventure-secondary-card" style={{ background: 'var(--card)', borderRadius: 18, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
               <div style={{ fontSize: 32, fontWeight: 900, color: '#C47A3C' }}>{profile.attempts}</div>
               <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Attempts</div>
             </div>
           </div>
         )}
-        <div style={{ background: 'var(--card)', borderRadius: 18, padding: '16px', marginBottom: 14, border: '1.5px solid var(--border)' }}>
+        <div className="adventure-secondary-card" style={{ background: 'var(--card)', borderRadius: 18, padding: '16px', marginBottom: 14, border: '1.5px solid var(--border)' }}>
           <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 12 }}>Information</div>
           {[{label:'Name',value:child.name},{label:'Level',value:child.level,color:accent},{label:'School',value:'MARIO Nursery & Primary'}].map(({label,value,color}:any) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 10, marginBottom: 10, borderBottom: '1px solid #D0C8B8' }}>
@@ -107,10 +108,15 @@ export default function ProfilePage({ child, onLogout, onBack, isDesktop }: Prop
             </div>
           ))}
         </div>
-        <div style={{ background: 'var(--card)', borderRadius: 18, padding: '14px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, border: '2px solid #1D6B2A' }}>
+        <div className="adventure-secondary-card" style={{ background: 'var(--card)', borderRadius: 18, padding: '14px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, border: '2px solid #1D6B2A' }}>
           <div style={{ fontSize: 26 }}>{MUSCLE}</div>
           <div style={{ fontSize: 13, color: 'var(--text-dark)', fontWeight: 700, lineHeight: 1.4 }}>Bravo {firstName} ! Continue comme ça, tu es fantastique !</div>
         </div>
+        {onOpenProgress && (
+          <button onClick={onOpenProgress} style={{ width: '100%', padding: '14px 0', borderRadius: 16, border: '2px solid #1D6B2A', background: '#1D6B2A', color: 'white', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            {CHART} My progress
+          </button>
+        )}
         <button onClick={toggle} style={{ width: '100%', padding: '12px 0', borderRadius: 16, border: '2px solid var(--border)', background: 'var(--card)', color: 'var(--text-dark)', fontSize: 14, fontWeight: 900, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           {isDark ? '☀️' : '🌙'} {isDark ? 'Light mode' : 'Dark mode'}
         </button>

@@ -13,14 +13,15 @@ class Child extends Model
 
     protected $fillable = [
         'household_id', 'level_id', 'first_name', 'last_name',
-        'birth_date', 'avatar', 'pin', 'is_active',
+        'national_language_id', 'national_language_other_name',
+        'birth_date', 'avatar', 'pin', 'pin_hash', 'is_active',
         // Lien EduMaison-Campus (cf. align_children_with_campus_contract).
         // campus_school_id = schools.id cote Campus
         // campus_student_id = matricule ou id eleve cote Campus
         'campus_school_id', 'campus_student_id', 'campus_last_sync_at',
     ];
 
-    protected $hidden = ['pin'];
+    protected $hidden = ['pin', 'pin_hash'];
 
     protected $casts = [
         'birth_date'          => 'date',
@@ -45,6 +46,11 @@ class Child extends Model
         return $this->belongsTo(Level::class);
     }
 
+    public function nationalLanguage(): BelongsTo
+    {
+        return $this->belongsTo(NationalLanguage::class);
+    }
+
     public function exerciseAttempts(): HasMany
     {
         return $this->hasMany(ExerciseAttempt::class);
@@ -63,5 +69,10 @@ class Child extends Model
     public function pronunciationAttempts(): HasMany
     {
         return $this->hasMany(PronunciationAttempt::class);
+    }
+
+    public function learningPackAssignments(): HasMany
+    {
+        return $this->hasMany(ChildLearningPack::class);
     }
 }

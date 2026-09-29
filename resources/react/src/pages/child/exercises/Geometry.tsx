@@ -3,7 +3,7 @@ import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
-  onComplete: (correct: boolean) => void
+  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
 }
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D']
@@ -91,7 +91,7 @@ export default function Geometry({ content, onComplete }: Props) {
     if (sel === null) return
     setChecked(true)
     if (sel === ans) fireSuccess({ xp: 10 })
-    setTimeout(() => onComplete(sel === ans), 1200)
+    setTimeout(() => onComplete(sel === ans, { selected_index: sel }), 1200)
   }
 
   // Si pas d'options (ex: draw exercise) -- skip automatique
@@ -102,7 +102,7 @@ export default function Geometry({ content, onComplete }: Props) {
         <div style={{ background: illBg, borderRadius: 20, padding: '16px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <GeometrySVG content={content} />
         </div>
-        <button onClick={() => onComplete(true)} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+        <button onClick={() => onComplete(false, { practice_only: true })} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
           Next →
         </button>
       </div>
@@ -117,7 +117,7 @@ export default function Geometry({ content, onComplete }: Props) {
         <div style={{ background: illBg, borderRadius: 20, padding: '16px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <GeometrySVG content={content} />
         </div>
-        <button onClick={() => onComplete(true)} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
+        <button onClick={() => onComplete(false, { practice_only: true })} style={{ width: '100%', padding: '13px 0', borderRadius: 16, border: 'none', background: '#8B5CF6', color: 'white', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}>
           Next →
         </button>
       </div>

@@ -11,7 +11,7 @@ class Level extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'slug', 'order', 'cycle',
+        'name', 'slug', 'order', 'cycle', 'education_subsystem',
     ];
 
     public function subjects(): HasMany

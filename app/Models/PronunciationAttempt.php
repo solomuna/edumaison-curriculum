@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PronunciationAttempt extends Model
 {
     protected $fillable = [
-        'child_id', 'exercise_id', 'target_text',
+        'child_id', 'exercise_id', 'exercise_attempt_id', 'target_text',
         'recorded_audio_path', 'overall_score', 'fluency_score',
         'prosody_score', 'rhythm_score', 'pronunciation_score',
         'feedback_json', 'attempted_at',
@@ -16,7 +16,7 @@ class PronunciationAttempt extends Model
 
     protected $casts = [
         'feedback_json' => 'array',
-        'attempted_at'  => 'datetime',
+        'attempted_at' => 'datetime',
     ];
 
     public function child(): BelongsTo
@@ -27,5 +27,10 @@ class PronunciationAttempt extends Model
     public function exercise(): BelongsTo
     {
         return $this->belongsTo(Exercise::class);
+    }
+
+    public function exerciseAttempt(): BelongsTo
+    {
+        return $this->belongsTo(ExerciseAttempt::class);
     }
 }

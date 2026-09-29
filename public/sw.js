@@ -1,5 +1,5 @@
-const CACHE = 'edumaison-v2'
-const API_CACHE = 'edumaison-api-v2'
+const CACHE = 'edumaison-v4'
+const API_CACHE = 'edumaison-api-v4'
 const QUEUE_KEY = 'offline-attempts'
 
 const STATIC_ASSETS = [
@@ -32,6 +32,13 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url)
 
+  // Cookies CSRF et sessions : toujours le réseau, jamais le cache. Une
+  // réponse mise en cache ici empêcherait de rouvrir une tablette verrouillée.
+  if (url.pathname.startsWith('/sanctum/')) {
+    e.respondWith(fetch(e.request).catch(() => new Response(null, { status: 503 })))
+    return
+  }
+
   // POST /api/exercises/attempt — queue if offline
   if (url.pathname === '/api/exercises/attempt' && e.request.method === 'POST') {
     e.respondWith(
@@ -46,27 +53,49 @@ self.addEventListener('fetch', e => {
     return
   }
 
-  // GET /api/ — network first, fallback to cache
-  if (url.pathname.startsWith('/api/') && e.request.method === 'GET') {
+  // API — toujours interroger le serveur. Les GET métier peuvent servir leur
+  // dernière copie hors ligne, mais les routes d'accès ne sont jamais cachées.
+  if (url.pathname.startsWith('/api/')) {
+    const securityRoute = url.pathname.startsWith('/api/access/')
+      || url.pathname.startsWith('/api/family-auth/')
+      || url.pathname === '/api/auth/login'
+      || url.pathname === '/api/mama/profile/verify-pin'
+    const canUseOfflineCache = e.request.method === 'GET' && !securityRoute
     e.respondWith(
       fetch(e.request).then(response => {
-        if (response.ok) {
+        if (response.status === 401 && response.headers.get('X-EduMaison-Access') === 'required') {
+          notifyAccessRequired()
+        }
+        if (canUseOfflineCache && response.ok) {
           const clone = response.clone()
           caches.open(API_CACHE).then(c => c.put(e.request, clone))
         }
         return response
-      }).catch(() =>
-        caches.match(e.request, { cacheName: API_CACHE }).then(cached =>
-          cached || new Response(JSON.stringify({ error: 'offline', cached: false }), {
-            headers: { 'Content-Type': 'application/json' }
-          })
-        )
-      )
+      }).catch(async () => {
+        const cached = canUseOfflineCache
+          ? await caches.match(e.request, { cacheName: API_CACHE })
+          : null
+        return cached || new Response(JSON.stringify({ error: 'offline', cached: false }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      })
     )
     return
   }
 
-  // Static assets — cache first
+  // Navigations — réseau d'abord pour ne jamais figer une ancienne version.
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(response => {
+        if (response.ok) caches.open(CACHE).then(c => c.put(e.request, response.clone()))
+        return response
+      }).catch(() => caches.match(e.request).then(cached => cached || caches.match('/')))
+    )
+    return
+  }
+
+  // Assets statiques versionnés — cache d'abord.
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached
@@ -80,6 +109,11 @@ self.addEventListener('fetch', e => {
     })
   )
 })
+
+async function notifyAccessRequired() {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  clients.forEach(client => client.postMessage({ type: 'ACCESS_REQUIRED' }))
+}
 
 // ── Background Sync ───────────────────────────────────────────────────────────
 self.addEventListener('sync', e => {

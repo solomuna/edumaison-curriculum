@@ -99,15 +99,15 @@ export default function BulletinPage({ child, onBack }: Props) {
   data.results.forEach(r => { resultMap[r.subject] = r })
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'system-ui,sans-serif', paddingBottom: 40 }}>
+    <div className="adventure-secondary-page adventure-report-page" style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'system-ui,sans-serif', paddingBottom: 40 }}>
 
-      <div className="no-print" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', background: 'var(--white)' }}>
+      <div className="no-print adventure-page-header adventure-report-toolbar" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--border)', background: 'var(--white)' }}>
         <button onClick={onBack} style={{ background: '#FFF0E8', border: '1.5px solid #FFD4B0', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 700, color: '#C8704A', cursor: 'pointer' }}>← Back</button>
-        <div style={{ flex: 1 }}>
+        <div className="adventure-report-toolbar__title" style={{ flex: 1 }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--text-dark)' }}>Report Card</div>
           <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{data.child.name}</div>
         </div>
-        <button onClick={() => window.print()} style={{ padding: '9px 20px', borderRadius: 12, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
+        <button className="adventure-report-toolbar__print" onClick={() => window.print()} style={{ padding: '9px 20px', borderRadius: 12, border: 'none', background: '#1D6B2A', color: 'white', fontSize: 13, fontWeight: 800, cursor: 'pointer' }}>
           🖨️ Print / PDF
         </button>
       </div>
@@ -115,7 +115,7 @@ export default function BulletinPage({ child, onBack }: Props) {
       <div id="bulletin" style={{ maxWidth: 720, margin: '20px auto', background: 'var(--white)', boxShadow: '0 2px 20px rgba(0,0,0,0.08)' }}>
 
         {/* Header */}
-        <div style={{ borderBottom: '3px solid #333', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="adventure-report-document-header" style={{ borderBottom: '3px solid #333', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#333', textTransform: 'uppercase' }}>Ministry of Basic Education</div>
             <div style={{ fontSize: 16, fontWeight: 900, color: '#1D6B2A', marginTop: 2 }}>EduMaison</div>
@@ -139,7 +139,7 @@ export default function BulletinPage({ child, onBack }: Props) {
         </div>
 
         {/* Child info */}
-        <div style={{ padding: '12px 24px', borderBottom: '2px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, fontSize: 12 }}>
+        <div className="adventure-report-child-info" style={{ padding: '12px 24px', borderBottom: '2px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8, fontSize: 12 }}>
           <div><span style={{ color: '#888' }}>Name: </span><strong>{data.child.name.toUpperCase()}</strong></div>
           <div><span style={{ color: '#888' }}>Class: </span><strong>{data.child.level}</strong></div>
           <div><span style={{ color: '#888' }}>Date of birth: </span><strong>{data.child.birth_date ? new Date(data.child.birth_date).toLocaleDateString('en-GB') : '—'}</strong></div>
@@ -147,7 +147,7 @@ export default function BulletinPage({ child, onBack }: Props) {
         </div>
 
         {/* Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+        <table className="adventure-report-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
           <thead>
             <tr style={{ background: '#F0F0F0' }}>
               <th style={{ padding: '8px 10px', textAlign: 'left', border: '1px solid #ddd', width: '32%' }}>Subjects</th>
@@ -183,7 +183,10 @@ export default function BulletinPage({ child, onBack }: Props) {
                     const scoreColor = score >= 14 ? '#059669' : score >= 10 ? '#D97706' : '#DC2626'
                     return (
                       <tr key={`${ci}-${ri}`} style={{ background: ri % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd', paddingLeft: 20 }}>{r.subject}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd', paddingLeft: 20 }}>
+                          {r.subject}
+                          <span className="adventure-report-mobile-remark">{r.teacher_comment || '—'}</span>
+                        </td>
                         <td style={{ padding: '7px 10px', border: '1px solid #ddd', textAlign: 'center', color: '#666' }}>20</td>
                         <td style={{ padding: '7px 10px', border: '1px solid #ddd', textAlign: 'center' }}>
                           <strong style={{ color: scoreColor, fontSize: 13 }}>{score.toFixed(2)}</strong>
@@ -211,7 +214,7 @@ export default function BulletinPage({ child, onBack }: Props) {
         </table>
 
         {/* Summary */}
-        <div style={{ padding: '14px 24px', borderTop: '3px solid #333', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 10 }}>
+        <div className="adventure-report-summary" style={{ padding: '14px 24px', borderTop: '3px solid #333', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 10 }}>
           <div style={{ textAlign: 'center', background: 'var(--card2)', borderRadius: 10, padding: '10px 6px' }}>
             <div style={{ fontSize: 9, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>General Average</div>
             <div style={{ fontSize: 24, fontWeight: 900, color: avgColor, marginTop: 2 }}>{avg.toFixed(2)}<span style={{ fontSize: 11, color: '#aaa' }}>/20</span></div>
@@ -241,7 +244,7 @@ export default function BulletinPage({ child, onBack }: Props) {
         </div>
 
         {/* Signatures */}
-        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, fontSize: 11 }}>
+        <div className="adventure-report-signatures" style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, fontSize: 11 }}>
           {['Class Teacher', 'Headteacher', 'Parent/Guardian'].map((label, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
               <div style={{ color: '#888', marginBottom: 24 }}>{label}</div>

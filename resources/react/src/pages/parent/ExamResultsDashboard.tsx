@@ -48,8 +48,7 @@ export default function ExamResultsDashboard() {
   const [loadingResults, setLoadingResults] = useState(false)
 
   useEffect(() => {
-    // Get all exams for household 1 (could be dynamic)
-    fetch('/api/exams/child/1')
+    fetch('/api/parent/exams', { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => setExams(Array.isArray(data) ? data : []))
       .catch(() => {})

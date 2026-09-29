@@ -4,9 +4,136 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Support\FamilyContext;
+use App\Services\NationalLanguageProfileService;
+use Illuminate\Validation\Rule;
 
 class ChildController extends Controller
 {
+    public function update(Request $request, int $childId)
+    {
+        $householdId = (int) (FamilyContext::householdId($request) ?? 0);
+        abort_unless($householdId > 0, 403);
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:80'],
+            'last_name' => ['nullable', 'string', 'max:80'],
+            'birth_date' => ['required', 'date', 'before:today'],
+            'level_id' => ['required', 'integer', 'exists:levels,id'],
+            'pin' => ['nullable', 'string', 'regex:/^\d{4}$/'],
+            'avatar' => ['nullable', 'image', 'max:4096'],
+            'national_language_mode' => ['sometimes', Rule::in(['inherit', 'catalogue', 'custom'])],
+            'national_language_id' => [
+                'nullable',
+                'required_if:national_language_mode,catalogue',
+                Rule::exists('national_languages', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->where('is_selectable', true)
+                    ->whereNull('deleted_at')),
+            ],
+            'national_language_other_name' => [
+                'nullable', 'string', 'max:120', 'required_if:national_language_mode,custom',
+            ],
+            'national_language_profile_ids' => ['sometimes', 'array', 'min:1'],
+            'national_language_profile_ids.*' => [
+                'integer',
+                Rule::exists('household_national_language', 'id')->where(fn ($query) => $query
+                    ->where('household_id', $householdId)
+                    ->where('is_active', true)),
+            ],
+            'current_national_language_profile_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('household_national_language', 'id')->where(fn ($query) => $query
+                    ->where('household_id', $householdId)
+                    ->where('is_active', true)),
+            ],
+        ]);
+        $values = [
+            'first_name' => $data['first_name'], 'last_name' => $data['last_name'] ?? '',
+            'birth_date' => $data['birth_date'], 'level_id' => $data['level_id'], 'updated_at' => now(),
+        ];
+        if (! empty($data['pin'])) $values['pin_hash'] = Hash::make($data['pin']);
+        if ($request->hasFile('avatar')) $values['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        if (array_key_exists('national_language_mode', $data)) {
+            $values['national_language_id'] = $data['national_language_mode'] === 'catalogue'
+                ? (int) $data['national_language_id']
+                : null;
+            $values['national_language_other_name'] = $data['national_language_mode'] === 'custom'
+                ? trim((string) $data['national_language_other_name'])
+                : null;
+        }
+        DB::table('children')->where('id', $childId)->update($values);
+        if (array_key_exists('national_language_profile_ids', $data)) {
+            app(NationalLanguageProfileService::class)->replaceChildLanguages(
+                $childId,
+                $householdId,
+                $data['national_language_profile_ids'],
+                isset($data['current_national_language_profile_id'])
+                    ? (int) $data['current_national_language_profile_id']
+                    : null
+            );
+        }
+        return response()->json(['ok' => true]);
+    }
+
+    public function deactivate(Request $request, int $childId)
+    {
+        $request->validate(['password' => ['required', 'current_password:web']]);
+        DB::table('children')->where('id', $childId)->update(['is_active' => false, 'updated_at' => now()]);
+        return response()->json(['ok' => true]);
+    }
+
+    public function resetProgress(int $childId)
+    {
+        $schoolYearId = DB::table('school_years')->where('is_current', true)->value('id');
+        if (! $schoolYearId) {
+            return response()->json(['message' => 'Aucune année scolaire active.'], 409);
+        }
+
+        [$deletedAttempts, $audioPaths] = DB::transaction(function () use ($childId, $schoolYearId): array {
+            $attemptIds = DB::table('exercise_attempts')
+                ->where('child_id', $childId)
+                ->where('school_year_id', $schoolYearId)
+                ->lockForUpdate()
+                ->pluck('id');
+
+            $audioPaths = $attemptIds->isEmpty()
+                ? collect()
+                : DB::table('pronunciation_attempts')
+                    ->whereIn('exercise_attempt_id', $attemptIds)
+                    ->whereNotNull('recorded_audio_path')
+                    ->pluck('recorded_audio_path');
+
+            $deleted = $attemptIds->isEmpty()
+                ? 0
+                : DB::table('exercise_attempts')->whereIn('id', $attemptIds)->delete();
+
+            DB::table('child_learning_pack')
+                ->where('child_id', $childId)
+                ->whereIn('status', ['assigned', 'in_progress', 'completed'])
+                ->update([
+                    'status' => 'assigned',
+                    'started_at' => null,
+                    'completed_at' => null,
+                    'updated_at' => now(),
+                ]);
+
+            return [$deleted, $audioPaths];
+        });
+
+        foreach ($audioPaths as $path) {
+            Storage::disk('local')->delete($path);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'deleted_attempts' => $deletedAttempts,
+            'school_year_id' => (int) $schoolYearId,
+        ]);
+    }
+
     public function uploadAvatar(Request $request, int $childId)
     {
         $child = DB::table('children')->where('id', $childId)->first();
@@ -108,9 +235,11 @@ class ChildController extends Controller
         ]);
     }
 
-    public function promoteAll()
+    public function promoteAll(Request $request)
     {
-        $children = DB::table('children')->get();
+        $householdId = FamilyContext::householdId($request);
+        abort_unless($householdId, 401);
+        $children = DB::table('children')->where('household_id', $householdId)->get();
         $promoted = [];
         foreach ($children as $child) {
             $nextLevelId = $this->nextLevel[$child->level_id] ?? null;

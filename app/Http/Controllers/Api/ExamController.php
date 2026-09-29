@@ -7,6 +7,23 @@ use Illuminate\Support\Facades\DB;
 
 class ExamController extends Controller
 {
+    private function householdId(Request $request): ?int
+    {
+        return $request->user() ? (int) $request->user()->household_id : null;
+    }
+
+    public function forParent(Request $request)
+    {
+        $householdId = $this->householdId($request);
+        if (! $householdId) return response()->json([]);
+
+        return response()->json(DB::table('exams')
+            ->join('subjects', 'exams.subject_id', '=', 'subjects.id')
+            ->where('exams.household_id', $householdId)
+            ->select('exams.*', 'subjects.name as subject_name')
+            ->orderByDesc('exams.scheduled_at')->get());
+    }
+
     // Get upcoming/active exams for a child
     public function forChild(int $childId)
     {
@@ -35,10 +52,12 @@ class ExamController extends Controller
     }
 
     // Get exam questions
-    public function questions(int $examId, int $childId)
+    public function questions(Request $request, int $examId, int $childId)
     {
         $exam = DB::table('exams')->where('id', $examId)->first();
         if (!$exam) return response()->json(null, 404);
+        $childHousehold = DB::table('children')->where('id', $childId)->value('household_id');
+        if ((int) $exam->household_id !== (int) $childHousehold) return response()->json(null, 404);
 
         // Get random exercises for this subject
         $exercises = DB::table('exercises')
@@ -73,6 +92,9 @@ class ExamController extends Controller
             'duration_seconds' => 'nullable|integer',
             'started_at'       => 'nullable|string',
         ]);
+        $examHousehold = DB::table('exams')->where('id', $examId)->value('household_id');
+        $childHousehold = DB::table('children')->where('id', $data['child_id'])->value('household_id');
+        if (! $examHousehold || (int) $examHousehold !== (int) $childHousehold) return response()->json(null, 404);
 
         // Prevent duplicate submissions
         $existing = DB::table('exam_results')
@@ -109,7 +131,6 @@ class ExamController extends Controller
     public function create(Request $request)
     {
         $data = $request->validate([
-            'household_id'     => 'required|integer',
             'subject_id'       => 'required|integer',
             'title'            => 'required|string',
             'question_count'   => 'integer|min:5|max:30',
@@ -117,7 +138,10 @@ class ExamController extends Controller
             'scheduled_at'     => 'required|date',
         ]);
 
+        $householdId = $this->householdId($request);
+        if (! $householdId) return response()->json(['message' => 'Compte familial requis.'], 401);
         $id = DB::table('exams')->insertGetId(array_merge($data, [
+            'household_id' => $householdId,
             'status'     => 'scheduled',
             'created_at' => now(),
             'updated_at' => now(),
@@ -127,13 +151,15 @@ class ExamController extends Controller
     }
 
     // Get results for parent
-    public function results(int $examId)
+    public function results(Request $request, int $examId)
     {
         $exam = DB::table('exams')
             ->join('subjects','exams.subject_id','=','subjects.id')
             ->where('exams.id', $examId)
+            ->when($this->householdId($request), fn ($query, $householdId) => $query->where('exams.household_id', $householdId))
             ->select('exams.*','subjects.name as subject_name')
             ->first();
+        if (! $exam) return response()->json(null, 404);
 
         $results = DB::table('exam_results')
             ->join('children','exam_results.child_id','=','children.id')

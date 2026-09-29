@@ -2,12 +2,9 @@ import { useState, useEffect } from 'react'
 
 interface Subject { id: number; name: string }
 
-interface Props {
-  householdId: number
-  onCreated?: () => void
-}
+interface Props { onCreated?: () => void }
 
-export default function ExamCreator({ householdId, onCreated }: Props) {
+export default function ExamCreator({ onCreated }: Props) {
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [form, setForm] = useState({
     title: '',
@@ -26,12 +23,16 @@ export default function ExamCreator({ householdId, onCreated }: Props) {
   const submit = async () => {
     if (!form.title || !form.subject_id || !form.scheduled_at) return
     setSaving(true)
-    await fetch('/api/exams', {
+    await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+    const token = decodeURIComponent(document.cookie.split('; ').find(v => v.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || '')
+    const response = await fetch('/api/exams', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, household_id: householdId }),
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': token },
+      body: JSON.stringify(form),
     })
     setSaving(false)
+    if (!response.ok) return
     setSuccess(true)
     setForm({ title: '', subject_id: '', question_count: 10, duration_minutes: 30, scheduled_at: '' })
     setTimeout(() => setSuccess(false), 3000)

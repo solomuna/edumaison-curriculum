@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getExercisesForChild, getMoreExercisesForChild, saveAttempt } from './services/api'
 import { useStreak } from './hooks/useStreak'
 import ExercisePlayer from './pages/child/ExercisePlayer'
+import LearningPacksPage, { type PackExercise } from './pages/child/LearningPacksPage'
 import SubjectsPage from './pages/child/SubjectsPage'
 import ProgressPage from './pages/child/ProgressPage'
 import ProfilePage from './pages/child/ProfilePage'
@@ -9,11 +10,12 @@ import BulletinPage from './pages/child/BulletinPage'
 import ExamSession from './pages/child/ExamSession'
 import ExamBanner from './components/ExamBanner'
 import Confetti from './components/Confetti'
+import AdventureDashboard from './components/AdventureDashboard'
 import type { Child } from './types/child'
-import type { Exercise } from './types/exercise'
+import type { AttemptDetails, Exercise } from './types/exercise'
 import { MamaJudi } from './services/MamaJudi'
 
-type Tab = 'home' | 'subjects' | 'progress' | 'profile'
+type Tab = 'home' | 'subjects' | 'progress' | 'profile' | 'packs'
 
 const SUBJECT_ICONS: Record<string, string> = {
   English: '\u{1F4D6}', Mathematics: '\u{1F4D0}', French: '\u{1F4AC}',
@@ -24,31 +26,25 @@ const SUBJECT_ICONS: Record<string, string> = {
   'Artistic Activities': '\u{1F3A8}', 'FSLC Preparation': '\u{1F393}',
 }
 
-function MamaJudiDesk() {
-  const [src, setSrc] = useState<string | null>(null)
+function CompanionDesk() {
+  const [profile, setProfile] = useState({ src: '/images/default-companion.webp', name: 'Mon accompagnateur' })
   useEffect(() => {
     fetch('/api/mama/profile').then(r => r.json()).then(d => {
-      if (d.avatar) setSrc('/storage/' + d.avatar)
+      setProfile({
+        src: d.avatar ? '/storage/' + d.avatar : '/images/default-companion.webp',
+        name: d.display_name || 'Mon accompagnateur',
+      })
     }).catch(() => {})
   }, [])
-  if (src) return (
-    <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
-      border: '2px solid rgba(255,255,255,.35)', flexShrink: 0 }}>
-      <img src={src} alt='Mama Judi' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-    </div>
-  )
   return (
-
-    <svg viewBox="0 0 84 84" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="42" cy="42" r="42" fill="#C8874A"/>
-      <circle cx="42" cy="38" r="22" fill="#A06830"/>
-      <circle cx="33" cy="34" r="4" fill="#1A0A00"/>
-      <circle cx="51" cy="34" r="4" fill="#1A0A00"/>
-      <circle cx="34.5" cy="32.5" r="1.5" fill="white"/>
-      <circle cx="52.5" cy="32.5" r="1.5" fill="white"/>
-      <path d="M30 48 Q42 58 54 48" stroke="#1A0A00" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-      <rect x="6" y="0" width="72" height="28" rx="36" fill="#2A1500"/>
-    </svg>
+    <>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
+        border: '2px solid rgba(255,255,255,.35)', flexShrink: 0 }}>
+        <img src={profile.src} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={e => { e.currentTarget.src = '/images/default-companion.webp' }} />
+      </div>
+      <span>{profile.name}</span>
+    </>
   )
 }
 
@@ -66,6 +62,7 @@ export default function DesktopApp({ child, onLogout }: Props) {
   const [confetti, setConfetti] = useState(false)
   const streakData = useStreak(child)
   const playAllRef = useRef(false)
+  const packQueueRef = useRef<PackExercise[]>([])
   const exercisesRef = useRef<any[]>([])
   const completedRef = useRef<number[]>([])
 
@@ -92,15 +89,30 @@ export default function DesktopApp({ child, onLogout }: Props) {
 
   useEffect(() => {
     MamaJudi.setChild(child.name)
-    setTimeout(() => MamaJudi.greeting(), 600)
+    MamaJudi.scheduleGreeting(600)
+    return () => MamaJudi.stop()
   }, [])
 
-  const handleComplete = async (score: number) => {
+  const handleComplete = async (score: number, details?: AttemptDetails) => {
     if (!active) return
-    await saveAttempt(child.id, active.id, score)
+    await saveAttempt(child.id, active.id, score, details)
     const nc = [...completedRef.current, active.id]
     completedRef.current = nc
     setCompleted(nc)
+    const packQueue = packQueueRef.current
+    if (packQueue.length > 0) {
+      const currentIndex = packQueue.findIndex(exercise => exercise.id === active.id)
+      const next = currentIndex >= 0 ? packQueue[currentIndex + 1] : null
+      if (next) {
+        setActive(next)
+        return
+      }
+      packQueueRef.current = []
+      setActive(null)
+      setConfetti(true)
+      setTimeout(() => setConfetti(false), 3500)
+      return
+    }
     if (nc.length === exercisesRef.current.length) {
       playAllRef.current = false; setActive(null); setConfetti(true)
       setTimeout(() => setConfetti(false), 3500)
@@ -110,12 +122,20 @@ export default function DesktopApp({ child, onLogout }: Props) {
     } else { setActive(null) }
   }
 
+  const startLearningPack = (packExercises: PackExercise[]) => {
+    if (!packExercises.length) return
+    playAllRef.current = false
+    packQueueRef.current = packExercises
+    setActive(packExercises[0])
+  }
+
   const streak = streakData?.streak ?? 0
   const xp = completed.length * 10
   const remaining = exercises.length - completed.length
   const firstName = child.name.split(' ')[0]
 
   const NAV = [
+    { id: 'packs' as Tab, label: 'My Paths', icon: '\u{1F3AF}' },
     { id: 'home' as Tab,     label: 'Home',     icon: '🏠' },
     { id: 'subjects' as Tab, label: 'Subjects', icon: '📚' },
     { id: 'progress' as Tab, label: 'Progress', icon: '📊' },
@@ -123,17 +143,17 @@ export default function DesktopApp({ child, onLogout }: Props) {
   ]
 
   if (activeExam) return <ExamSession child={child} exam={activeExam} onBack={() => setActiveExam(null)} onComplete={() => setActiveExam(null)} />
-  if (active) return <ExercisePlayer key={active.id} exercise={active} onComplete={handleComplete} onBack={() => { playAllRef.current = false; setActive(null) }} />
+  if (active) return <ExercisePlayer key={active.id} exercise={active} onComplete={handleComplete} onBack={() => { playAllRef.current = false; packQueueRef.current = []; setActive(null) }} />
 
   const bySubject: Record<string, (Exercise & { subject: string })[]> = {}
   exercises.forEach(ex => { if (!bySubject[ex.subject]) bySubject[ex.subject] = []; bySubject[ex.subject].push(ex) })
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', background: 'var(--bg)' }}>
+    <div className="adventure-desktop-shell" style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', background: 'var(--bg)' }}>
       <Confetti active={confetti} />
 
       {/* Sidebar */}
-      <div style={{ width: 260, background: '#1D6B2A', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
+      <div className="adventure-sidebar" style={{ width: 260, background: '#1D6B2A', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
         <div style={{ textAlign: 'center', padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
           <div style={{ fontSize: 13, fontWeight: 900, color: 'rgba(255,255,255,0.6)', letterSpacing: '2px', marginBottom: 12 }}>EDUMAISON</div>
           {(child as any).avatar
@@ -192,8 +212,7 @@ export default function DesktopApp({ child, onLogout }: Props) {
               fontSize: 13, fontWeight: 800, cursor: 'pointer', marginBottom: 8,
               fontFamily: 'Nunito, system-ui, sans-serif',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <MamaJudiDesk />
-            Mama Judi
+            <CompanionDesk />
           </button>
           <button onClick={onLogout} style={{
             width: '100%', padding: '10px 0', borderRadius: 12,
@@ -208,12 +227,27 @@ export default function DesktopApp({ child, onLogout }: Props) {
       </div>
 
       {/* Main content */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: '100vh' }}>
+      <div className="adventure-desktop-content" style={{ flex: 1, overflowY: 'auto', minHeight: '100vh' }}>
         {showBulletin && <BulletinPage child={child} onBack={() => setShowBulletin(false)} />}
         {!showBulletin && tab === 'subjects' && <SubjectsPage child={child} onBack={() => setTab('home')} initialSubjectName={openSubjectName} isDesktop />}
+        {!showBulletin && tab === 'packs' && <LearningPacksPage child={child} onBack={() => setTab('home')} onStart={startLearningPack} isDesktop />}
         {!showBulletin && tab === 'progress' && <ProgressPage child={child} onBack={() => setTab('home')} isDesktop />}
         {!showBulletin && tab === 'profile'  && <ProfilePage  child={child} onLogout={onLogout} onBack={() => setTab('home')} isDesktop />}
         {!showBulletin && tab === 'home' && (
+          <AdventureDashboard
+            child={child}
+            exercises={exercises}
+            completed={completed}
+            loading={loading}
+            streak={streak}
+            desktop
+            notice={<ExamBanner child={child} onStartExam={setActiveExam} />}
+            onStartExercise={setActive}
+            onOpenSubject={subject => { setOpenSubjectName(subject); setTab('subjects') }}
+            onOpenPaths={() => setTab('packs')}
+          />
+        )}
+        {!showBulletin && false && tab === 'home' && (
           <div style={{ padding: '32px 40px', maxWidth: 900 }}>
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-dark)' }}>Good day, {firstName}! 👋</div>

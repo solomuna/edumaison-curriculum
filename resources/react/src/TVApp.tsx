@@ -3,6 +3,7 @@ import { getChildren, loginChild, getExercisesForChild, saveAttempt } from './se
 import type { Child } from './types/child'
 import type { Exercise } from './types/exercise'
 import ExercisePlayer from './pages/child/ExercisePlayer'
+import CompanionAvatar from './components/CompanionAvatar'
 
 const CHILD_COLORS = [
   { bg: '#FCE7F3', accent: '#EC4899', icon: '🌸' },
@@ -24,33 +25,8 @@ const SUBJECT_COLORS: Record<string, { bg: string; accent: string }> = {
 const DEF_COL = { bg: '#F3F4F6', accent: '#6B7280' }
 const gc = (s: string) => SUBJECT_COLORS[s] || DEF_COL
 
-function MamaJudiSVG({ size = 100 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 84 104" width={size} height={size * 104 / 84} xmlns="http://www.w3.org/2000/svg">
-      <circle cx="42" cy="36" r="28" fill="#2A1500"/>
-      <circle cx="16" cy="43" r="13" fill="#2A1500"/>
-      <circle cx="68" cy="43" r="13" fill="#2A1500"/>
-      <circle cx="42" cy="44" r="21" fill="#C8874A"/>
-      <ellipse cx="21" cy="44" rx="4" ry="5" fill="#B87A40"/>
-      <ellipse cx="63" cy="44" rx="4" ry="5" fill="#B87A40"/>
-      <circle cx="34" cy="40" r="3.5" fill="#1A0A00"/>
-      <circle cx="50" cy="40" r="3.5" fill="#1A0A00"/>
-      <circle cx="35.5" cy="38.8" r="1.3" fill="white"/>
-      <circle cx="51.5" cy="38.8" r="1.3" fill="white"/>
-      <ellipse cx="42" cy="48" rx="2.5" ry="2" fill="#A86835"/>
-      <path d="M30 54 Q42 65 54 54" stroke="#1A0A00" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-      <path d="M30 54 Q42 60 54 54" fill="white" opacity="0.5"/>
-      <ellipse cx="28" cy="50" rx="5.5" ry="3.5" fill="#E8956A" opacity="0.35"/>
-      <ellipse cx="56" cy="50" rx="5.5" ry="3.5" fill="#E8956A" opacity="0.35"/>
-      <rect x="38" y="63" width="8" height="10" rx="4" fill="#C8874A"/>
-      <path d="M14 92 Q12 76 42 72 Q72 76 70 92 L68 104 L16 104 Z" fill="#FF8FAB"/>
-      <path d="M18 82 Q4 66 10 50" stroke="#C8874A" strokeWidth="7" fill="none" strokeLinecap="round"/>
-      <circle cx="9" cy="48" r="7" fill="#C8874A"/>
-      <polygon points="75,39 77.5,45.5 84,45.5 79,49.5 81,56 75,52.5 69,56 71,49.5 66,45.5 72.5,45.5" fill="#FFD700"/>
-      <path d="M66 82 Q76 66 74 52" stroke="#C8874A" strokeWidth="7" fill="none" strokeLinecap="round"/>
-      <circle cx="75" cy="50" r="7" fill="#C8874A"/>
-    </svg>
-  )
+function CompanionPortrait({ size = 100 }: { size?: number }) {
+  return <CompanionAvatar size={size} borderColor="#6B4226" borderWidth={4} />
 }
 
 // ── 1. Child Select ───────────────────────────────────────────────────────────
@@ -67,7 +43,7 @@ function TVChildSelect({ children, onSelect }: { children: Child[]; onSelect: (c
   }, [focused, children])
   return (
     <div style={{ background: '#FFF8F2', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui,sans-serif", padding: '60px 80px' }}>
-      <MamaJudiSVG size={130} />
+      <CompanionPortrait size={130} />
       <div style={{ fontSize: 40, fontWeight: 900, color: '#2D1B0E', margin: '20px 0 10px' }}>EduMaison</div>
       <div style={{ fontSize: 24, color: '#C8A090', marginBottom: 50 }}>Qui apprend aujourd'hui ?</div>
       <div style={{ display: 'flex', gap: 40 }}>
@@ -193,7 +169,7 @@ function TVSession({ exercises, subject, onComplete, onBack }: {
     const pct2 = Math.round(good / exercises.length * 100)
     return (
       <div style={{ background: '#FFF8F2', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui,sans-serif", padding: '60px', textAlign: 'center' }}>
-        <MamaJudiSVG size={110} />
+        <CompanionPortrait size={110} />
         <div style={{ fontSize: 44, fontWeight: 900, color: '#2D1B0E', margin: '20px 0 10px' }}>
           {pct2 >= 80 ? 'Excellent !' : pct2 >= 60 ? 'Bien joué !' : 'Continue !'}
         </div>
@@ -318,7 +294,7 @@ function TVDashboard({ child, onLogout }: { child: Child; onLogout: () => void }
     <div style={{ background: '#FFF8F2', minHeight: '100vh', fontFamily: "system-ui,sans-serif", display: 'flex', flexDirection: 'column' }}>
       <div style={{ background: 'white', padding: '18px 60px', borderBottom: '2px solid #F0E4D8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <MamaJudiSVG size={56} />
+          <CompanionPortrait size={56} />
           <div>
             <div style={{ fontSize: 26, fontWeight: 900, color: '#2D1B0E' }}>Bonjour, {child.name} !</div>
             <div style={{ fontSize: 15, color: col.accent, fontWeight: 700 }}>{child.level}</div>

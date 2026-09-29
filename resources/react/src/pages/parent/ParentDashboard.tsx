@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { getParentDashboard, getChildDetail } from '../../services/api'
 import ExamResultsDashboard from './ExamResultsDashboard'
 import ExamCreator from '../../components/ExamCreator'
+import FamilySettings from './FamilySettings'
+import SchoolTimetable from './SchoolTimetable'
+import AcademicCalendar from './AcademicCalendar'
+import LanguageReviews from './LanguageReviews'
+import LegacyFamilyClaim from './LegacyFamilyClaim'
 
 const LEVEL_COLORS: Record<string, string> = {
   'Class 1': '#4CAF50', 'Class 2': '#2196F3', 'Class 3': '#9C27B0',
@@ -9,20 +14,37 @@ const LEVEL_COLORS: Record<string, string> = {
   'Nursery 1': '#FF8FAB', 'Nursery 2': '#FF8FAB', 'Pre-Nursery': '#FF8FAB',
 }
 
-interface ChildSummary { id: number; name: string; level: string; attempts: number; completed: number; avg_score: number; pct: number }
-interface Dashboard { school_year: string; children: ChildSummary[]; total_completed: number; total_attempts: number }
-type Tab = 'children' | 'exams' | 'create'
+interface ProgressSummary {
+  attempts: number
+  completed_attempts: number
+  completed_exercises: number
+  total_exercises: number
+  avg_score: number
+  progress_pct: number
+}
+interface ChildSummary extends ProgressSummary { id: number; name: string; level: string; level_id: number }
+interface Dashboard { school_year: string; children: ChildSummary[]; total_completed_exercises: number; total_attempts: number }
+interface ChildDetail { child: Pick<ChildSummary, 'id' | 'name' | 'level'>; summary: ProgressSummary; recent_attempts: unknown[] }
+type Tab = 'children' | 'calendar' | 'timetable' | 'exams' | 'create' | 'reviews' | 'settings'
 
 export default function ParentDashboard() {
   const [data, setData] = useState<Dashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<number | null>(null)
-  const [detail, setDetail] = useState<any>(null)
+  const [detail, setDetail] = useState<ChildDetail | null>(null)
   const [tab, setTab] = useState<Tab>('children')
   const [promoting, setPromoting] = useState<number | null>(null)
   const [promoted, setPromoted] = useState<number[]>([])
+  const [hasFamilyAccount, setHasFamilyAccount] = useState(false)
+  const [accountChecked, setAccountChecked] = useState(false)
 
   useEffect(() => { getParentDashboard().then(setData).finally(() => setLoading(false)) }, [])
+  useEffect(() => {
+    fetch('/api/family-auth/me', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(r => setHasFamilyAccount(r.ok))
+      .catch(() => setHasFamilyAccount(false))
+      .finally(() => setAccountChecked(true))
+  }, [])
 
   const openDetail = async (childId: number) => {
     setSelected(childId)
@@ -32,7 +54,9 @@ export default function ParentDashboard() {
   const promoteChild = async (childId: number) => {
     setPromoting(childId)
     try {
-      const r = await fetch(`/api/children/${childId}/promote`, { method: 'POST' })
+      await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+      const token = decodeURIComponent(document.cookie.split('; ').find(v => v.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || '')
+      const r = await fetch(`/api/children/${childId}/promote`, { method: 'POST', credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': token, Accept: 'application/json' } })
       if (r.ok) { setPromoted(p => [...p, childId]); setData(await fetch('/api/parent/dashboard').then(x => x.json())) }
     } finally { setPromoting(null) }
   }
@@ -40,7 +64,9 @@ export default function ParentDashboard() {
   const promoteAll = async () => {
     setPromoting(-1)
     try {
-      await fetch('/api/children/promote-all', { method: 'POST' })
+      await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+      const token = decodeURIComponent(document.cookie.split('; ').find(v => v.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || '')
+      await fetch('/api/children/promote-all', { method: 'POST', credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': token, Accept: 'application/json' } })
       const fresh = await fetch('/api/parent/dashboard').then(x => x.json())
       setData(fresh); setPromoted(data?.children.map(c => c.id) || [])
     } finally { setPromoting(null) }
@@ -52,27 +78,31 @@ export default function ParentDashboard() {
   }
 
   if (selected && detail) {
-    const color = LEVEL_COLORS[detail.level] || '#1D6B2A'
+    const color = LEVEL_COLORS[detail.child.level] || '#1D6B2A'
     return (
       <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', padding: '0 0 40px' }}>
         <div style={{ background: '#1D6B2A', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => { setSelected(null); setDetail(null) }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 10, padding: '6px 14px', color: 'white', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Back</button>
-          <div style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>{detail.name}</div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: 'white' }}>{detail.child.name}</div>
         </div>
         <div style={{ padding: '16px 18px' }}>
           <div style={{ background: 'var(--card)', borderRadius: 18, padding: '20px', marginBottom: 14, textAlign: 'center', border: '2px solid ' + color }}>
             <div style={{ fontSize: 48, marginBottom: 8 }}>👧</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-dark)' }}>{detail.name}</div>
-            <span style={{ background: color, color: 'white', borderRadius: 20, padding: '3px 14px', fontSize: 12, fontWeight: 800, marginTop: 6, display: 'inline-block' }}>{detail.level}</span>
+            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text-dark)' }}>{detail.child.name}</div>
+            <span style={{ background: color, color: 'white', borderRadius: 20, padding: '3px 14px', fontSize: 12, fontWeight: 800, marginTop: 6, display: 'inline-block' }}>{detail.child.level}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
             <div style={{ background: 'var(--card)', borderRadius: 16, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-              <div style={{ fontSize: 28, fontWeight: 900, color: '#1D6B2A' }}>{detail.completed || 0}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Completed</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#1D6B2A' }}>{detail.summary.completed_exercises}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Exercices terminés</div>
             </div>
             <div style={{ background: 'var(--card)', borderRadius: 16, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-              <div style={{ fontSize: 28, fontWeight: 900, color: '#C47A3C' }}>{detail.pct || 0}%</div>
-              <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Success rate</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#C47A3C' }}>{detail.summary.progress_pct}%</div>
+              <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Progression</div>
+            </div>
+            <div style={{ background: 'var(--card)', borderRadius: 16, padding: '16px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
+              <div style={{ fontSize: 28, fontWeight: 900, color: '#1D4ED8' }}>{detail.summary.avg_score}%</div>
+              <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Moyenne</div>
             </div>
           </div>
         </div>
@@ -81,10 +111,14 @@ export default function ParentDashboard() {
   }
 
   const TABS: [Tab, string, string][] = [
+    ['calendar', 'Année scolaire', '📅'],
     ['children', 'Children', '👨‍👧‍👦'],
+    ['timetable', 'Emploi du temps', '📚'],
     ['exams', 'Exam Results', '📝'],
     ['create', 'Schedule Exam', '📅'],
+    ['settings', 'Paramètres', '⚙️'],
   ]
+  if (hasFamilyAccount) TABS.splice(TABS.length - 1, 0, ['reviews', 'Productions', '✓'])
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: 40 }}>
@@ -95,7 +129,7 @@ export default function ParentDashboard() {
         <div style={{ fontSize: 20, fontWeight: 900, color: 'white', marginTop: 2 }}>Parent Dashboard</div>
         {data && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2, paddingBottom: 12 }}>{data.school_year}</div>}
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 6, paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 6, paddingBottom: 0, overflowX: 'auto' }}>
           {TABS.map(([id, label, icon]) => (
             <button key={id} onClick={() => setTab(id)} style={{
               padding: '10px 16px', borderRadius: '12px 12px 0 0', border: 'none', fontSize: 12, fontWeight: 800, cursor: 'pointer',
@@ -115,8 +149,8 @@ export default function ParentDashboard() {
             {data && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
                 <div style={{ background: 'var(--card)', borderRadius: 16, padding: '14px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
-                  <div style={{ fontSize: 26, fontWeight: 900, color: '#1D6B2A' }}>{data.total_completed}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Activities done</div>
+                  <div style={{ fontSize: 26, fontWeight: 900, color: '#1D6B2A' }}>{data.total_completed_exercises}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-soft)', marginTop: 4, fontWeight: 700 }}>Exercices terminés</div>
                 </div>
                 <div style={{ background: 'var(--card)', borderRadius: 16, padding: '14px', textAlign: 'center', border: '1.5px solid var(--border)' }}>
                   <div style={{ fontSize: 26, fontWeight: 900, color: '#C47A3C' }}>{data.children.length}</div>
@@ -166,24 +200,30 @@ export default function ParentDashboard() {
                       <div style={{ fontSize: 11, color: color, fontWeight: 700, marginTop: 2 }}>{child.level}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 22, fontWeight: 900, color }}>{child.pct}%</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-soft)' }}>success</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color }}>{child.progress_pct}%</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-soft)' }}>progression</div>
                     </div>
                   </div>
                   <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
-                    <div style={{ height: 6, borderRadius: 3, background: color, width: `${child.pct}%`, transition: 'width 0.4s' }}/>
+                    <div style={{ height: 6, borderRadius: 3, background: color, width: `${child.progress_pct}%`, transition: 'width 0.4s' }}/>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--text-soft)' }}>
-                    <span>{child.completed} done / {child.attempts} attempts</span>
-                    <span>Avg: {child.avg_score}%</span>
+                    <span>{child.completed_exercises}/{child.total_exercises} exercices · {child.attempts} tentatives</span>
+                    <span>Moy. {child.avg_score}%</span>
                   </div>
                 </div>
               )
             })}
           </>
         )}
+        {tab === 'calendar' && <AcademicCalendar />}
         {tab === 'exams' && <ExamResultsDashboard />}
-        {tab === 'create' && <ExamCreator householdId={1} onCreated={() => setTab('exams')} />}
+        {tab === 'timetable' && <SchoolTimetable children={data?.children || []} />}
+        {tab === 'create' && <ExamCreator onCreated={() => setTab('exams')} />}
+        {tab === 'reviews' && <LanguageReviews />}
+        {tab === 'settings' && accountChecked && (hasFamilyAccount
+          ? <FamilySettings />
+          : <LegacyFamilyClaim onClaimed={() => setHasFamilyAccount(true)} />)}
       </div>
     </div>
   )

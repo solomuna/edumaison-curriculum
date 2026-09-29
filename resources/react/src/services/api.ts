@@ -1,3 +1,5 @@
+import type { AttemptDetails } from '../types/exercise'
+
 // Adresse de l'API : relative par defaut (meme hote que la page ; nginx proxy /api -> FastAPI:8100).
 // Surchargeable via VITE_API_URL (dev, ou build mobile Capacitor).
 const BASE = (import.meta.env.VITE_API_URL || '') + '/api'
@@ -46,13 +48,15 @@ export async function getMoreExercisesForChild(childId: number, levelId: number,
   }
 }
 
-export async function saveAttempt(childId: number, exerciseId: number, score: number) {
+export async function saveAttempt(childId: number, exerciseId: number, score: number, details?: AttemptDetails) {
   const res = await fetch(`${BASE}/exercises/attempt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({ child_id: childId, exercise_id: exerciseId, score }),
+    body: JSON.stringify({ child_id: childId, exercise_id: exerciseId, score, ...details }),
   })
-  return res.json()
+  const data = await res.json()
+  if (!res.ok) throw new Error(data?.message || 'Could not save this attempt.')
+  return data
 }
 
 export async function getChildProfile(childId: number) {
@@ -60,9 +64,28 @@ export async function getChildProfile(childId: number) {
   return res.json()
 }
 
-export async function getSubjects(levelId: number) {
-  const res = await fetch(`${BASE}/subjects?level_id=${levelId}`)
+export async function getSubjects(levelId: number, childId?: number) {
+  const child = childId ? `&child_id=${childId}` : ''
+  const res = await fetch(`${BASE}/subjects?level_id=${levelId}${child}`)
   return res.json()
+}
+
+export async function selectNationalLanguage(childId: number, householdLanguageId: number) {
+  await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+  const rawToken = document.cookie.split('; ').find(v => v.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || ''
+  const res = await fetch(`${BASE}/children/${childId}/national-language-profile/current`, {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-XSRF-TOKEN': decodeURIComponent(rawToken),
+    },
+    body: JSON.stringify({ household_language_id: householdLanguageId }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data?.message || 'Impossible de choisir cette langue.')
+  return data
 }
 
 export async function getParentDashboard() {

@@ -2,7 +2,7 @@ import { useState } from "react"
 
 interface Props {
   content: any
-  onComplete: (correct: boolean) => void
+  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
 }
 
 export default function NumberLine({ content, onComplete }: Props) {
@@ -29,7 +29,7 @@ export default function NumberLine({ content, onComplete }: Props) {
     if (sel === null) return
     setChecked(true)
     const ok = sel === correctAnswer
-    setTimeout(() => onComplete(ok), 1200)
+    setTimeout(() => onComplete(ok, { selected_value: sel }), 1200)
   }
 
   const tickCount = Math.min(max - min + 1, 21)
