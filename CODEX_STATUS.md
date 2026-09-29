@@ -1,5 +1,15 @@
 # Codex Status
 
+## 2026-09-29 - Premier deploiement depuis git : a97da07
+
+- Production realignee sur git : `/opt/edumaison-curriculum` passe de `8436eb5` + 188 modifications non committees a `a97da07` (master), via `docker/deploy.sh`.
+- Contenu : etat production precedent inchange, dependances composer securisees (Laravel 13.33, Symfony 7.4.x ; `composer audit` : 0), route `speaking-assessment` sans controleur retiree (desormais 404 au lieu de 500), manifeste et consignes agents. Aucune migration.
+- Sauvegarde avant bascule : `/home/david/edumaison-backups/deploy-20260929T175802Z` (db.dump 57 tables, code.tgz, vendor.tgz, SHA256SUMS, PREVIOUS_HEAD). Un premier essai (`deploy-20260929T175333Z`) s'etait arrete a la sauvegarde, sans bascule.
+- Controles : `/app` et `/mama` 200 x3, API protegee 401, assets et fonds d'environnement 200, `curriculum-app` et `curriculum-nginx` sans redemarrage, `curriculum-queue` relance par `queue:restart`, aucune erreur dans les journaux.
+- Seules differences suivies restantes sur le serveur : `public/react/index.html` et `mama.html` (sortie du build). Les fichiers non suivis laisses par Codex (scripts d'audit a la racine, anciens dossiers `public/react-before-*`) sont conserves.
+- Travail non deploye conserve sur `wip/codex-speaking-contributions` (Speaking/Azure, Atelier langue, pack Fe'fe').
+- Prochaine action sure : tout deploiement suivant passe par PR -> master -> `bash docker/deploy.sh <sha>`.
+
 ## 2026-09-29 - Rapatriement dans git (Claude Code)
 
 - Le code de production et le travail local Codex ont ete reverses dans git : branche `sync/production-2026-09-28`, commits `3076109` (etat production au 28/09) et `5d1c5de` (travaux non deployes : Speaking/Azure, contributions de langues, pack Fe'fe' Bafang).
