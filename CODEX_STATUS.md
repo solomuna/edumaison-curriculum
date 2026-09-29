@@ -3,7 +3,7 @@
 ## 2026-09-29 - Rapatriement dans git (Claude Code)
 
 - Le code de production et le travail local Codex ont ete reverses dans git : branche `sync/production-2026-09-28`, commits `3076109` (etat production au 28/09) et `5d1c5de` (travaux non deployes : Speaking/Azure, contributions de langues, pack Fe'fe' Bafang).
-- La copie `ArkiSuite/.codex-work/edumaison-family` est abandonnee. Travailler uniquement dans `C:\laragon\wwwdumaison` (voir `AGENTS.md`).
+- La copie `ArkiSuite/.codex-work/edumaison-family` est abandonnee. Travailler uniquement dans `C:\laragon\www\edumaison` (voir `AGENTS.md`).
 - Bug de production connu : `routes/api.php` reference `SpeakingAssessmentController`, absent du serveur (POST speaking-assessment en 500, `artisan route:list`/`route:cache` en echec). A corriger par un deploiement depuis git.
 
 ## 2026-09-29 - Pack pilote Fe'fe' / Nufi Bafang Class 1 pret hors production
