@@ -1,5 +1,15 @@
 # Codex Status
 
+## 2026-09-29 - Boucle de lecon interactive et sons synchronises deployes : 262f781
+
+- Deploye via `docker/deploy.sh 262f781` (PR #7). Precedent : `a97da07`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T193516Z`. Aucune migration.
+- QCM et texte a trous : boucle Verifier -> bandeau vert/rouge avec Mama Judi -> Continuer, series, ecran de fin (XP, precision, meilleure serie). Vrai/faux, associations, remise en ordre, horloge, geometrie, droite numerique et Venn passent par `LessonShell` avec verdict immediat.
+- Sons : prechargement et decodage Web Audio, MP3 legers dans `public/sounds/fx` (5,8 Mo -> 244 Ko), son a t=0 et voix a +250 ms ; plus de synthese vocale pour les retours immediats.
+- La tentative est enregistree sur « Continuer » (une fois) ; « Recommencer » retire de l'ecran de fin.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets et sons `fx/*.mp3` 200 (audio/mpeg), bundle `main-ClU0vrMy.js` contenant la nouvelle boucle, aucune erreur Laravel.
+- Verification utilisateur restante : sur tablette, actualiser completement l'application et jouer un QCM puis un texte a trous pour confirmer la synchronisation du son.
+- Suites possibles : harmoniser le style et la langue des boutons internes des moteurs (horloge, geometrie, Venn, associations), puis la dictee et la production ecrite.
+
 ## 2026-09-29 - Premier deploiement depuis git : a97da07
 
 - Production realignee sur git : `/opt/edumaison-curriculum` passe de `8436eb5` + 188 modifications non committees a `a97da07` (master), via `docker/deploy.sh`.
