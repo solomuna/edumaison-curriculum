@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-09-29 - Dictee, production ecrite et ecriture sans cursive deployees : c1f3c15
+
+- Deploye via `docker/deploy.sh c1f3c15` (PR #11). Precedent : `cac9ddf`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T204413Z`. Aucune migration.
+- Ecriture manuscrite : modeles toujours en lettres droites (`print`), meme pour les contenus Class 3 en base reglés `upright_joint_script` ; seeder aligne (non execute). Decision utilisateur : pas d'ecriture cursive dans les exercices d'ecriture.
+- Dictee : boucle interactive (Ecouter, VERIFIER, bandeau vert >= 80 %, detail par critere, ecran de fin). Production ecrite : bouton « Envoyer a mon parent », refus serveur affiche avec « Corriger mon texte ». Contrats serveur inchanges.
+- Enregistrement tolerant aux erreurs partout (message + « Reessayer »).
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, bundle contenant la nouvelle dictee et la production ecrite, aucune erreur Laravel.
+
 ## 2026-09-29 - Moteurs d'exercices harmonises deployes : cac9ddf
 
 - Deploye via `docker/deploy.sh cac9ddf` (PR #9). Precedent : `262f781`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T200606Z`. Aucune migration.
