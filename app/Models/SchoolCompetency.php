@@ -13,12 +13,23 @@ class SchoolCompetency extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'subject_id', 'name', 'description', 'order', 'is_active',
+        'subject_id', 'curriculum_document_id', 'sequence_id', 'official_code',
+        'source_pages', 'verification_status', 'name', 'description', 'order', 'is_active',
     ];
 
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function curriculumDocument(): BelongsTo
+    {
+        return $this->belongsTo(CurriculumDocument::class);
+    }
+
+    public function sequence(): BelongsTo
+    {
+        return $this->belongsTo(Sequence::class);
     }
 
     public function schoolResults(): HasMany

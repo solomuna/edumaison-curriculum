@@ -8,6 +8,10 @@ import MCQ from './exercises/MCQ'
 
 import Handwriting from './exercises/Handwriting'
 
+import Dictation from './exercises/Dictation'
+
+import WrittenResponse from './exercises/WrittenResponse'
+
 
 
 import FillIn from './exercises/FillIn'
@@ -30,7 +34,7 @@ import ClockReading from './exercises/ClockReading'
 
 
 
-import type { Exercise } from '../../types/exercise'
+import type { Exercise, ExerciseCompletionHandler } from '../../types/exercise'
 
 
 
@@ -60,6 +64,8 @@ import { useEffect, useState } from 'react'
 
 import Ardoise from './exercises/Ardoise'
 
+import MamaJudiPose from '../../components/MamaJudiPose'
+
 
 
 
@@ -78,7 +84,7 @@ interface Props {
 
 
 
-  onComplete: (score: number) => void
+  onComplete: ExerciseCompletionHandler
 
 
 
@@ -218,7 +224,7 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
 
 
-    <div style={{
+    <div className="adventure-exercise-shell" style={{
 
 
 
@@ -238,7 +244,7 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
 
 
-      <div style={{
+      <div className="adventure-exercise-header" style={{
 
 
 
@@ -326,7 +332,7 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
 
 
-            setTimeout(() => MamaJudi.speakLang(text, lang), 100)
+            MamaJudi.speakLangAfter(text, lang, 100)
 
 
 
@@ -376,6 +382,13 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
       {exerciseId && <BookHint exerciseId={exerciseId} />}
 
+      {instructions && (
+        <MamaJudiPose pose="explain" className="adventure-judi-instruction">
+          <span className="adventure-eyebrow">Mama Judi</span>
+          <strong>{instructions}</strong>
+        </MamaJudiPose>
+      )}
+
 
 
       {category === 'ict' && keyword && (
@@ -414,7 +427,7 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
 
 
-      <div style={{ padding: '16px' }}>
+      <div className="adventure-exercise-content" style={{ padding: '16px' }}>
 
 
 
@@ -503,6 +516,13 @@ function ExerciseShell({ title, onBack, children, category, keyword, exerciseId,
 
 
 export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) {
+  const childId = (() => {
+    try {
+      return Number(JSON.parse(localStorage.getItem('edumaison_session') || '{}')?.id || 0)
+    } catch {
+      return 0
+    }
+  })()
 
 
 
@@ -562,7 +582,9 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    setTimeout(() => MamaJudi.speakLang(text, lang), 800)
+    MamaJudi.speakLangAfter(text, lang, 800)
+
+    return () => MamaJudi.stop()
 
 
 
@@ -574,7 +596,15 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-  const handleBool = (correct: boolean) => onComplete(correct ? 1 : 0)
+  const handleBool = (correct: boolean, answers?: Record<string, unknown>) => onComplete(correct ? 100 : 0, {
+
+    verification_status: 'auto_checked',
+
+    answers,
+
+    evidence: { method: 'server_answer_key' },
+
+  })
 
 
 
@@ -586,7 +616,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <OralDrill title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
+    return <OralDrill exerciseId={exercise.id} childId={childId} title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
 
 
 
@@ -742,6 +772,14 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
+  }
+
+  if (type === 'dictation') {
+    return <Dictation title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
+  }
+
+  if (type === 'written_response') {
+    return <WrittenResponse title={exercise.title} instructions={exercise.instructions} content={content} onComplete={onComplete} onBack={onBack} />
   }
 
 
@@ -1163,7 +1201,3 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 }
-
-
-
-

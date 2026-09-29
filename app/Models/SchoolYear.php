@@ -11,13 +11,15 @@ class SchoolYear extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'label', 'start_date', 'end_date', 'is_current',
+        'label', 'start_date', 'end_date', 'is_current', 'official_status',
+        'source_authority', 'source_url', 'source_reference', 'published_at',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date'   => 'date',
         'is_current' => 'boolean',
+        'published_at' => 'date',
     ];
 
     public function terms(): HasMany

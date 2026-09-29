@@ -10,11 +10,12 @@ class ExerciseAttempt extends Model
     protected $fillable = [
         'child_id', 'exercise_id', 'school_year_id',
         'score', 'max_score', 'duration_seconds',
-        'status', 'answers', 'attempted_at',
+        'status', 'verification_status', 'answers', 'evidence', 'attempted_at',
     ];
 
     protected $casts = [
         'answers'      => 'array',
+        'evidence'     => 'array',
         'attempted_at' => 'datetime',
     ];
 

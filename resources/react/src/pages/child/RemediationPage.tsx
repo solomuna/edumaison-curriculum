@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import type { Child } from '../../types/child'
 import ExercisePlayer from './ExercisePlayer'
 import { saveAttempt } from '../../services/api'
+import type { AttemptDetails } from '../../types/exercise'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Plan {
@@ -67,9 +68,9 @@ export default function RemediationPage({ child, onBack }: Props) {
   }
 
   // Fin d'un exercice — enregistre le score, passe au suivant
-  const handleComplete = async (score: number) => {
+  const handleComplete = async (score: number, details?: AttemptDetails) => {
     if (!activePlan || !activeEx) return
-    await saveAttempt(child.id, activeEx.id, score)
+    await saveAttempt(child.id, activeEx.id, score, details)
     const ok = score > 0
     const ns = [...sessionScores, ok]
     setSessionScores(ns)

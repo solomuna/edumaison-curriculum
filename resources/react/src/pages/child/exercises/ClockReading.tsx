@@ -2,7 +2,7 @@ import { useState } from "react"
 
 interface Props {
   content: any
-  onComplete: (correct: boolean) => void
+  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
 }
 
 function ClockSVG({ hours, minutes, accentColor }: { hours: number, minutes: number, accentColor: string }) {
@@ -68,7 +68,7 @@ export default function ClockReading({ content, onComplete }: Props) {
     if (sel === null) return
     setChecked(true)
     const ok = sel === ans
-    setTimeout(() => onComplete(ok), 1200)
+    setTimeout(() => onComplete(ok, { selected_index: sel }), 1200)
   }
 
   const optStyle = (i: number): React.CSSProperties => {

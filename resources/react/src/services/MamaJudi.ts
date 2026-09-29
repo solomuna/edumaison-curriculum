@@ -1,20 +1,22 @@
-// MamaJudi.ts — TTS service : Web Speech API (browser) + Capacitor TTS (Android)
+// MamaJudi.ts - TTS service: Web Speech API (browser) + Capacitor TTS (Android)
 import { TextToSpeech } from '@capacitor-community/text-to-speech'
 
 const CHILD_KEY: Record<string, string> = {
-  'Irma':  'gabi',
-  'Mark':  'mark',
-  'Ruth':  'carla',
-  'Carla': 'carla',
-  'Julia': '',
+  Irma: 'gabi',
+  Mark: 'mark',
+  Ruth: 'carla',
+  Carla: 'carla',
+  Julia: '',
 }
+
 type MamaEvent = 'greeting' | 'correct' | 'wrong' | 'session_good' | 'session_perfect' | 'session_retry' | 'streak3' | 'streak5'
 
-// Détecte si on tourne dans Capacitor (Android/iOS)
 const isCapacitor = () => typeof (window as any).Capacitor !== 'undefined' && (window as any).Capacitor.isNativePlatform()
 
 class MamaJudiClass {
   private currentAudio: HTMLAudioElement | null = null
+  private currentUtterance: SpeechSynthesisUtterance | null = null
+  private scheduledSpeech: number | null = null
   private childName = ''
 
   setChild(name: string) {
@@ -42,97 +44,148 @@ class MamaJudiClass {
     return true
   }
 
-  private async ttsCapacitor(text: string, lang = 'fr-FR') {
+  private async ttsCapacitor(text: string, lang = 'fr-FR', rate = 0.9): Promise<boolean> {
     try {
       await TextToSpeech.stop()
-      await TextToSpeech.speak({
-        text,
-        lang,
-        rate: 0.9,
-        pitch: 1.0,
-        volume: 1.0,
-        category: 'ambient',
-      })
-    } catch (e) {
-      console.warn('Capacitor TTS error:', e)
+      await TextToSpeech.speak({ text, lang, rate, pitch: 1.0, volume: 1.0, category: 'ambient' })
+      return true
+    } catch (error) {
+      console.warn('Capacitor TTS error:', error)
+      return false
     }
   }
 
-  private ttsWeb(text: string, lang = 'fr-FR') {
-    if (!('speechSynthesis' in window)) return
+  private ttsWeb(text: string, lang = 'fr-FR', rate = 0.9): Promise<boolean> {
+    if (!('speechSynthesis' in window)) return Promise.resolve(false)
+
     window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = lang
-    utter.rate = 0.9
-    utter.pitch = 1.0
-    const voices = window.speechSynthesis.getVoices()
-    if (voices.length > 0) {
-      const match = voices.find(v => v.lang.startsWith(lang.split('-')[0]))
-      if (match) utter.voice = match
-    }
-    window.speechSynthesis.speak(utter)
+    return new Promise(resolve => {
+      const utterance = new SpeechSynthesisUtterance(text)
+      this.currentUtterance = utterance
+      utterance.lang = lang
+      utterance.rate = rate
+      utterance.pitch = 1.0
+
+      const voices = window.speechSynthesis.getVoices()
+      const match = voices.find(voice => voice.lang.startsWith(lang.split('-')[0]))
+      if (match) utterance.voice = match
+
+      let reported = false
+      const watchdog = window.setTimeout(() => {
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) report(true)
+      }, 1200)
+      const failureTimeout = window.setTimeout(() => report(false), 5000)
+      const report = (success: boolean) => {
+        if (reported) return
+        reported = true
+        window.clearTimeout(watchdog)
+        window.clearTimeout(failureTimeout)
+        resolve(success)
+      }
+      utterance.onstart = () => report(true)
+      utterance.onend = () => {
+        if (this.currentUtterance === utterance) this.currentUtterance = null
+        report(true)
+      }
+      utterance.onerror = () => {
+        if (this.currentUtterance === utterance) this.currentUtterance = null
+        report(false)
+      }
+
+      try {
+        window.speechSynthesis.resume()
+        window.speechSynthesis.speak(utterance)
+      } catch {
+        report(false)
+      }
+    })
   }
 
-  private tts(text: string, lang = 'fr-FR') {
+  private async tts(text: string, lang = 'fr-FR', rate = 0.9): Promise<boolean> {
     if (isCapacitor()) {
-      this.ttsCapacitor(text, lang)
-    } else {
-      this.ttsWeb(text, lang)
+      const spoken = await this.ttsCapacitor(text, lang, rate)
+      if (spoken) return true
     }
+    return this.ttsWeb(text, lang, rate)
   }
 
-  // ── Messages Mama Judi ────────────────────────────────────────────────────
   greeting() {
-    if (!this.playMp3('greeting')) this.tts(`Bonjour ${this.childName} ! Bienvenue dans EduMaison !`)
+    if (!this.playMp3('greeting')) void this.tts(`Bonjour ${this.childName} ! Bienvenue dans EduMaison !`)
   }
+
+  scheduleGreeting(delay = 500) {
+    this.cancelScheduledSpeech()
+    this.scheduledSpeech = window.setTimeout(() => {
+      this.scheduledSpeech = null
+      this.greeting()
+    }, delay)
+  }
+
   correct() {
-    if (!this.playMp3('correct')) this.tts('Excellent ! Tres bien !')
+    if (!this.playMp3('correct')) void this.tts('Excellent ! Tres bien !')
   }
+
   wrong() {
-    if (!this.playMp3('wrong')) this.tts('Pas tout a fait. Essaie encore !')
+    if (!this.playMp3('wrong')) void this.tts('Pas tout a fait. Essaie encore !')
   }
+
   sessionGood() {
-    if (!this.playMp3('session_good')) this.tts('Bien joue ! Continue comme ca !')
+    if (!this.playMp3('session_good')) void this.tts('Bien joue ! Continue comme ca !')
   }
+
   sessionPerfect() {
-    if (!this.playMp3('session_perfect')) this.tts('Parfait ! Tu es fantastique !')
+    if (!this.playMp3('session_perfect')) void this.tts('Parfait ! Tu es fantastique !')
   }
+
   sessionRetry() {
-    if (!this.playMp3('session_retry')) this.tts('Courage ! Tu peux faire mieux !')
+    if (!this.playMp3('session_retry')) void this.tts('Courage ! Tu peux faire mieux !')
   }
+
   streak3() {
-    if (!this.playMp3('streak3')) this.tts('Trois de suite ! Bravo !')
+    if (!this.playMp3('streak3')) void this.tts('Trois de suite ! Bravo !')
   }
+
   streak5() {
-    if (!this.playMp3('streak5')) this.tts('Cinq de suite ! Incroyable !')
+    if (!this.playMp3('streak5')) void this.tts('Cinq de suite ! Incroyable !')
   }
 
-  // ── TTS exercices ─────────────────────────────────────────────────────────
-  speak(text: string) {
+  speak(text: string, rate = 0.9): Promise<boolean> {
     this.stop()
-    this.tts(text, 'en-GB')
+    return this.tts(text, 'en-GB', rate)
   }
 
-  speakLang(text: string, lang: string) {
+  speakLang(text: string, lang: string, rate = 0.9): Promise<boolean> {
     this.stop()
-    this.tts(text, lang)
+    return this.tts(text, lang, rate)
+  }
+
+  speakLangAfter(text: string, lang: string, delay: number, rate = 0.9) {
+    this.stop()
+    this.scheduledSpeech = window.setTimeout(() => {
+      this.scheduledSpeech = null
+      void this.speakLang(text, lang, rate)
+    }, delay)
+  }
+
+  private cancelScheduledSpeech() {
+    if (this.scheduledSpeech === null) return
+    window.clearTimeout(this.scheduledSpeech)
+    this.scheduledSpeech = null
   }
 
   private stopAudio() {
-    if (this.currentAudio) {
-      this.currentAudio.pause()
-      this.currentAudio.currentTime = 0
-      this.currentAudio = null
-    }
+    if (!this.currentAudio) return
+    this.currentAudio.pause()
+    this.currentAudio.currentTime = 0
+    this.currentAudio = null
   }
 
   stop() {
+    this.cancelScheduledSpeech()
     this.stopAudio()
-    if (isCapacitor()) {
-      TextToSpeech.stop().catch(() => {})
-    } else if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-    }
+    this.currentUtterance = null
+    if (isCapacitor()) TextToSpeech.stop().catch(() => {})
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
   }
 }
 

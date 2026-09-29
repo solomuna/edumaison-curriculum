@@ -3,7 +3,7 @@ import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
-  onComplete: (correct: boolean) => void
+  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
 }
 
 export default function VennDiagram({ content, onComplete }: Props) {
@@ -42,7 +42,7 @@ export default function VennDiagram({ content, onComplete }: Props) {
     setResult(ok)
     setChecked(true)
     if (ok) fireSuccess({ xp: 10 })
-    setTimeout(() => onComplete(ok), 1200)
+    setTimeout(() => onComplete(ok, { placements: placed }), 1200)
   }
 
   const zoneItems = (zone: 'A' | 'B' | 'AB') =>

@@ -11,7 +11,7 @@ interface Pair {
 
 interface Props {
   content: any
-  onComplete: (correct: boolean) => void
+  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EC4899']
@@ -167,7 +167,12 @@ export default function MatchPairs({ content, onComplete }: Props) {
             </div>
           )}
           <button
-            onClick={() => onComplete(result ?? false)}
+            onClick={() => onComplete(result ?? false, {
+              pairs: Object.entries(matches).map(([leftIndex, rightIndex]) => ({
+                left: pairs[Number(leftIndex)].word,
+                right: rightOrder[Number(rightIndex)].image,
+              })),
+            })}
             style={{
               width: '100%', padding: '13px 0',
               borderRadius: 16, border: 'none',
@@ -183,4 +188,3 @@ export default function MatchPairs({ content, onComplete }: Props) {
     </div>
   )
 }
-

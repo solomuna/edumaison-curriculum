@@ -45,4 +45,16 @@ class Exercise extends Model
     {
         return $this->belongsToMany(SchoolCompetency::class, 'exercise_school_competency');
     }
+
+    public function mediaAssets(): HasMany
+    {
+        return $this->hasMany(ExerciseMediaAsset::class)->orderBy('sort_order');
+    }
+
+    public function learningPacks(): BelongsToMany
+    {
+        return $this->belongsToMany(LearningPack::class, 'learning_pack_exercise')
+            ->withPivot(['position', 'is_required'])
+            ->withTimestamps();
+    }
 }

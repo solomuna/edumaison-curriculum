@@ -9,6 +9,7 @@ import TVApp from './TVApp'
 import AdminApp from './pages/admin/AdminApp'
 import DesktopApp from './DesktopApp'
 import SuccessFx from './components/SuccessFx'
+import AccessGate from './components/AccessGate'
 import type { Child } from './types/child'
 
 const isTV = window.location.pathname.startsWith('/tv') ||
@@ -22,7 +23,7 @@ const SHELL_MAX_WIDTH = Math.min(900, window.innerWidth)
 const isMama = window.location.pathname.startsWith('/mama')
 const isAdmin = window.location.pathname.startsWith('/admin-react')
 
-export default function App() {
+function EduMaisonApp() {
   const [child, setChild] = useState<Child | null>(() => {
     try {
       const s = localStorage.getItem('edumaison_session')
@@ -102,4 +103,8 @@ export default function App() {
       <SuccessFx />
     </ThemeProvider>
   )
+}
+
+export default function App() {
+  return <AccessGate><EduMaisonApp /></AccessGate>
 }

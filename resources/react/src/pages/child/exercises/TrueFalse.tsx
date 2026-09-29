@@ -4,7 +4,7 @@ import { fireSuccess } from '../../../components/SuccessFx'
 
 interface Props {
   content: any
-  onComplete: (correct: boolean) => void
+  onComplete: (correct: boolean, answers?: Record<string, unknown>) => void
 }
 
 export default function TrueFalse({ content, onComplete }: Props) {
@@ -25,7 +25,7 @@ export default function TrueFalse({ content, onComplete }: Props) {
         y: rect ? rect.top + rect.height / 2 : window.innerHeight / 2,
       })
     }
-    setTimeout(() => onComplete(ok), 1000)
+    setTimeout(() => onComplete(ok, { selected: v }), 1000)
   }
 
   const isCorrect = chosen !== null && chosen === content.answer

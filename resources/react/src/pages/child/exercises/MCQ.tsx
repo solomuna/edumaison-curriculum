@@ -12,10 +12,11 @@ import { MamaJudi } from '../../../services/MamaJudi'
 
 import { SoundService } from '../../../services/SoundService'
 import { fireSuccess } from '../../../components/SuccessFx'
+import MamaJudiPose from '../../../components/MamaJudiPose'
 
 
 
-import type { MCQContent } from '../../../types/exercise'
+import type { ExerciseCompletionHandler, MCQContent } from '../../../types/exercise'
 import { useAssetLibrary } from '../../../hooks/useAssetLibrary'
 
 
@@ -48,7 +49,7 @@ interface Props {
 
 
 
-  onComplete: (score: number) => void
+  onComplete: ExerciseCompletionHandler
 
 
 
@@ -109,7 +110,7 @@ function shuffleOptions(options: any, answerIndex: number) {
 
 
   const safeOptions = Array.isArray(options) ? options : []
-  const indexed = safeOptions.map((opt, i) => ({ opt, isCorrect: i === answerIndex }))
+  const indexed = safeOptions.map((opt, i) => ({ opt, originalIndex: i, isCorrect: i === answerIndex }))
 
 
 
@@ -129,83 +130,11 @@ function shuffleOptions(options: any, answerIndex: number) {
 
 
 
-  return { options: indexed.map(x => x.opt), answerIndex: indexed.findIndex(x => x.isCorrect) }
-
-
-
-}
-
-
-
-
-
-
-
-function MamaJudiSVG({ size = 44 }: { size?: number }) {
-
-
-
-  return (
-
-
-
-    <svg viewBox="0 0 56 52" width={size} height={size} xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-
-
-
-      <circle cx="28" cy="20" r="16" fill="#2A1500"/>
-
-
-
-      <circle cx="14" cy="25" r="8" fill="#2A1500"/>
-
-
-
-      <circle cx="42" cy="25" r="8" fill="#2A1500"/>
-
-
-
-      <circle cx="28" cy="27" r="14" fill="#C8874A"/>
-
-
-
-      <ellipse cx="18" cy="27" rx="2.5" ry="3" fill="#B87A40"/>
-
-
-
-      <ellipse cx="38" cy="27" rx="2.5" ry="3" fill="#B87A40"/>
-
-
-
-      <circle cx="22" cy="22" r="2.8" fill="#1A0A00"/>
-
-
-
-      <circle cx="34" cy="22" r="2.8" fill="#1A0A00"/>
-
-
-
-      <circle cx="23.2" cy="21" r="1" fill="white"/>
-
-
-
-      <circle cx="35.2" cy="21" r="1" fill="white"/>
-
-
-
-      <ellipse cx="28" cy="30" rx="2" ry="1.5" fill="#A86835"/>
-
-
-
-      <path d="M18 27 Q28 36 38 27" stroke="#1A0A00" strokeWidth="2" fill="none" strokeLinecap="round"/>
-
-
-
-    </svg>
-
-
-
-  )
+  return {
+    options: indexed.map(x => x.opt),
+    originalIndexes: indexed.map(x => x.originalIndex),
+    answerIndex: indexed.findIndex(x => x.isCorrect),
+  }
 
 
 
@@ -229,7 +158,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-  const [results, setResults] = useState<{ correct: boolean; title: string }[]>([])
+  const [results, setResults] = useState<{ correct: boolean; title: string; question_index: number; selected_index: number }[]>([])
 
 
 
@@ -312,7 +241,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-  const shuffledQ = shuffled[current] || { options: q?.options || [], answerIndex: 0 }
+  const shuffledQ = shuffled[current] || { options: q?.options || [], originalIndexes: (q?.options || []).map((_: unknown, index: number) => index), answerIndex: 0 }
 
 
 
@@ -369,7 +298,12 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-    setResults(r => [...r, { correct, title: q.text || q.question || '' }])
+    setResults(r => [...r, {
+      correct,
+      title: q.text || q.question || '',
+      question_index: current,
+      selected_index: shuffledQ.originalIndexes[idx],
+    }])
 
 
 
@@ -409,7 +343,11 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-      onComplete(Math.round(total / questions.length * 100))
+      onComplete(Math.round(total / questions.length * 100), {
+        verification_status: 'auto_checked',
+        answers: { items: results.map(result => ({ question_index: result.question_index, selected_index: result.selected_index })) },
+        evidence: { method: 'answer_key' },
+      })
 
 
 
@@ -481,7 +419,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: 40 }}>
+      <div className="adventure-result-page" style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif', paddingBottom: 40 }}>
 
 
 
@@ -573,7 +511,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-          <MamaJudiSVG size={40} />
+          <MamaJudiPose pose={pct >= 80 ? 'celebrate' : 'encourage'} className="adventure-judi-feedback" decorative />
 
 
 
@@ -725,7 +663,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif' }}>
+    <div className="adventure-exercise-shell adventure-mcq-page" style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: 'Nunito, system-ui, sans-serif' }}>
 
 
 
@@ -741,7 +679,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-      <div style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)', padding: '10px 14px 8px' }}>
+      <div className="adventure-exercise-header" style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)', padding: '10px 14px 8px' }}>
 
 
 
@@ -765,7 +703,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-            <button onClick={() => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); setTimeout(() => MamaJudi.speak(q?.text || q?.question || instructions, 0.85), 100) }} style={{ background: '#1D6B2A', border: 'none', borderRadius: 8, padding: '4px 10px', fontSize: 16, cursor: 'pointer' }} title="Listen again">&#128266;</button>
+            <button onClick={() => MamaJudi.speakLangAfter(q?.text || q?.question || instructions, ttsLang, 100, 0.85)} style={{ background: '#1D6B2A', border: 'none', borderRadius: 8, padding: '4px 10px', fontSize: 16, cursor: 'pointer' }} title="Listen again">&#128266;</button>
 
 
 
@@ -825,7 +763,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-      <div style={{ padding: '14px 16px' }}>
+      <div className="adventure-exercise-content adventure-mcq-content" style={{ padding: '14px 16px' }}>
 
 
 
@@ -847,7 +785,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
         {/* Illustration - bibliotheque si manquant */}
         {!content.image_url && (content.illustration || subject) && (
-          <div style={{ background: '#FFF0E6', borderRadius: 16, padding: '14px', textAlign: 'center', fontSize: 52, marginBottom: 12, border: '1px solid #FFD4B0', lineHeight: 1 }}>
+          <div className="adventure-exercise-panel" style={{ background: '#FFF0E6', borderRadius: 16, padding: '14px', textAlign: 'center', fontSize: 52, marginBottom: 12, border: '1px solid #FFD4B0', lineHeight: 1 }}>
             {content.illustration || getSubjectIcon(subject || '')}
           </div>
         )}
@@ -858,11 +796,29 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
+        {rawContent.passage && (
+
+          <article style={{ background: '#FFFDF8', borderLeft: '4px solid #C47A3C', padding: '14px 16px', marginBottom: 14, lineHeight: 1.65, fontSize: 16, color: 'var(--text-dark)' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
+
+              <strong>Reading passage</strong>
+
+              <button onClick={() => MamaJudi.speakLang(rawContent.passage, ttsLang, 0.82)} aria-label="Listen to the passage" style={{ border: 0, background: '#1D6B2A', color: 'white', width: 38, height: 38, borderRadius: 8, cursor: 'pointer' }}>&#128266;</button>
+
+            </div>
+
+            {rawContent.passage}
+
+          </article>
+
+        )}
+
         {/* Question card */}
 
 
 
-        <div style={{ background: 'var(--card)', borderRadius: 16, padding: '14px 16px', marginBottom: 14, border: '1.5px solid var(--border)' }}>
+        <div className="adventure-exercise-panel" style={{ background: 'var(--card)', borderRadius: 16, padding: '14px 16px', marginBottom: 14, border: '1.5px solid var(--border)' }}>
 
 
 
@@ -982,7 +938,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 
-              <div key={i} onClick={(e) => choose(opt, i, e)} style={{
+              <div className="adventure-mcq-option" key={i} onClick={(e) => choose(opt, i, e)} style={{
 
 
 
@@ -1163,9 +1119,3 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
 
 }
-
-
-
-
-
-
