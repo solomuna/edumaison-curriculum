@@ -1,5 +1,11 @@
 # Codex Status
 
+## 2026-09-29 - Reprise des questions ratees deployee : 346eeea
+
+- Deploye via `docker/deploy.sh 346eeea` (PR #13). Precedent : `c1f3c15`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T210026Z`. Aucune migration.
+- QCM, texte a trous et dictee : une question ratee revient en fin de lecon (au plus 2 reprises, badge « On reessaie celle-ci »). Seule la premiere reponse est notee et envoyee ; les ecoutes de reprise de la dictee ne sont pas envoyees.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, bundle contenant la reprise, aucune erreur Laravel.
+
 ## 2026-09-29 - Dictee, production ecrite et ecriture sans cursive deployees : c1f3c15
 
 - Deploye via `docker/deploy.sh c1f3c15` (PR #11). Precedent : `cac9ddf`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T204413Z`. Aucune migration.
