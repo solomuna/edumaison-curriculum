@@ -50,7 +50,7 @@ interface Props {
   isFrench: boolean
   onBack: () => void
   /** Enregistre la tentative (appelé sur « Continuer », une seule fois). */
-  onSubmit: (correct: boolean, answers?: Record<string, unknown>) => void
+  onSubmit: (correct: boolean, answers?: Record<string, unknown>) => void | Promise<unknown>
   /** Encarts optionnels au-dessus du moteur (manuel de référence, illustration). */
   extras?: ReactNode
   children: (report: ReportResult) => ReactNode
@@ -67,6 +67,8 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
   const lang = isFrench ? 'fr-FR' : 'en-GB'
   const [verdict, setVerdict] = useState<{ correct: boolean; answers?: Record<string, unknown>; detail?: string; praise: string } | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [showArdoise, setShowArdoise] = useState(false)
   const [check, setCheck] = useState<{ ready: boolean; fn: (() => void) | null }>({ ready: false, fn: null })
   const cancelVoice = useRef<() => void>(() => {})
@@ -95,11 +97,19 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
 
   const runCheck = () => { if (!verdict && check.ready) check.fn?.() }
 
-  const submit = () => {
-    if (!verdict || submitted) return
+  const submit = async () => {
+    if (!verdict || submitted || saving) return
     cancelVoice.current()
-    setSubmitted(true)
-    onSubmit(verdict.correct, verdict.answers)
+    setSaving(true)
+    setSaveError('')
+    try {
+      await onSubmit(verdict.correct, verdict.answers)
+      setSubmitted(true)
+    } catch (reason) {
+      setSaveError(reason instanceof Error ? reason.message : L.saveError)
+    } finally {
+      setSaving(false)
+    }
   }
 
   useEffect(() => {
@@ -159,12 +169,13 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
                     {(verdict.detail || !verdict.correct) && (
                       <div className="lesson-verdict__detail">{verdict.detail || L.seeAbove}</div>
                     )}
+                    {saveError && <div className="lesson-save-error" role="alert">{saveError}</div>}
                   </div>
                 </div>
               ) : <span />}
               {verdict ? (
-                <button className={`lesson-btn${verdict.correct ? '' : ' lesson-btn--red'}`} onClick={submit} disabled={submitted} autoFocus>
-                  {L.continue}
+                <button className={`lesson-btn${verdict.correct ? '' : ' lesson-btn--red'}`} onClick={submit} disabled={submitted || saving} autoFocus>
+                  {saving ? L.saving : saveError ? L.retrySave : L.continue}
                 </button>
               ) : (
                 <button ref={checkBtn} className="lesson-btn" onClick={runCheck} disabled={!check.ready}>{L.check}</button>

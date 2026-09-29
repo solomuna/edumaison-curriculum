@@ -130,7 +130,7 @@ class Class3HandwritingAlignmentPilotSeeder extends Seeder
                     'content' => json_encode([
                         'type' => 'handwriting',
                         'practice_mode' => 'copy',
-                        'guide_style' => 'upright_joint_script',
+                        'guide_style' => 'print', // pas d'écriture cursive
                         'prompts' => $activity['prompts'],
                     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
                     'is_active' => true,

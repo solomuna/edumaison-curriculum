@@ -70,9 +70,11 @@ export default function Handwriting({ title, instructions, content, isFrench = f
   const strokes = useRef<HandwritingStroke[]>([])
   const startedAt = useRef(Date.now())
   const prompt = prompts[current]
-  const guideStyle = content.guide_style ?? 'print'
+  // Pas d'écriture cursive (attachée) : modèles toujours en lettres droites,
+  // même si un contenu ancien demande 'upright_joint_script'.
+  const guideStyle: HandwritingGuideStyle = 'print'
   const practiceMode = content.practice_mode ?? 'trace'
-  const usesJointScript = guideStyle === 'upright_joint_script'
+  const usesJointScript = false
   const isCopying = practiceMode === 'copy'
   const progress = Math.round(((current + 1) / prompts.length) * 100)
   const language = isFrench ? 'fr-FR' : 'en-GB'

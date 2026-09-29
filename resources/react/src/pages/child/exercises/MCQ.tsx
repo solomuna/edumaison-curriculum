@@ -50,7 +50,6 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   const [praise, setPraise] = useState('')
   const [showResult, setShowResult] = useState(false)
   const [showArdoise, setShowArdoise] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const checkBtn = useRef<HTMLButtonElement>(null)
   const { getSubjectIcon } = useAssetLibrary()
 
@@ -135,10 +134,8 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   // La tentative est enregistrée quand l'enfant quitte l'écran de fin :
   // le parent change d'écran dès l'enregistrement, l'enfant doit d'abord voir son bilan.
   const submit = () => {
-    if (submitted) return
-    setSubmitted(true)
     const total = results.filter(r => r.correct).length
-    onComplete(Math.round(total / questions.length * 100), {
+    return onComplete(Math.round(total / questions.length * 100), {
       verification_status: 'auto_checked',
       answers: { items: results.map(result => ({ question_index: result.question_index, selected_index: result.selected_index })) },
       evidence: { method: 'answer_key' },
@@ -165,7 +162,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   }, [combo])
 
   if (showResult) {
-    return <LessonEnd isFrench={isFrenchSubject} results={results} total={questions.length} bestStreak={bestStreak} submitted={submitted} onContinue={submit} />
+    return <LessonEnd isFrench={isFrenchSubject} results={results} total={questions.length} bestStreak={bestStreak} onContinue={submit} />
   }
 
   if (!q) return null

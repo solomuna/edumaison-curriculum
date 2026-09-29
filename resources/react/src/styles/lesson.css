@@ -770,3 +770,112 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Erreur d'enregistrement (réseau, refus du serveur) */
+.lesson-save-error {
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff1f0;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 800;
+}
+.lesson-footer--end .lesson-save-error { width: 100%; text-align: center; }
+
+/* ── Dictée et production écrite ───────────────────────────────────────── */
+.lesson-listen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 10px 0 4px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--l-blue);
+  box-shadow: 0 4px 0 var(--l-blue-dark);
+  color: #ffffff;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.lesson-listen:active:not(:disabled) { transform: translateY(4px); box-shadow: none; }
+.lesson-listen:disabled { background: var(--l-line); box-shadow: none; color: #afafaf; cursor: default; }
+.lesson-listen__icon { display: grid; place-items: center; width: 34px; height: 34px; }
+.lesson-listen__icon svg { width: 30px; height: 30px; }
+.lesson-field-label { display: block; margin: 4px 0 8px; font-size: 16px; font-weight: 900; }
+.lesson-textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  padding: 14px 16px;
+  border: 2px solid var(--l-line);
+  border-radius: 16px;
+  background: #f7f7f7;
+  color: var(--l-ink);
+  font: 700 19px/1.6 Nunito, system-ui, sans-serif;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.lesson-textarea:focus { border-color: #84d8ff; background: #ffffff; }
+.lesson-textarea.is-right { border-color: #a5ed6e; background: var(--l-green-bg); }
+.lesson-textarea.is-wrong { border-color: #ffb2b2; background: #fff5f5; }
+.lesson-field-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 22px;
+  margin: 8px 2px 14px;
+  color: var(--l-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+.lesson-field-meta .is-error { color: var(--l-red-ink); }
+.lesson-field-meta .is-ok { color: var(--l-green-ink); font-weight: 900; }
+.lesson-field-meta .is-off { color: #c2410c; font-weight: 900; }
+.lesson-field-meta span:last-child { margin-left: auto; text-align: right; }
+.lesson-review-card {
+  padding: 14px;
+  border: 2px solid var(--l-line);
+  border-radius: 16px;
+  animation: lesson-rise 0.3s both;
+}
+.lesson-review-card__row { margin-bottom: 12px; font-size: 16px; line-height: 1.5; }
+.lesson-scores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.lesson-score {
+  display: grid;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+.lesson-score strong { font-size: 18px; }
+.lesson-score.is-ok { background: var(--l-green-bg); color: var(--l-green-ink); }
+.lesson-score.is-mid { background: #fff4d6; color: #9a5a22; }
+.lesson-score.is-low { background: var(--l-red-bg); color: var(--l-red-ink); }
+.lesson-word-check {
+  margin: -4px 0 14px;
+  padding: 12px 14px;
+  border: 2px solid var(--l-line);
+  border-radius: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 700 18px/1.8 Nunito, system-ui, sans-serif;
+}
+.lesson-word-check__legend { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: var(--l-muted); font-size: 12px; font-weight: 800; white-space: normal; }
+.lesson-word-check .is-ok { color: var(--l-green-ink); text-decoration: underline 2px solid; text-underline-offset: 4px; }
+.lesson-word-check .is-check { color: var(--l-red-ink); text-decoration: underline 2px wavy; text-underline-offset: 4px; }
+.lesson-checklist { margin: 0 0 14px; padding-left: 22px; color: var(--l-muted); font-weight: 700; line-height: 1.6; }
+.lesson-footer.is-info { background: var(--l-blue-bg); border-top-color: transparent; animation: lesson-sheet-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+.lesson-footer.is-info .lesson-verdict { color: var(--l-blue-dark); }
+.lesson-footer.is-wrong .lesson-save-error { background: #ffffff; }
+@media (max-width: 560px) {
+  .lesson-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.lesson-verdict--note .lesson-verdict__detail { color: var(--l-muted); }
