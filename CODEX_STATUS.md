@@ -1,5 +1,15 @@
 # Codex Status
 
+## 2026-09-30 - Correctifs remontes par le test sur tablette deployes : 301d35c
+
+- Deploye via `docker/deploy.sh 301d35c` (PR #17, #18, #19). Precedent : `0770ce6`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260930T065825Z`. Aucune migration.
+- Bug 1 (pas de bouton de validation) : la barre de navigation de l'accueil (fixe, z-index 100) recouvrait le pied de lecon depuis la page des matieres ; masquee pendant une lecon. Clavier virtuel : `interactive-widget=resizes-content` + repli `--kb-inset`.
+- Bug 2 (reponses justes comptees fausses) : la touche Entree verifiait ET passait a la suite (bandeau jamais visible) ; un appui deja traite est desormais ignore.
+- Decision utilisateur : dans les textes a trous, majuscules, accents et ponctuation comptent (« Goodbye! »). Serveur (`exactAnswer`) et ecran alignes ; bandeau d'erreur avec les caracteres manquants surlignes et en trop barres.
+- Serveur, associations : comparaison en multiensemble (mots repetes a gauche).
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, `interactive-widget` present, CSS masquant la barre, bundle avec l'affichage des differences, `exactAnswer` actif, extension intl presente, aucune erreur Laravel.
+- Verification utilisateur restante : rejouer « Write the Greeting » sur tablette.
+
 ## 2026-09-29 - Correctifs espace Mama et ardoise deployes : 0770ce6
 
 - Deploye via `docker/deploy.sh 0770ce6` (PR #15). Precedent : `346eeea`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260929T211136Z`. Aucune migration.
