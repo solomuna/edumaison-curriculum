@@ -23,6 +23,39 @@ class LanguageAttemptVerificationTest extends TestCase
         return $method->invoke(new ExerciseController(), $strokes);
     }
 
+    public function test_match_pairs_accepts_repeated_left_words(): void
+    {
+        $content = ['type' => 'match_pairs', 'pairs' => [
+            ['word' => 'I am', 'image' => 'a happy child.'],
+            ['word' => 'I have', 'image' => 'a red ball.'],
+            ['word' => 'I am', 'image' => 'tall and strong.'],
+        ]];
+
+        [$score] = $this->verify('match_pairs', $content, ['answers' => ['pairs' => [
+            ['left' => 'I am', 'right' => 'tall and strong.'],
+            ['left' => 'I have', 'right' => 'a red ball.'],
+            ['left' => 'I am', 'right' => 'a happy child.'],
+        ]]]);
+        $this->assertSame(100, $score);
+
+        [$score] = $this->verify('match_pairs', $content, ['answers' => ['pairs' => [
+            ['left' => 'I am', 'right' => 'a red ball.'],
+            ['left' => 'I have', 'right' => 'a happy child.'],
+            ['left' => 'I am', 'right' => 'tall and strong.'],
+        ]]]);
+        $this->assertSame(0, $score);
+    }
+
+    public function test_fill_in_ignores_punctuation_and_case(): void
+    {
+        [$score] = $this->verify('fill_in', [
+            'type' => 'fill_in',
+            'items' => [['prompt' => 'You are leaving. Write: ___', 'answer' => 'Goodbye!']],
+        ], ['answers' => ['items' => ['goodbye']]]);
+
+        $this->assertSame(100, $score);
+    }
+
     public function test_mcq_score_is_recomputed_from_the_server_answer_key(): void
     {
         [$score, $status, $answers, $evidence] = $this->verify('multiple_choice', [

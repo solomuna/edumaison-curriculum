@@ -151,9 +151,12 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   useEffect(() => {
     if (showResult || showArdoise) return
     const onKey = (e: KeyboardEvent) => {
+      // Une touche déjà traitée (ex. Entrée qui vient de vérifier) ne doit pas
+      // déclencher aussi l'action suivante : l'écouteur est réinstallé pendant l'appui.
+      if (e.defaultPrevented) return
       if (e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return
       const n = Number(e.key)
-      if (n >= 1 && n <= shuffledQ.options.length) { select(n - 1); return }
+      if (n >= 1 && n <= shuffledQ.options.length) { e.preventDefault(); select(n - 1); return }
       if (e.key === 'Enter') { e.preventDefault(); checked ? next() : check() }
     }
     window.addEventListener('keydown', onKey)

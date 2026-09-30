@@ -9,7 +9,8 @@ interface Props {
 
 export default function SentenceOrder({ content, onComplete }: Props) {
   const { t, checked } = useLesson()
-  const answer: string[] = content.answer || []
+  const expected = content.answer ?? content.correct ?? []
+  const answer: string[] = (typeof expected === 'string' ? expected.trim().split(/\s+/) : Array.from(expected as string[])).map(String)
   const [pool, setPool] = useState<string[]>(() => [...(content.words || [])].sort(() => Math.random() - 0.5))
   const [sentence, setSentence] = useState<string[]>([])
   const [result, setResult] = useState<boolean | null>(null)
