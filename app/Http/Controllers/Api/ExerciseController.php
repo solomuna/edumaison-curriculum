@@ -95,6 +95,7 @@ class ExerciseController extends Controller
             'evidence'           => 'nullable|array',
             'duration_seconds'   => 'nullable|integer|min:0|max:86400',
         ]);
+        $validated = $this->withSubmittedAnswers($validated, $request);
 
         $exercise = Exercise::query()->findOrFail($validated['exercise_id']);
         $householdId = (int) (FamilyContext::householdId($request) ?? 0);
@@ -177,6 +178,21 @@ class ExerciseController extends Controller
             'score' => $attempt->score,
             'verification_status' => $attempt->verification_status,
         ]);
+    }
+
+    /**
+     * validated() ne conserve, sous « answers », que les clés visées par les
+     * règles « answers.items.*.audio_data_url / assessment_token » : il effaçait
+     * les réponses du QCM, du texte à trous et de la dictée (422 « A response is
+     * required… ») et la transcription de l'oral. Les règles restent appliquées ;
+     * la notation lit les réponses telles qu'envoyées.
+     */
+    private function withSubmittedAnswers(array $validated, Request $request): array
+    {
+        $answers = $request->input('answers');
+        $validated['answers'] = is_array($answers) ? $answers : null;
+
+        return $validated;
     }
 
     private function verifiedAttemptData(string $type, array $content, array $validated): array
