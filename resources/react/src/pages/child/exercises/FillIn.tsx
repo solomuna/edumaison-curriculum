@@ -3,7 +3,7 @@ import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, normalizeAnswer } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler } from '../../../types/exercise'
 
 interface FillInItem {
@@ -41,7 +41,6 @@ const SpeakerIcon = () => (
   </svg>
 )
 
-const normalized = (s: string) => s.trim().toLowerCase().replace(/[‘’]/g, "'")
 
 export default function FillIn({ title, instructions, content, isFrench = false, onComplete, onBack }: Props) {
   const [lastAnswer, setLastAnswer] = useState('')
@@ -73,6 +72,9 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const parts = text.split('___')
   const spoken = text.replace('___', C.blank)
   const isLast = rq.isLastStep
+  // Indice : lettres seulement (« Goodbye! » -> G, 7 lettres)
+  const answerLetters = (item?.answer || '').match(/[\p{L}\p{N}]/gu) ?? []
+  const hintFirst = (answerLetters[0] || '').toUpperCase()
 
   useEffect(() => {
     prepareLessonAudio()
@@ -88,8 +90,8 @@ export default function FillIn({ title, instructions, content, isFrench = false,
 
   const check = () => {
     if (feedback || !input.trim() || !item) return
-    const answer = normalized(input)
-    const correct = answer === normalized(item.answer) || (item.alternatives || []).map(normalized).includes(answer)
+    const answer = normalizeAnswer(input)
+    const correct = answer === normalizeAnswer(item.answer) || (item.alternatives || []).map(normalizeAnswer).includes(answer)
     setFeedback(correct ? 'correct' : 'wrong')
     setLastAnswer(input.trim())
     if (!rq.isRetry) {
@@ -133,12 +135,17 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const revealHint = () => {
     if (!item?.answer) return
     setHintUsed(true)
-    setInput(item.answer[0])
+    setInput(answerLetters[0] || '')
   }
 
   useEffect(() => {
     if (!feedback || done) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); next() } }
+    const onKey = (e: KeyboardEvent) => {
+      // Une touche déjà traitée (ex. Entrée qui vient de vérifier) ne doit pas
+      // déclencher aussi l'action suivante : l'écouteur est réinstallé pendant l'appui.
+      if (e.defaultPrevented) return
+      if (e.key === 'Enter') { e.preventDefault(); next() }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [feedback, done, rq.step])
@@ -206,6 +213,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
+                    enterKeyHint="go"
                     aria-label={C.complete}
                     style={{ width: `${Math.max(4, input.length + 2)}ch` }}
                   />
@@ -218,9 +226,9 @@ export default function FillIn({ title, instructions, content, isFrench = false,
 
         {!feedback && (
           hintUsed ? (
-            <div className="lesson-hint is-used">💡 {C.hint} : {C.hintText((item.answer || '')[0]?.toUpperCase() || '', item.answer?.length || 0)}</div>
+            <div className="lesson-hint is-used">💡 {C.hint} : {C.hintText(hintFirst, answerLetters.length)}</div>
           ) : (
-            <button className="lesson-hint" onClick={revealHint}>💡 {C.hint} — {C.hintText((item.answer || '')[0]?.toUpperCase() || '', item.answer?.length || 0)}</button>
+            <button className="lesson-hint" onClick={revealHint}>💡 {C.hint} — {C.hintText(hintFirst, answerLetters.length)}</button>
           )
         )}
       </div>

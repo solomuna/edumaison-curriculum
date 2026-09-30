@@ -259,8 +259,10 @@ class ExerciseController extends Controller
             if ($expected->isEmpty() || $expected->count() !== $submitted->count()) {
                 throw ValidationException::withMessages(['answers.pairs' => 'Every item must be paired.']);
             }
-            $expectedMap = $expected->pluck('right', 'left');
-            $correct = $submitted->every(fn ($pair) => $expectedMap->get($pair['left']) === $pair['right']);
+            // Comparaison en multiensemble : un même mot à gauche peut apparaître
+            // plusieurs fois (« I am … », « I am … ») avec des fins différentes.
+            $key = fn ($pair) => $pair['left']."\u{1F}".$pair['right'];
+            $correct = $expected->map($key)->sort()->values()->all() === $submitted->map($key)->sort()->values()->all();
             return [$correct ? 100 : 0, 'auto_checked', ['pairs' => $submitted->all(), 'correct' => $correct], ['method' => 'server_answer_key']];
         }
 

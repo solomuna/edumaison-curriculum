@@ -114,6 +114,9 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Une touche déjà traitée (ex. Entrée qui vient de vérifier) ne doit pas
+      // déclencher aussi l'action suivante : l'écouteur est réinstallé pendant l'appui.
+      if (e.defaultPrevented) return
       if (e.key !== 'Enter' || showArdoise) return
       if (e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return
       e.preventDefault()

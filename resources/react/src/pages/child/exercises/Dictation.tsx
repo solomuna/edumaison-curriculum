@@ -230,12 +230,15 @@ export default function Dictation({ title, instructions, content, onComplete, on
     })
   }
 
-  // Entrée : vérifier puis continuer (Ctrl+Entrée dans la zone de texte).
+  // Entrée (touche « OK » du clavier) : vérifier puis continuer ; Maj+Entrée = retour à la ligne.
   useEffect(() => {
     if (done) return
     const onKey = (e: KeyboardEvent) => {
+      // Une touche déjà traitée (ex. Entrée qui vient de vérifier) ne doit pas
+      // déclencher aussi l'action suivante : l'écouteur est réinstallé pendant l'appui.
+      if (e.defaultPrevented) return
       if (e.key !== 'Enter') return
-      if (e.target instanceof HTMLTextAreaElement && !e.ctrlKey && !review) return
+      if (e.target instanceof HTMLTextAreaElement && e.shiftKey) return
       e.preventDefault()
       if (review) next(); else check()
     }
@@ -307,6 +310,7 @@ export default function Dictation({ title, instructions, content, onComplete, on
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
+          enterKeyHint="go"
         />
         <div className="lesson-field-meta">
           <span role={error ? 'alert' : undefined} className={error ? 'is-error' : ''}>{error || (!review ? guidance : '')}</span>

@@ -4,6 +4,32 @@ import { MamaJudi } from '../../services/MamaJudi'
 import { SoundService } from '../../services/SoundService'
 import '../../styles/lesson.css'
 
+// Clavier virtuel : sur les navigateurs qui le superposent à la page, on
+// remonte le pied de leçon de la hauteur du clavier (variable --kb-inset).
+if (typeof window !== 'undefined' && window.visualViewport && !(window as any).__lessonKbTracked) {
+  (window as any).__lessonKbTracked = true
+  const vv = window.visualViewport
+  const update = () => {
+    const inset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop))
+    document.documentElement.style.setProperty('--kb-inset', `${inset}px`)
+  }
+  vv.addEventListener('resize', update)
+  vv.addEventListener('scroll', update)
+  update()
+}
+
+/** Même règle que le serveur (ExerciseController::normalizeText) : minuscules,
+ *  sans accents ni ponctuation, espaces réduits. « Goodbye » = « Goodbye! ». */
+export function normalizeAnswer(value: string): string {
+  return String(value ?? '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u2018\u2019\u02bc`]/g, "'")
+    .replace(/[^a-z0-9'\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export const JUDI = {
   explain: '/images/adventure/characters/mama-judi/explain-v1.webp',
   encourage: '/images/adventure/characters/mama-judi/encourage-v1.webp',
