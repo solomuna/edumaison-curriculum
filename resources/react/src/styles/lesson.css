@@ -288,7 +288,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: 200;
   border-top: 2px solid var(--l-line);
   background: #ffffff;
   transition: background 0.2s, border-color 0.2s;
@@ -371,7 +371,7 @@
   position: fixed;
   left: 50%;
   top: 22%;
-  z-index: 60;
+  z-index: 210;
   padding: 12px 22px;
   border-radius: 99px;
   background: var(--l-orange);
@@ -389,7 +389,7 @@
   position: fixed;
   right: 18px;
   bottom: 120px;
-  z-index: 40;
+  z-index: 190;
   display: grid;
   place-items: center;
   width: 52px;
@@ -895,3 +895,8 @@
   font-weight: 900;
   animation: lesson-pop 0.3s ease-out;
 }
+
+/* Pendant un exercice, la barre de navigation de l'accueil (fixée en bas,
+   z-index 100) masquait VÉRIFIER / CONTINUER : on la cache, la croix en haut
+   permet de quitter la leçon. */
+body:has(.lesson) .adventure-bottom-nav { display: none !important; }

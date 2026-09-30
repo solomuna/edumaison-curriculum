@@ -83,7 +83,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     prepareLessonAudio()
     return () => { clearVoice(); MamaJudi.stop() }
   }, [])
-  useEffect(() => { if (q) MamaJudi.speakLangAfter(rq.step === 0 ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [rq.step])
+  useEffect(() => { if (q) MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [rq.step])
 
 
   const select = (idx: number) => {
