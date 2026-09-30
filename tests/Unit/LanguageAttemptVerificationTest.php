@@ -23,6 +23,27 @@ class LanguageAttemptVerificationTest extends TestCase
         return $method->invoke(new ExerciseController(), $strokes);
     }
 
+    public function test_submitted_answers_survive_request_validation(): void
+    {
+        $rules = [
+            'answers' => 'nullable|array',
+            'answers.items.*.audio_data_url' => 'nullable|string|max:4000000',
+            'answers.items.*.assessment_token' => 'nullable|uuid',
+        ];
+        $method = new ReflectionMethod(ExerciseController::class, 'withSubmittedAnswers');
+        $method->setAccessible(true);
+
+        foreach ([
+            'fill_in' => ['items' => ['Good morning!', 'Goodbye!']],
+            'mcq' => ['items' => [['question_index' => 0, 'selected_index' => 1]]],
+            'oral' => ['items' => [['transcript' => 'Good morning', 'audio_data_url' => 'data:audio/webm;base64,AA']]],
+        ] as $label => $answers) {
+            $request = \Illuminate\Http\Request::create('/api/exercises/attempt', 'POST', ['answers' => $answers]);
+            $validated = validator($request->all(), $rules)->validate();
+            $this->assertSame($answers, $method->invoke(new ExerciseController(), $validated, $request)['answers'], $label);
+        }
+    }
+
     public function test_match_pairs_accepts_repeated_left_words(): void
     {
         $content = ['type' => 'match_pairs', 'pairs' => [
