@@ -136,7 +136,7 @@ export default function Dictation({ title, instructions, content, onComplete, on
   const canCheck = hasListened && answer.trim().length > 0 && !review
 
   useEffect(() => {
-    prepareLessonAudio()
+    prepareLessonAudio(isFrench)
     return () => {
       recordedAudioRef.current?.pause()
       recordedAudioRef.current = null

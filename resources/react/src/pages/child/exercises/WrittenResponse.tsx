@@ -79,7 +79,7 @@ export default function WrittenResponse({ title, instructions, content, isFrench
   const cannotSubmit = submitting || validationError !== ''
 
   useEffect(() => {
-    prepareLessonAudio()
+    prepareLessonAudio(isFrench)
     return () => MamaJudi.stop()
   }, [])
 

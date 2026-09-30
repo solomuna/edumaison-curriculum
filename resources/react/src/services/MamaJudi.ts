@@ -2,15 +2,13 @@
 import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { SoundService } from './SoundService'
 
-const CHILD_KEY: Record<string, string> = {
-  Irma: 'gabi',
-  Mark: 'mark',
-  Ruth: 'carla',
-  Carla: 'carla',
-  Julia: '',
-}
-
 type MamaEvent = 'greeting' | 'correct' | 'wrong' | 'session_good' | 'session_perfect' | 'session_retry' | 'streak3' | 'streak5'
+type VoiceLang = 'en' | 'fr'
+
+// Pack de voix commun à toutes les familles (aucun prénom), généré par
+// scripts/generate-mama-voice.mjs : plusieurs variantes par moment et par langue.
+const VOICE_BASE = '/sounds/mama/v2'
+interface VoiceManifest { clips: Partial<Record<VoiceLang, Partial<Record<MamaEvent, { file: string }[]>>>> }
 
 const isCapacitor = () => typeof (window as any).Capacitor !== 'undefined' && (window as any).Capacitor.isNativePlatform()
 
@@ -19,29 +17,42 @@ class MamaJudiClass {
   private currentUtterance: SpeechSynthesisUtterance | null = null
   private scheduledSpeech: number | null = null
   private childName = ''
+  private lang: VoiceLang = 'en'
+  private manifest: VoiceManifest | null = null
+  private manifestLoading: Promise<VoiceManifest | null> | null = null
 
   setChild(name: string) {
     this.childName = name.split(' ')[0]
     localStorage.setItem('edumaison_child', this.childName)
   }
 
-  private resolveChild(): string {
-    if (this.childName) return this.childName
-    return localStorage.getItem('edumaison_child') || ''
+  /** Langue des répliques (celle de l'exercice en cours). */
+  setLanguage(lang: VoiceLang) {
+    this.lang = lang
   }
 
-  private getKey(): string {
-    const name = this.resolveChild()
-    return CHILD_KEY[name] ?? ''
+  private loadManifest(): Promise<VoiceManifest | null> {
+    if (this.manifest) return Promise.resolve(this.manifest)
+    if (!this.manifestLoading) {
+      this.manifestLoading = fetch(`${VOICE_BASE}/manifest.json`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { this.manifest = data?.clips ? data : null; return this.manifest })
+        .catch(() => null)
+    }
+    return this.manifestLoading
   }
 
-  private clipUrl(event: MamaEvent): string | null {
-    const key = this.getKey()
-    return key ? `/sounds/mama/${event}_${key}.mp3` : null
+  /** Toutes les variantes d'un moment, dans la langue courante (pack pas encore généré : aucune). */
+  private clipUrls(event: MamaEvent, lang: VoiceLang = this.lang): string[] {
+    return (this.manifest?.clips[lang]?.[event] ?? []).map(clip => `${VOICE_BASE}/${clip.file}`)
+  }
+
+  private pick(urls: string[]): string | null {
+    return urls.length ? urls[Math.floor(Math.random() * urls.length)] : null
   }
 
   private playMp3(event: MamaEvent): boolean {
-    const src = this.clipUrl(event)
+    const src = this.pick(this.clipUrls(event))
     if (!src) return false
     this.stopAudio()
     // Clip déjà décodé : lecture instantanée. Sinon lecture classique (moins réactive).
@@ -51,22 +62,22 @@ class MamaJudiClass {
     return true
   }
 
-  /** Précharge les voix enregistrées de l'enfant courant (lecture instantanée ensuite). */
+  /** Précharge les répliques de la langue courante (lecture instantanée ensuite). */
   preloadVoices(events: MamaEvent[] = ['correct', 'wrong', 'streak3', 'streak5', 'session_good', 'session_perfect', 'session_retry']) {
-    events.reduce<Promise<void>>((p, event) => {
-      const src = this.clipUrl(event)
-      return src ? p.then(() => SoundService.load(src)) : p
-    }, Promise.resolve())
+    const lang = this.lang
+    void this.loadManifest().then(() => events
+      .flatMap(event => this.clipUrls(event, lang))
+      .reduce<Promise<void>>((p, src) => p.then(() => SoundService.load(src)), Promise.resolve()))
   }
 
   /**
-   * Réaction immédiate (bonne réponse, erreur, série) : joue la voix enregistrée
-   * seulement si elle est prête. Jamais de synthèse vocale ici : elle démarre
-   * trop tard et arriverait décalée par rapport à l'écran.
+   * Réaction immédiate (bonne réponse, erreur, série) : joue une variante déjà
+   * décodée, au hasard. Jamais de synthèse vocale ici : elle démarre trop tard
+   * et arriverait décalée par rapport à l'écran.
    */
   react(event: MamaEvent): boolean {
-    const src = this.clipUrl(event)
-    if (!src || !SoundService.isReady(src)) return false
+    const src = this.pick(this.clipUrls(event).filter(url => SoundService.isReady(url)))
+    if (!src) return false
     this.stopAudio()
     return SoundService.play(src, { exclusive: true })
   }
