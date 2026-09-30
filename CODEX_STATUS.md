@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-09-30 - Reponses effacees par la validation corrigees : 7810b4c
+
+- Deploye via `docker/deploy.sh 7810b4c` (PR #21). Precedent : `301d35c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260930T074801Z`. Aucune migration.
+- Cause : les regles `answers.items.*.audio_data_url` / `assessment_token` (ajoutees vers le 20/08 pour l'oral) faisaient que `validated()` vidait `answers` pour le QCM, le texte a trous et la dictee (422 « A response is required… ») et perdait la transcription de l'oral. Aucune tentative de ces types enregistree entre la semaine du 17/08 et le 30/09 : progression perdue, irrecuperable.
+- Correction : `withSubmittedAnswers` (regles conservees, notation sur les reponses envoyees) + test de regression.
+- Verifie en production : tentatives enregistrees (HTTP 200) pour un oral (practice_only) et « Write the Greeting » (auto_checked, detail par phrase coherent avec l'ecran).
+- Piste proposee : alerte serveur si les enregistrements de tentatives echouent en serie.
+
 ## 2026-09-30 - Correctifs remontes par le test sur tablette deployes : 301d35c
 
 - Deploye via `docker/deploy.sh 301d35c` (PR #17, #18, #19). Precedent : `0770ce6`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260930T065825Z`. Aucune migration.
