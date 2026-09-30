@@ -401,15 +401,22 @@ class ExerciseController extends Controller
             if ($expected->isEmpty() || $expected->count() !== $submitted->count()) {
                 throw ValidationException::withMessages(['answers.items' => 'A response or an explicit skip is required for every speaking item.']);
             }
+            // Comme Duolingo : une phrase dite est notée par la correspondance des
+            // mots reconnus (transcription du navigateur, tolérante aux accents).
+            // La prononciation n'est jugée qu'avec l'évaluation serveur (Azure).
+            // Seule une phrase sautée (sans transcription) laisse la tentative
+            // en simple entraînement.
             $practiceOnly = false;
-            $cleanItems = $expected->map(function ($target, $index) use ($submitted, &$practiceOnly) {
+            $pronunciationVerified = true;
+            $cleanItems = $expected->map(function ($target, $index) use ($submitted, &$practiceOnly, &$pronunciationVerified) {
                 $entry = (array) $submitted[$index];
                 $assessment = is_array($entry['_server_assessment'] ?? null)
                     ? $this->sanitizeSpeakingAssessment($entry['_server_assessment'])
                     : null;
                 $transcript = trim((string) ($assessment['transcript'] ?? $entry['transcript'] ?? ''));
                 $method = $assessment ? 'pronunciation_assessment' : ($transcript === '' ? 'practice_only' : 'speech_transcript');
-                $practiceOnly = $practiceOnly || $method !== 'pronunciation_assessment';
+                $practiceOnly = $practiceOnly || $method === 'practice_only';
+                $pronunciationVerified = $pronunciationVerified && $method === 'pronunciation_assessment';
                 return [
                     'target' => $target,
                     'transcript' => $transcript,
@@ -423,8 +430,8 @@ class ExerciseController extends Controller
                 $practiceOnly ? 'practice_only' : 'auto_checked',
                 ['items' => $cleanItems->all()],
                 [
-                    'method' => $practiceOnly ? 'speaking_practice' : 'pronunciation_assessment',
-                    'pronunciation_verified' => ! $practiceOnly,
+                    'method' => $practiceOnly ? 'speaking_practice' : ($pronunciationVerified ? 'pronunciation_assessment' : 'speech_transcript_match'),
+                    'pronunciation_verified' => ! $practiceOnly && $pronunciationVerified,
                     'item_assessments' => $cleanItems->pluck('assessment')->all(),
                 ],
             ];

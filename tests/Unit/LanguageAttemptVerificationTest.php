@@ -228,18 +228,33 @@ class LanguageAttemptVerificationTest extends TestCase
         $this->assertSame(90, $score);
     }
 
-    public function test_speaking_transcript_does_not_claim_pronunciation_verification(): void
+    public function test_speaking_transcript_is_scored_by_word_match_without_claiming_pronunciation(): void
     {
-        [$score, $status, $answers, $evidence] = $this->verify('oral_drill', [
-            'type' => 'oral_drill',
-            'items' => [['text' => 'Good morning']],
-        ], [
-            'answers' => ['items' => [['transcript' => 'Good morning']]],
+        $content = ['type' => 'oral_drill', 'items' => [['text' => 'Good morning, teacher!'], ['text' => 'How are you?']]];
+
+        [$score, $status, $answers, $evidence] = $this->verify('oral_drill', $content, [
+            'answers' => ['items' => [['transcript' => 'good morning teacher'], ['transcript' => 'how are']]],
         ]);
 
-        $this->assertSame(100, $score);
-        $this->assertSame('practice_only', $status);
+        $this->assertSame('auto_checked', $status);
+        $this->assertSame(100, $answers['items'][0]['score']);
         $this->assertSame('speech_transcript', $answers['items'][0]['method']);
+        $this->assertLessThan(100, $answers['items'][1]['score']);
+        $this->assertSame((int) round(($answers['items'][0]['score'] + $answers['items'][1]['score']) / 2), $score);
+        $this->assertFalse($evidence['pronunciation_verified']);
+        $this->assertSame('speech_transcript_match', $evidence['method']);
+    }
+
+    public function test_skipped_speaking_item_keeps_attempt_as_practice(): void
+    {
+        [, $status, , $evidence] = $this->verify('oral_drill', [
+            'type' => 'oral_drill',
+            'items' => [['text' => 'Good morning'], ['text' => 'Goodbye']],
+        ], [
+            'answers' => ['items' => [['transcript' => 'Good morning'], ['transcript' => '']]],
+        ]);
+
+        $this->assertSame('practice_only', $status);
         $this->assertFalse($evidence['pronunciation_verified']);
     }
 
