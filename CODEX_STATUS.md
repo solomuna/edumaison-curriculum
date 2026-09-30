@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-09-30 - Exercices oraux valides par correspondance des mots : cd1bb63
+
+- Deploye via `docker/deploy.sh cd1bb63` (PR #23). Precedent : `7810b4c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260930T083657Z`. Aucune migration.
+- Decision utilisateur (option A, approche Duolingo) : une phrase dite est notee par la correspondance des mots reconnus par le navigateur ; tentative `auto_checked`, `pronunciation_verified=false`, methode `speech_transcript_match`. Phrase sautee = `practice_only`. Azure (si active plus tard) reste prioritaire.
+- Limite acceptee : transcription fournie par le navigateur (falsifiable). Options futures : transcription serveur (Whisper) ou Azure.
+- Controles : deploiement OK, regle active cote serveur, aucune erreur Laravel.
+- Pistes en attente de decision : pack de voix Mama Judi commun + voix enregistrees par les parents (retirer les prenoms codes en dur dans MamaJudi.ts), reconnaissance d'ecriture (ML Kit Digital Ink, app Android), alerte en cas d'echecs d'enregistrement en serie.
+
 ## 2026-09-30 - Reponses effacees par la validation corrigees : 7810b4c
 
 - Deploye via `docker/deploy.sh 7810b4c` (PR #21). Precedent : `301d35c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260930T074801Z`. Aucune migration.
