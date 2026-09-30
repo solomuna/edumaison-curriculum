@@ -900,3 +900,22 @@
    z-index 100) masquait VÉRIFIER / CONTINUER : on la cache, la croix en haut
    permet de quitter la leçon. */
 body:has(.lesson) .adventure-bottom-nav { display: none !important; }
+
+/* Différences de réponse (texte à trous) : ce qui manque / ce qui est en trop */
+.lesson-diff { font-size: 18px; letter-spacing: 0.5px; }
+.lesson-diff__miss {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--l-green-ink);
+  font-weight: 900;
+  text-decoration: underline 3px;
+  text-underline-offset: 3px;
+}
+.lesson-diff__extra {
+  padding: 0 2px;
+  border-radius: 4px;
+  background: #ffc2c2;
+  color: var(--l-red-ink);
+  text-decoration: line-through 2px;
+}

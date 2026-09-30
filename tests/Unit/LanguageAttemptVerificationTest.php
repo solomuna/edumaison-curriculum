@@ -46,14 +46,24 @@ class LanguageAttemptVerificationTest extends TestCase
         $this->assertSame(0, $score);
     }
 
-    public function test_fill_in_ignores_punctuation_and_case(): void
+    public function test_fill_in_requires_exact_capitals_and_punctuation(): void
     {
-        [$score] = $this->verify('fill_in', [
-            'type' => 'fill_in',
-            'items' => [['prompt' => 'You are leaving. Write: ___', 'answer' => 'Goodbye!']],
-        ], ['answers' => ['items' => ['goodbye']]]);
+        $content = ['type' => 'fill_in', 'items' => [['prompt' => 'You are leaving. Write: ___', 'answer' => 'Goodbye!']]];
+        $score = fn (string $answer) => $this->verify('fill_in', $content, ['answers' => ['items' => [$answer]]])[0];
 
-        $this->assertSame(100, $score);
+        $this->assertSame(100, $score('Goodbye!'));
+        $this->assertSame(100, $score('  Goodbye! '));
+        $this->assertSame(0, $score('Goodbye'));
+        $this->assertSame(0, $score('goodbye!'));
+    }
+
+    public function test_fill_in_tolerates_apostrophe_forms_but_not_missing_accents(): void
+    {
+        $content = ['type' => 'fill_in', 'items' => [['prompt' => 'Nous allons ___', 'answer' => "à l\u{2019}école"]]];
+        $score = fn (string $answer) => $this->verify('fill_in', $content, ['answers' => ['items' => [$answer]]])[0];
+
+        $this->assertSame(100, $score("à l'école"));
+        $this->assertSame(0, $score("a l'ecole"));
     }
 
     public function test_mcq_score_is_recomputed_from_the_server_answer_key(): void

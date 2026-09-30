@@ -3,7 +3,7 @@ import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, normalizeAnswer } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, exactAnswer, diffAnswer } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler } from '../../../types/exercise'
 
 interface FillInItem {
@@ -33,6 +33,29 @@ interface Props {
 const COPY = {
   en: { complete: 'Complete the sentence', hint: 'Hint', hintText: (l: string, n: number) => `starts with ${l} (${n} letters)`, youWrote: 'You wrote:', blank: 'blank' },
   fr: { complete: 'Complète la phrase', hint: 'Indice', hintText: (l: string, n: number) => `commence par ${l} (${n} lettres)`, youWrote: 'Tu as écrit :', blank: 'blanc' },
+}
+
+/** Bonne réponse avec ce qui manque surligné, puis la réponse de l'enfant avec ce qui est en trop barré. */
+function AnswerDiff({ expected, actual, youWrote }: { expected: string; actual: string; youWrote: string }) {
+  const diff = diffAnswer(expected, actual)
+  const show = (text: string) => text.replace(/ /g, ' ')
+  return (
+    <>
+      <div className="lesson-verdict__detail lesson-diff">
+        {diff.expected.map((part, k) => part.ok
+          ? <span key={k}>{show(part.text)}</span>
+          : <mark key={k} className="lesson-diff__miss">{part.text === ' ' ? '␣' : show(part.text)}</mark>)}
+      </div>
+      {actual && (
+        <div className="lesson-verdict__detail lesson-diff">
+          {youWrote}{' '}
+          {diff.actual.map((part, k) => part.ok
+            ? <span key={k}>{show(part.text)}</span>
+            : <del key={k} className="lesson-diff__extra">{part.text === ' ' ? '␣' : show(part.text)}</del>)}
+        </div>
+      )}
+    </>
+  )
 }
 
 const SpeakerIcon = () => (
@@ -74,7 +97,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const isLast = rq.isLastStep
   // Indice : lettres seulement (« Goodbye! » -> G, 7 lettres)
   const answerLetters = (item?.answer || '').match(/[\p{L}\p{N}]/gu) ?? []
-  const hintFirst = (answerLetters[0] || '').toUpperCase()
+  const hintFirst = answerLetters[0] || ''
 
   useEffect(() => {
     prepareLessonAudio()
@@ -90,8 +113,9 @@ export default function FillIn({ title, instructions, content, isFrench = false,
 
   const check = () => {
     if (feedback || !input.trim() || !item) return
-    const answer = normalizeAnswer(input)
-    const correct = answer === normalizeAnswer(item.answer) || (item.alternatives || []).map(normalizeAnswer).includes(answer)
+    // Réponse exacte exigée, comme au serveur : majuscules, accents et ponctuation comptent.
+    const answer = exactAnswer(input)
+    const correct = answer === exactAnswer(item.answer) || (item.alternatives || []).map(exactAnswer).includes(answer)
     setFeedback(correct ? 'correct' : 'wrong')
     setLastAnswer(input.trim())
     if (!rq.isRetry) {
@@ -240,8 +264,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
               <img className="lesson-verdict__judi" src={isRight ? JUDI.celebrate : JUDI.encourage} alt="" />
               <div>
                 <div className="lesson-verdict__title">{isRight ? praise : L.wrong}</div>
-                {!isRight && <div className="lesson-verdict__detail">{item.answer}</div>}
-                {!isRight && lastAnswer && <div className="lesson-verdict__detail">{C.youWrote} <s>{lastAnswer}</s></div>}
+                {!isRight && <AnswerDiff expected={exactAnswer(item.answer)} actual={exactAnswer(lastAnswer)} youWrote={C.youWrote} />}
               </div>
             </div>
           ) : <span />}
