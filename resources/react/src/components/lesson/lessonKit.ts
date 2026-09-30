@@ -18,16 +18,49 @@ if (typeof window !== 'undefined' && window.visualViewport && !(window as any)._
   update()
 }
 
-/** Même règle que le serveur (ExerciseController::normalizeText) : minuscules,
- *  sans accents ni ponctuation, espaces réduits. « Goodbye » = « Goodbye! ». */
-export function normalizeAnswer(value: string): string {
+/** Même règle que le serveur (ExerciseController::exactAnswer) : la réponse doit
+ *  être exacte — majuscules, accents et ponctuation comptent (« Goodbye! »).
+ *  Seuls les espaces superflus et la forme de l'apostrophe sont tolérés. */
+export function exactAnswer(value: string): string {
   return String(value ?? '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\u2018\u2019\u02bc`]/g, "'")
-    .replace(/[^a-z0-9'\s]/g, ' ')
+    .normalize('NFC')
+    .replace(/[‘’ʼ`]/g, "'")
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+export interface DiffPart { text: string; ok: boolean }
+
+/**
+ * Compare caractère par caractère (plus longue sous-suite commune) :
+ * expected = bonne réponse, parties non retrouvées = oubliées ou fausses ;
+ * actual = réponse de l'enfant, parties non retrouvées = en trop ou fausses.
+ */
+export function diffAnswer(expected: string, actual: string): { expected: DiffPart[]; actual: DiffPart[] } {
+  const a = [...expected]
+  const b = [...actual]
+  const lcs = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0))
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1])
+    }
+  }
+  const exp: boolean[] = new Array(a.length).fill(false)
+  const act: boolean[] = new Array(b.length).fill(false)
+  let i = 0
+  let j = 0
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { exp[i] = true; act[j] = true; i++; j++ }
+    else if (lcs[i + 1][j] >= lcs[i][j + 1]) i++
+    else j++
+  }
+  const group = (chars: string[], flags: boolean[]) => chars.reduce<DiffPart[]>((parts, ch, k) => {
+    const last = parts[parts.length - 1]
+    if (last && last.ok === flags[k]) last.text += ch
+    else parts.push({ text: ch, ok: flags[k] })
+    return parts
+  }, [])
+  return { expected: group(a, exp), actual: group(b, act) }
 }
 
 export const JUDI = {

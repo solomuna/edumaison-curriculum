@@ -225,8 +225,8 @@ class ExerciseController extends Controller
             $cleanItems = $items->map(function ($item, $index) use ($submitted) {
                 $accepted = collect([(string) ($item['answer'] ?? '')])
                     ->merge($item['alternatives'] ?? [])
-                    ->map(fn ($answer) => $this->normalizeText((string) $answer));
-                $response = $this->normalizeText($submitted[$index]);
+                    ->map(fn ($answer) => $this->exactAnswer((string) $answer));
+                $response = $this->exactAnswer($submitted[$index]);
                 return ['index' => $index, 'response' => $submitted[$index], 'correct' => $accepted->contains($response)];
             });
             $score = (int) round($cleanItems->where('correct', true)->count() / $items->count() * 100);
@@ -742,6 +742,21 @@ class ExerciseController extends Controller
                 'error_type' => Str::limit((string) ($word['error_type'] ?? 'None'), 40, ''),
             ])->filter(fn ($word) => $word['word'] !== '')->values()->all(),
         ];
+    }
+
+    /**
+     * Texte à trous : la réponse doit être exacte (majuscules, accents et
+     * ponctuation comptent, comme dans le système anglophone : « Goodbye! »).
+     * Seuls les espaces superflus et la forme de l'apostrophe sont tolérés.
+     */
+    private function exactAnswer(string $value): string
+    {
+        if (class_exists(\Normalizer::class)) {
+            $value = \Normalizer::normalize($value, \Normalizer::FORM_C) ?: $value;
+        }
+        $value = str_replace(["\u{2019}", "\u{2018}", "\u{02BC}", '`'], "'", $value);
+
+        return trim((string) preg_replace('/\s+/u', ' ', $value));
     }
 
     private function normalizeText(string $value): string
