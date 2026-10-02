@@ -135,7 +135,7 @@ export default function WrittenResponse({ title, instructions, content, isFrench
           <div className="lesson-bubble">
             {instructions && <div className="lesson-bubble__hint">{instructions}</div>}
             <div className="lesson-bubble__row">
-              <button className="lesson-speak" onClick={() => MamaJudi.speakLangAfter(content.prompt, lang, 100, 0.9)} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(content.prompt, lang, 0.9) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
               <span>{content.prompt}</span>
             </div>
           </div>

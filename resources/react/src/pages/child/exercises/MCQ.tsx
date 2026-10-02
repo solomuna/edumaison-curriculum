@@ -235,7 +235,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
           <div className="lesson-bubble">
             {q.french && <div className="lesson-bubble__hint">{q.french}</div>}
             <div className="lesson-bubble__row">
-              <button className="lesson-speak" onClick={() => MamaJudi.speakLangAfter(questionText || instructions, ttsLang, 100, 0.85)} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(questionText || instructions, ttsLang, 0.85) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
               <span>{questionText}</span>
             </div>
           </div>

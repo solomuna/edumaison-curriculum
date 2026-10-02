@@ -285,3 +285,21 @@ class MamaJudiClass {
 }
 
 export const MamaJudi = new MamaJudiClass()
+
+// iPhone/iPad : Safari garde la voix du téléphone muette tant qu'une première
+// phrase n'a pas été lancée pendant un toucher. On la réveille au premier
+// toucher dans l'application, par une phrase silencieuse : les lectures
+// automatiques des énoncés (lancées sans toucher) passent ensuite.
+if (typeof window !== 'undefined' && 'speechSynthesis' in window && !isCapacitor()) {
+  const wake = () => {
+    window.removeEventListener('pointerdown', wake, true)
+    window.removeEventListener('keydown', wake, true)
+    try {
+      const silent = new SpeechSynthesisUtterance(' ')
+      silent.volume = 0
+      window.speechSynthesis.speak(silent)
+    } catch { /* synthèse indisponible */ }
+  }
+  window.addEventListener('pointerdown', wake, true)
+  window.addEventListener('keydown', wake, true)
+}

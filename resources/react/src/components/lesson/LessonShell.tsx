@@ -153,7 +153,7 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
               <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
               <div className="lesson-bubble">
                 <div className="lesson-bubble__row">
-                  <button className="lesson-speak" onClick={() => MamaJudi.speakLangAfter(instructions, lang, 100, 0.9)} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+                  <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(instructions, lang, 0.9) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
                   <span>{instructions}</span>
                 </div>
               </div>
