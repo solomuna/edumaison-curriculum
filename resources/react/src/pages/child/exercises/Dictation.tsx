@@ -190,7 +190,7 @@ export default function Dictation({ title, instructions, content, onComplete, on
       const next = streak + 1
       setStreak(next)
       setBestStreak(b => Math.max(b, next))
-      cancelVoice.current = playVerdict(true, next)
+      cancelVoice.current = playVerdict(true, next, { retry: rq.isRetry })
       const rect = checkBtn.current?.getBoundingClientRect()
       fireSuccess({ xp: XP_PER_CORRECT, x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2, y: rect ? rect.top : window.innerHeight * 0.8 })
     } else {

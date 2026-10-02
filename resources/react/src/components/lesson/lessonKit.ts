@@ -1,6 +1,7 @@
 // Kit commun de la boucle de leçon : textes, poses de Mama Judi et séquence
 // de retour (son -> bandeau -> voix) partagés par le QCM et LessonShell.
-import { MamaJudi } from '../../services/MamaJudi'
+import { useEffect } from 'react'
+import { MamaJudi, type MamaEvent } from '../../services/MamaJudi'
 import { SoundService } from '../../services/SoundService'
 import '../../styles/lesson.css'
 
@@ -111,9 +112,14 @@ export const isStreakMilestone = (n: number) => n === 3 || n === 5 || (n > 5 && 
  * bandeau, 3. la voix enregistrée de Mama Judi suit à +250 ms (si prête).
  * Renvoie une fonction qui annule la voix programmée (ex. si l'enfant continue).
  */
-export function playVerdict(correct: boolean, streak = 0): () => void {
+export function playVerdict(
+  correct: boolean,
+  streak = 0,
+  { retry = false, wrongVoice = 'wrong' }: { retry?: boolean; wrongVoice?: MamaEvent } = {},
+): () => void {
   MamaJudi.stop()
-  let voice: 'correct' | 'wrong' | 'streak3' | 'streak5' = correct ? 'correct' : 'wrong'
+  // Une question ratée réussie à la reprise : « Cette fois, c'est juste ! »
+  let voice: MamaEvent = correct ? (retry ? 'retry_correct' : 'correct') : wrongVoice
   if (correct && isStreakMilestone(streak)) {
     SoundService.streak()
     voice = streak === 3 ? 'streak3' : 'streak5'
@@ -123,13 +129,45 @@ export function playVerdict(correct: boolean, streak = 0): () => void {
     SoundService.wrong()
     if ('vibrate' in navigator) navigator.vibrate?.(120)
   }
-  const timer = window.setTimeout(() => MamaJudi.react(voice), 250)
+  // Réplique pas encore générée (nouveau moment) : on retombe sur la réplique de base.
+  const timer = window.setTimeout(() => { if (!MamaJudi.react(voice)) MamaJudi.react(correct ? 'correct' : 'wrong') }, 250)
   return () => window.clearTimeout(timer)
 }
 
 /** À appeler au montage d'une leçon : sons et voix décodés à l'avance. */
+let introDone: Promise<number> = Promise.resolve(0)
+
 export function prepareLessonAudio(isFrench = false) {
   MamaJudi.setLanguage(isFrench ? 'fr' : 'en')
   SoundService.init()
   MamaJudi.preloadVoices()
+  introDone = MamaJudi.intro()
+}
+
+/** Lit la première question après l'encouragement de début de leçon. Renvoie l'annulation. */
+export function speakAfterIntro(speak: () => void): () => void {
+  let cancelled = false
+  let timer = 0
+  void introDone.then(ms => { if (!cancelled) timer = window.setTimeout(speak, ms) })
+  return () => { cancelled = true; window.clearTimeout(timer) }
+}
+
+/** Mama Judi relance l'enfant s'il ne touche à rien pendant 25 s (une fois par question). */
+export function useIdleNudge(active: boolean, step: unknown) {
+  useEffect(() => {
+    if (!active) return
+    const events = ['pointerdown', 'keydown', 'input'] as const
+    let timer = 0
+    const stop = () => {
+      window.clearTimeout(timer)
+      events.forEach(ev => window.removeEventListener(ev, arm, true))
+    }
+    function arm() {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => { stop(); MamaJudi.react('idle') }, 25_000)
+    }
+    events.forEach(ev => window.addEventListener(ev, arm, true))
+    arm()
+    return stop
+  }, [active, step])
 }

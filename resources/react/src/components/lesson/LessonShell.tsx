@@ -9,7 +9,7 @@ import { MamaJudi } from '../../services/MamaJudi'
 import { SoundService } from '../../services/SoundService'
 import { fireSuccess } from '../SuccessFx'
 import Ardoise from '../../pages/child/exercises/Ardoise'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio, type LessonLabels } from './lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio, useIdleNudge, type LessonLabels } from './lessonKit'
 
 /** detail : texte de correction affiché dans le bandeau (jamais envoyé au serveur). */
 export type ReportResult = (correct: boolean, answers?: Record<string, unknown>, detail?: string) => void
@@ -71,6 +71,7 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
   const [saveError, setSaveError] = useState('')
   const [showArdoise, setShowArdoise] = useState(false)
   const [check, setCheck] = useState<{ ready: boolean; fn: (() => void) | null }>({ ready: false, fn: null })
+  useIdleNudge(!verdict && !submitted, 0)
   const cancelVoice = useRef<() => void>(() => {})
   const checkBtn = useRef<HTMLButtonElement>(null)
 
