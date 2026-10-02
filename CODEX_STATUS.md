@@ -1,5 +1,14 @@
 # Codex Status
 
+## 2026-10-02 - Nouveaux moments de Mama Judi et prenoms des enfants deployes : 1476804
+
+- Migration `2026_10_02_150000_create_child_voice_clips` (additive : colonne `households.child_name_voice_consent_at` + table `child_voice_clips`) appliquee seule depuis `origin/master`, apres sauvegarde verifiee : `/home/david/edumaison-backups/pre-migration-20261002T202726Z` (57 tables, SHA256SUMS).
+- Deploye via `docker/deploy.sh 1476804` (PR #36, #37). Precedent : `f0225ee`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T202741Z`.
+- #36 : 10 nouveaux moments (reprise reussie, debut de lecon, oral « plus fort » / « reecoute », relance apres 25 s), 20 MP3.
+- #37 : prenoms des enfants avec accord du parent (generation serveur ElevenLabs, stockage prive par foyer, effacement au retrait).
+- Controles : aucune migration en attente, 4 routes `name-voice` (401 sans session), nouveaux MP3 servis (200), worker de file d'attente relance, `/app` `/mama` 200 x3, aucune erreur Laravel.
+- Inactif tant que `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` ne sont pas dans le `.env` du serveur (la case parent affiche « Bientot disponible »). Pose de la cle : par l'utilisateur, avec accord.
+
 ## 2026-10-02 - Voix de Mama Judi et sons de geste deployes : f0225ee
 
 - Deploye via `docker/deploy.sh f0225ee` (PR #24, #34). Precedent : `e74fd6b`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T193931Z`. Aucune migration.
