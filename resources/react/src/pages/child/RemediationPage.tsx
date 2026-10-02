@@ -117,7 +117,7 @@ export default function RemediationPage({ child, onBack }: Props) {
         {/* Lecteur d'exercice */}
         <ExercisePlayer
           exercise={activeEx}
-          child={child}
+          onBack={() => { setActiveEx(null); setActivePlan(null) }}
           onComplete={handleComplete}
         />
       </div>
@@ -186,7 +186,7 @@ export default function RemediationPage({ child, onBack }: Props) {
         </button>
         <div>
           <div style={{ fontSize: 16, fontWeight: 900, color: '#3D2B1F' }}>Remediation Plan</div>
-          <div style={{ fontSize: 12, color: '#7A6050' }}>{child.first_name} {'\u2014'} Subjects needing extra practice</div>
+          <div style={{ fontSize: 12, color: '#7A6050' }}>{child.name} {'\u2014'} Subjects needing extra practice</div>
         </div>
       </div>
 

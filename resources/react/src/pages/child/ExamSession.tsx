@@ -196,7 +196,7 @@ export default function ExamSession({ child, exam, onBack, onComplete }: Props) 
         {exercises[cur] && (
           <ExercisePlayer
             key={exercises[cur].id}
-            exercise={{ ...exercises[cur], content: typeof exercises[cur].content === 'string' ? JSON.parse(exercises[cur].content) : exercises[cur].content, subject: exam.subject_name }}
+            exercise={{ ...exercises[cur], content: typeof exercises[cur].content === 'string' ? JSON.parse(exercises[cur].content) : exercises[cur].content, instructions: '', difficulty: '', subject: exam.subject_name }}
             onComplete={handleComplete}
             onBack={() => {}}
           />

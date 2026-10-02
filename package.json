@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "dev": "vite",
     "dev:react": "vite",
     "build:react": "vite build && copy public\\manifest.json public\\react\\manifest.json"

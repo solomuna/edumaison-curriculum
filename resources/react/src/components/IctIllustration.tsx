@@ -1,5 +1,5 @@
-﻿
-const icons: Record<string, () => JSX.Element> = {
+import type { ReactElement } from 'react'
+const icons: Record<string, () => ReactElement> = {
   monitor: () => (
     <svg viewBox="0 0 120 90" width="120" height="90" xmlns="http://www.w3.org/2000/svg">
       <rect x="5" y="4" width="110" height="66" rx="6" fill="#DBEAFE" stroke="#3B82F6" strokeWidth="3"/>
