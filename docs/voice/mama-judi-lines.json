@@ -1,0 +1,81 @@
+{
+  "_about": "Répliques de Mama Judi, communes à toutes les familles (aucun prénom). Générées en MP3 par scripts/generate-mama-voice.mjs. Plusieurs variantes par moment : l'application en choisit une au hasard.",
+  "en": {
+    "greeting": [
+      "Hello, my dear! Are you ready to learn with me today?",
+      "Welcome back! Let's learn something new together."
+    ],
+    "correct": [
+      "Well done!",
+      "Excellent, that's right!",
+      "Yes! You got it!",
+      "Very good, keep going!",
+      "Brilliant! I'm proud of you."
+    ],
+    "wrong": [
+      "Not quite. Look at the correct answer.",
+      "Almost! Let's look at it together.",
+      "Good try! You will get it next time.",
+      "Don't worry, mistakes help us learn."
+    ],
+    "streak3": [
+      "Three in a row! You're on fire!",
+      "Three correct answers! Wonderful!"
+    ],
+    "streak5": [
+      "Five in a row! You are a champion!",
+      "Five! Amazing, keep it up!"
+    ],
+    "session_perfect": [
+      "Perfect! You got everything right. Bravo!",
+      "A perfect lesson! I'm so proud of you."
+    ],
+    "session_good": [
+      "Good work! You're getting better every day.",
+      "Well done! Keep practising like this."
+    ],
+    "session_retry": [
+      "Good effort! Let's practise again, you can do it.",
+      "Every try makes you stronger. Let's try again!"
+    ]
+  },
+  "fr": {
+    "greeting": [
+      "Bonjour, mon enfant ! Tu es prêt à apprendre avec moi aujourd'hui ?",
+      "Te revoilà ! On va apprendre quelque chose de nouveau ensemble."
+    ],
+    "correct": [
+      "Bravo !",
+      "Excellent, c'est juste !",
+      "Oui ! Tu as trouvé !",
+      "Très bien, continue !",
+      "Magnifique ! Je suis fière de toi."
+    ],
+    "wrong": [
+      "Pas tout à fait. Regarde la bonne réponse.",
+      "Presque ! Regardons ensemble.",
+      "Bel essai ! Tu vas y arriver la prochaine fois.",
+      "Ce n'est pas grave, on apprend en se trompant."
+    ],
+    "streak3": [
+      "Trois de suite ! Tu es en feu !",
+      "Trois bonnes réponses ! Formidable !"
+    ],
+    "streak5": [
+      "Cinq de suite ! Tu es un champion !",
+      "Cinq ! Incroyable, continue comme ça !"
+    ],
+    "session_perfect": [
+      "Parfait ! Tu as tout juste. Bravo !",
+      "Une leçon parfaite ! Je suis tellement fière de toi."
+    ],
+    "session_good": [
+      "Beau travail ! Tu progresses chaque jour.",
+      "Bien joué ! Continue à t'entraîner comme ça."
+    ],
+    "session_retry": [
+      "Beaux efforts ! On s'entraîne encore, tu peux y arriver.",
+      "Chaque essai te rend plus fort. On recommence !"
+    ]
+  }
+}

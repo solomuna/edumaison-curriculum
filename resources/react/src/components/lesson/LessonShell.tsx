@@ -75,7 +75,7 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
   const checkBtn = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    prepareLessonAudio()
+    prepareLessonAudio(isFrench)
     return () => { cancelVoice.current(); MamaJudi.stop() }
   }, [])
 

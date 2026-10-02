@@ -80,7 +80,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
   // Sons et voix décodés à l'avance, pendant que l'enfant lit la première question.
   useEffect(() => {
-    prepareLessonAudio()
+    prepareLessonAudio(isFrenchSubject)
     return () => { clearVoice(); MamaJudi.stop() }
   }, [])
   useEffect(() => { if (q) MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [rq.step])

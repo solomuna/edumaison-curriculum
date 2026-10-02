@@ -128,7 +128,8 @@ export function playVerdict(correct: boolean, streak = 0): () => void {
 }
 
 /** À appeler au montage d'une leçon : sons et voix décodés à l'avance. */
-export function prepareLessonAudio() {
+export function prepareLessonAudio(isFrench = false) {
+  MamaJudi.setLanguage(isFrench ? 'fr' : 'en')
   SoundService.init()
   MamaJudi.preloadVoices()
 }

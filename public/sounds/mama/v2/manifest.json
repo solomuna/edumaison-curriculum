@@ -1,0 +1,211 @@
+{
+  "voice_id": "gsm4lUH9bnZ3pjR1Pw7w",
+  "model_id": "eleven_multilingual_v2",
+  "generated_at": "2026-10-02T18:31:16.172Z",
+  "clips": {
+    "en": {
+      "greeting": [
+        {
+          "file": "en/greeting_1.mp3",
+          "text": "Hello, my dear! Are you ready to learn with me today?"
+        },
+        {
+          "file": "en/greeting_2.mp3",
+          "text": "Welcome back! Let's learn something new together."
+        }
+      ],
+      "correct": [
+        {
+          "file": "en/correct_1.mp3",
+          "text": "Well done!"
+        },
+        {
+          "file": "en/correct_2.mp3",
+          "text": "Excellent, that's right!"
+        },
+        {
+          "file": "en/correct_3.mp3",
+          "text": "Yes! You got it!"
+        },
+        {
+          "file": "en/correct_4.mp3",
+          "text": "Very good, keep going!"
+        },
+        {
+          "file": "en/correct_5.mp3",
+          "text": "Brilliant! I'm proud of you."
+        }
+      ],
+      "wrong": [
+        {
+          "file": "en/wrong_1.mp3",
+          "text": "Not quite. Look at the correct answer."
+        },
+        {
+          "file": "en/wrong_2.mp3",
+          "text": "Almost! Let's look at it together."
+        },
+        {
+          "file": "en/wrong_3.mp3",
+          "text": "Good try! You will get it next time."
+        },
+        {
+          "file": "en/wrong_4.mp3",
+          "text": "Don't worry, mistakes help us learn."
+        }
+      ],
+      "streak3": [
+        {
+          "file": "en/streak3_1.mp3",
+          "text": "Three in a row! You're on fire!"
+        },
+        {
+          "file": "en/streak3_2.mp3",
+          "text": "Three correct answers! Wonderful!"
+        }
+      ],
+      "streak5": [
+        {
+          "file": "en/streak5_1.mp3",
+          "text": "Five in a row! You are a champion!"
+        },
+        {
+          "file": "en/streak5_2.mp3",
+          "text": "Five! Amazing, keep it up!"
+        }
+      ],
+      "session_perfect": [
+        {
+          "file": "en/session_perfect_1.mp3",
+          "text": "Perfect! You got everything right. Bravo!"
+        },
+        {
+          "file": "en/session_perfect_2.mp3",
+          "text": "A perfect lesson! I'm so proud of you."
+        }
+      ],
+      "session_good": [
+        {
+          "file": "en/session_good_1.mp3",
+          "text": "Good work! You're getting better every day."
+        },
+        {
+          "file": "en/session_good_2.mp3",
+          "text": "Well done! Keep practising like this."
+        }
+      ],
+      "session_retry": [
+        {
+          "file": "en/session_retry_1.mp3",
+          "text": "Good effort! Let's practise again, you can do it."
+        },
+        {
+          "file": "en/session_retry_2.mp3",
+          "text": "Every try makes you stronger. Let's try again!"
+        }
+      ]
+    },
+    "fr": {
+      "greeting": [
+        {
+          "file": "fr/greeting_1.mp3",
+          "text": "Bonjour, mon enfant ! Tu es prêt à apprendre avec moi aujourd'hui ?"
+        },
+        {
+          "file": "fr/greeting_2.mp3",
+          "text": "Te revoilà ! On va apprendre quelque chose de nouveau ensemble."
+        }
+      ],
+      "correct": [
+        {
+          "file": "fr/correct_1.mp3",
+          "text": "Bravo !"
+        },
+        {
+          "file": "fr/correct_2.mp3",
+          "text": "Excellent, c'est juste !"
+        },
+        {
+          "file": "fr/correct_3.mp3",
+          "text": "Oui ! Tu as trouvé !"
+        },
+        {
+          "file": "fr/correct_4.mp3",
+          "text": "Très bien, continue !"
+        },
+        {
+          "file": "fr/correct_5.mp3",
+          "text": "Magnifique ! Je suis fière de toi."
+        }
+      ],
+      "wrong": [
+        {
+          "file": "fr/wrong_1.mp3",
+          "text": "Pas tout à fait. Regarde la bonne réponse."
+        },
+        {
+          "file": "fr/wrong_2.mp3",
+          "text": "Presque ! Regardons ensemble."
+        },
+        {
+          "file": "fr/wrong_3.mp3",
+          "text": "Bel essai ! Tu vas y arriver la prochaine fois."
+        },
+        {
+          "file": "fr/wrong_4.mp3",
+          "text": "Ce n'est pas grave, on apprend en se trompant."
+        }
+      ],
+      "streak3": [
+        {
+          "file": "fr/streak3_1.mp3",
+          "text": "Trois de suite ! Tu es en feu !"
+        },
+        {
+          "file": "fr/streak3_2.mp3",
+          "text": "Trois bonnes réponses ! Formidable !"
+        }
+      ],
+      "streak5": [
+        {
+          "file": "fr/streak5_1.mp3",
+          "text": "Cinq de suite ! Tu es un champion !"
+        },
+        {
+          "file": "fr/streak5_2.mp3",
+          "text": "Cinq ! Incroyable, continue comme ça !"
+        }
+      ],
+      "session_perfect": [
+        {
+          "file": "fr/session_perfect_1.mp3",
+          "text": "Parfait ! Tu as tout juste. Bravo !"
+        },
+        {
+          "file": "fr/session_perfect_2.mp3",
+          "text": "Une leçon parfaite ! Je suis tellement fière de toi."
+        }
+      ],
+      "session_good": [
+        {
+          "file": "fr/session_good_1.mp3",
+          "text": "Beau travail ! Tu progresses chaque jour."
+        },
+        {
+          "file": "fr/session_good_2.mp3",
+          "text": "Bien joué ! Continue à t'entraîner comme ça."
+        }
+      ],
+      "session_retry": [
+        {
+          "file": "fr/session_retry_1.mp3",
+          "text": "Beaux efforts ! On s'entraîne encore, tu peux y arriver."
+        },
+        {
+          "file": "fr/session_retry_2.mp3",
+          "text": "Chaque essai te rend plus fort. On recommence !"
+        }
+      ]
+    }
+  }
+}

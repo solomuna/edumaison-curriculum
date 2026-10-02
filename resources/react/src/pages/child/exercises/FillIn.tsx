@@ -100,7 +100,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const hintFirst = answerLetters[0] || ''
 
   useEffect(() => {
-    prepareLessonAudio()
+    prepareLessonAudio(isFrench)
     return () => { cancelVoice.current(); MamaJudi.stop() }
   }, [])
 
