@@ -99,4 +99,6 @@ export interface Exercise {
   category: string
   difficulty: string
   content: ExerciseContent
+  /** Matière (nom), utilisée pour le choix de la voix et les illustrations. */
+  subject?: string
 }

@@ -657,8 +657,9 @@ function DictionaryModule({ child }: { child: Child }) {
 // ── Module Grammaire ──────────────────────────────────────────────────────────
 function GrammarModule({ child }: { child: Child }) {
   const defaultLvl = (() => {
-    const n = child.level_name || 'C1'
-    const m = n.match(/C(\d)/)
+    // child.level est le nom du niveau (« Class 3 ») ; on accepte aussi « C3 ».
+    const n = child.level || 'C1'
+    const m = n.match(/C(?:lass\s*)?(\d)/i)
     return m ? `C${m[1]}` : 'C1'
   })()
   const [selLevel, setSelLevel] = useState(defaultLvl)
@@ -806,8 +807,9 @@ function ConjugationModule() {
 // ── Module Maths ──────────────────────────────────────────────────────────────
 function MathsModule({ child }: { child: Child }) {
   const defaultLvl = (() => {
-    const n = child.level_name || 'C1'
-    const m = n.match(/C(\d)/)
+    // child.level est le nom du niveau (« Class 3 ») ; on accepte aussi « C3 ».
+    const n = child.level || 'C1'
+    const m = n.match(/C(?:lass\s*)?(\d)/i)
     return m ? `C${m[1]}` : 'C1'
   })()
   const [selLevel, setSelLevel] = useState(defaultLvl)

@@ -22,10 +22,10 @@ interface BulletinData {
   class_average: number | null
 }
 
-function getCompetencies(levelId: number) {
+function getCompetencies(levelId?: number) {
   // C1/C2/C3 (level_id 5-7): Reading + Handwriting separees = 110
   // C4/C5/C6 (level_id 8-10): fusionnes dans English = 60
-  const comp1 = levelId <= 7
+  const comp1 = levelId !== undefined && levelId <= 7
     ? { label: 'Comp_1 — Communication', subjects: ['English','French','National Languages and Cultures','Reading','Handwriting'], sur: 110 }
     : { label: 'Comp_1 — Communication', subjects: ['English','French','National Languages and Cultures'], sur: 60 }
   return [
