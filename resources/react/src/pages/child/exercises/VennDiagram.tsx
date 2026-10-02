@@ -15,14 +15,17 @@ export default function VennDiagram({ content, onComplete }: Props) {
   const setB: string[] = content.setB || []
   const labelA: string = content.labelA || 'A'
   const labelB: string = content.labelB || 'B'
-  const correctInter: string[] = content.intersection || []
+  const correctInter: string[] = (content.intersection || []).map(String)
   const allItems: string[] = content.items || [...setA, ...setB]
   const [placed, setPlaced] = useState<Record<string, Zone | null>>(() => Object.fromEntries(allItems.map(i => [i, null])))
   const unplaced = allItems.filter(i => placed[i] === null)
   const [picked, setPicked] = useState<string | null>(null)
   const active = picked && placed[picked] === null ? picked : unplaced[0] ?? null
 
-  const expected = (item: string): Zone => (setA.includes(item) && setB.includes(item) ? 'AB' : setA.includes(item) ? 'A' : 'B')
+  // Certains contenus listent l'intersection à part (setA / setB sans les éléments communs) :
+  // un élément de « intersection » va dans « Les deux », comme au serveur.
+  const expected = (item: string): Zone =>
+    correctInter.includes(item) || (setA.includes(item) && setB.includes(item)) ? 'AB' : setA.includes(item) ? 'A' : 'B'
 
   const placeIn = (zone: Zone) => {
     if (checked || !active) return
