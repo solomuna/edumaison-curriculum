@@ -10,6 +10,10 @@ type VoiceLang = 'en' | 'fr'
 // scripts/generate-mama-voice.mjs : plusieurs variantes par moment et par langue.
 const VOICE_BASE = '/sounds/mama/v2'
 interface VoiceManifest { clips: Partial<Record<VoiceLang, Partial<Record<MamaEvent, { file: string }[]>>>> }
+// Répliques au prénom de l'enfant (accord du parent), servies par l'API du foyer.
+interface PersonalManifest { clips: Partial<Record<VoiceLang, Partial<Record<MamaEvent, { url: string }[]>>>> }
+/** Part des réactions dites avec le prénom (le reste : pack commun, pour ne pas lasser). */
+const PERSONAL_SHARE: Partial<Record<MamaEvent, number>> = { greeting: 1, session_perfect: 1, correct: 0.3 }
 
 const isCapacitor = () => typeof (window as any).Capacitor !== 'undefined' && (window as any).Capacitor.isNativePlatform()
 
@@ -22,9 +26,32 @@ class MamaJudiClass {
   private manifest: VoiceManifest | null = null
   private manifestLoading: Promise<VoiceManifest | null> | null = null
 
-  setChild(name: string) {
+  private childId = 0
+  private personal: PersonalManifest | null = null
+  private personalLoading: Promise<void> = Promise.resolve()
+
+  setChild(name: string, id?: number) {
     this.childName = name.split(' ')[0]
     localStorage.setItem('edumaison_child', this.childName)
+    if (id && id !== this.childId) {
+      this.childId = id
+      this.personal = null
+      this.personalLoading = fetch(`/api/children/${id}/name-voice`, { headers: { Accept: 'application/json' } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { if (this.childId === id) this.personal = data?.clips ? data : null })
+        .catch(() => {})
+    }
+  }
+
+  private personalUrls(event: MamaEvent, lang: VoiceLang = this.lang): string[] {
+    return (this.personal?.clips[lang]?.[event] ?? []).map(clip => clip.url)
+  }
+
+  /** Réplique au prénom, selon la part prévue pour ce moment (null : pack commun). */
+  private personalPick(event: MamaEvent, decodedOnly: boolean): string | null {
+    if (Math.random() >= (PERSONAL_SHARE[event] ?? 0)) return null
+    const urls = this.personalUrls(event)
+    return this.pick(decodedOnly ? urls.filter(url => SoundService.isReady(url)) : urls)
   }
 
   /** Langue des répliques (celle de l'exercice en cours). */
@@ -53,7 +80,7 @@ class MamaJudiClass {
   }
 
   private playMp3(event: MamaEvent): boolean {
-    const src = this.pick(this.clipUrls(event))
+    const src = this.personalPick(event, false) ?? this.pick(this.clipUrls(event))
     if (!src) return false
     this.stopAudio()
     // Clip déjà décodé : lecture instantanée. Sinon lecture classique (moins réactive).
@@ -66,8 +93,8 @@ class MamaJudiClass {
   /** Précharge les répliques de la langue courante (lecture instantanée ensuite). */
   preloadVoices(events: MamaEvent[] = ['correct', 'wrong', 'retry_correct', 'streak3', 'streak5', 'idle', 'oral_louder', 'oral_listen_again', 'session_good', 'session_perfect', 'session_retry']) {
     const lang = this.lang
-    void this.loadManifest().then(() => events
-      .flatMap(event => this.clipUrls(event, lang))
+    void Promise.all([this.loadManifest(), this.personalLoading]).then(() => events
+      .flatMap(event => [...this.personalUrls(event, lang), ...this.clipUrls(event, lang)])
       .reduce<Promise<void>>((p, src) => p.then(() => SoundService.load(src)), Promise.resolve()))
   }
 
@@ -77,7 +104,7 @@ class MamaJudiClass {
    * et arriverait décalée par rapport à l'écran.
    */
   react(event: MamaEvent): boolean {
-    const src = this.pick(this.clipUrls(event).filter(url => SoundService.isReady(url)))
+    const src = this.personalPick(event, true) ?? this.pick(this.clipUrls(event).filter(url => SoundService.isReady(url)))
     if (!src) return false
     this.stopAudio()
     return SoundService.play(src, { exclusive: true })
@@ -174,7 +201,9 @@ class MamaJudiClass {
     return this.ttsWeb(text, lang, rate)
   }
 
-  greeting() {
+  async greeting() {
+    // Laisse au plus 1,5 s pour connaître les répliques au prénom et le pack commun.
+    await Promise.race([Promise.all([this.personalLoading, this.loadManifest()]), new Promise(r => setTimeout(r, 1500))])
     if (!this.playMp3('greeting')) void this.tts(`Bonjour ${this.childName} ! Bienvenue dans EduMaison !`)
   }
 
@@ -182,7 +211,7 @@ class MamaJudiClass {
     this.cancelScheduledSpeech()
     this.scheduledSpeech = window.setTimeout(() => {
       this.scheduledSpeech = null
-      this.greeting()
+      void this.greeting()
     }, delay)
   }
 

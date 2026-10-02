@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\ChildTimetableController;
 use App\Http\Controllers\Api\FamilyRevisionController;
 use App\Http\Controllers\Api\AcademicCalendarController;
 use App\Http\Controllers\Api\LearningPackController;
+use App\Http\Controllers\Api\ChildNameVoiceController;
 use App\Http\Controllers\Api\LanguageReviewController;
 use App\Http\Controllers\Api\NationalLanguageProfileController;
 
@@ -47,7 +48,11 @@ Route::post('/family-auth/claim-legacy', [FamilyAuthController::class, 'claimLeg
 
 Route::middleware('family.access')->group(function () {
 Route::get('/language-practice/settings', [LanguageReviewController::class, 'settings']);
+Route::get('/children/{childId}/name-voice', [ChildNameVoiceController::class, 'manifest'])->whereNumber('childId')->middleware('child.family');
+Route::get('/children/{childId}/name-voice/{clipId}', [ChildNameVoiceController::class, 'audio'])->whereNumber(['childId', 'clipId'])->middleware('child.family');
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/parent/name-voice/settings', [ChildNameVoiceController::class, 'settings']);
+    Route::put('/parent/name-voice/settings', [ChildNameVoiceController::class, 'updateSettings']);
     Route::put('/parent/language-reviews/settings', [LanguageReviewController::class, 'updateSettings']);
     Route::get('/parent/language-reviews', [LanguageReviewController::class, 'index']);
     Route::get('/parent/language-reviews/{attempt}/writing/{sampleIndex}', [LanguageReviewController::class, 'writingMedia'])->whereNumber('sampleIndex');

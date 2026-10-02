@@ -246,7 +246,7 @@ export default function ChildHome({ child, onLogout }: Props) {
   }, [child.id])
 
   useEffect(() => {
-    MamaJudi.setChild(child.name)
+    MamaJudi.setChild(child.name, child.id)
     MamaJudi.scheduleGreeting(500)
     return () => MamaJudi.stop()
   }, [])
