@@ -8,6 +8,9 @@
 type FxName = 'correct' | 'wrong' | 'perfect' | 'applause' | 'levelup' | 'streak' | 'heart_lost'
   | 'tap' | 'pop' | 'mic_on' | 'mic_off' | 'tick'
 
+/** Gain après compression : voix vers -15 dB en moyenne (effets : -16), crêtes sous -1 dB. */
+const VOICE_MAKEUP_GAIN = 1.9
+
 // Ordre = priorité de préchargement (les sons de la boucle de question d'abord).
 const FX: FxName[] = ['tap', 'correct', 'wrong', 'pop', 'streak', 'mic_on', 'mic_off', 'perfect', 'tick', 'heart_lost', 'levelup', 'applause']
 
@@ -84,6 +87,28 @@ class SoundServiceClass {
     return entry ? Math.round((entry.buffer.duration - entry.offset) * 1000) : 0
   }
 
+  private voiceBus: AudioNode | null = null
+
+  /**
+   * Voix de Mama Judi (clip exclusif) : les MP3 ElevenLabs sortent vers -25 LUFS,
+   * environ 7 dB sous les effets. Un compresseur suivi d'un gain les remonte
+   * sans saturer les crêtes, pour le pack commun comme pour les répliques au prénom.
+   */
+  private getVoiceBus(ctx: AudioContext): AudioNode {
+    if (this.voiceBus) return this.voiceBus
+    const compressor = ctx.createDynamicsCompressor()
+    compressor.threshold.value = -30
+    compressor.knee.value = 6
+    compressor.ratio.value = 6
+    compressor.attack.value = 0.003
+    compressor.release.value = 0.25
+    const makeup = ctx.createGain()
+    makeup.gain.value = VOICE_MAKEUP_GAIN
+    compressor.connect(makeup).connect(ctx.destination)
+    this.voiceBus = compressor
+    return compressor
+  }
+
   /** Joue un son décodé immédiatement. Renvoie false s'il n'est pas prêt. */
   play(url: string, { exclusive = false, volume = 1 } = {}): boolean {
     const entry = this.buffers.get(url)
@@ -94,7 +119,7 @@ class SoundServiceClass {
     src.buffer = entry.buffer
     const gain = ctx.createGain()
     gain.gain.value = volume
-    src.connect(gain).connect(ctx.destination)
+    src.connect(gain).connect(exclusive ? this.getVoiceBus(ctx) : ctx.destination)
     src.start(0, entry.offset)
     if (exclusive) {
       this.clip = src

@@ -226,7 +226,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
           <div className="lesson-bubble">
             {instructions && <div className="lesson-bubble__hint">{instructions}</div>}
             <div className="lesson-bubble__row">
-              <button className="lesson-speak" onClick={() => MamaJudi.speakLangAfter(spoken, lang, 100, 0.85)} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(spoken, lang, 0.85) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
               <span className="lesson-fill__sentence">
                 <span>{parts[0]}</span>
                 {feedback ? (

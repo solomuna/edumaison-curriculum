@@ -68,6 +68,7 @@ import MamaJudiPose from '../../components/MamaJudiPose'
 
 import { normalizeExerciseContent } from '../../lib/normalizeExercise'
 
+import { speakAfterIntro } from '../../components/lesson/lessonKit'
 import LessonShell, { type ReportResult } from '../../components/lesson/LessonShell'
 
 
@@ -559,29 +560,19 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    const text = exercise.instructions || exercise.title
-
-
-
+    // Consigne, puis énoncé quand il y en a un (vrai/faux, géométrie).
+    const statement = typeof content.statement === 'string' ? content.statement : typeof content.question === 'string' ? content.question : ''
+    // Ponctuation d'origine gardée (« ? » donne l'intonation) ; un point ajouté seulement s'il manque.
+    const text = [exercise.instructions || exercise.title, statement]
+      .map(part => (part ?? '').trim())
+      .filter(Boolean)
+      .map(part => (/[.!?:;]$/.test(part) ? part : `${part}.`))
+      .join(' ')
     if (!text) return
-
-
-
     const lang = isFrench ? 'fr-FR' : 'en-GB'
-
-
-
-    // Annuler tout TTS en cours avant de lire
-
-
-
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
-
-
-
-    MamaJudi.speakLangAfter(text, lang, 800)
-
-    return () => MamaJudi.stop()
+    // Après l'encouragement de début de leçon (« C'est parti ! »), sans le couper.
+    const cancel = speakAfterIntro(() => MamaJudi.speakLangAfter(text, lang, 800))
+    return () => { cancel(); MamaJudi.stop() }
 
 
 
