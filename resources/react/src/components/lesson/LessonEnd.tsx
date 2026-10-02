@@ -18,14 +18,21 @@ interface Props {
   onContinue: () => void | Promise<unknown>
 }
 
-function useCountUp(target: number, delay: number) {
+function useCountUp(target: number, delay: number, sound = false) {
   const [value, setValue] = useState(0)
   useEffect(() => {
     let frame = 0
+    let shown = 0
     const start = performance.now() + delay
     const tick = (now: number) => {
       const t = Math.min(1, Math.max(0, (now - start) / 700))
-      setValue(Math.round(target * (1 - Math.pow(1 - t, 3))))
+      const next = Math.round(target * (1 - Math.pow(1 - t, 3)))
+      if (next !== shown) {
+        shown = next
+        setValue(next)
+        // Cliquetis pendant que le compteur monte (limité dans SoundService.tick).
+        if (sound && next > 0) SoundService.tick()
+      }
       if (t < 1) frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
@@ -56,7 +63,7 @@ export default function LessonEnd({ isFrench, results, total, bestStreak, accura
     }
   }
   const good = pct >= 70
-  const xp = useCountUp(correct * XP_PER_CORRECT, 550)
+  const xp = useCountUp(correct * XP_PER_CORRECT, 550, true)
   const acc = useCountUp(pct, 700)
   const best = useCountUp(bestStreak, 850)
 

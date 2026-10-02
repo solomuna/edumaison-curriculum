@@ -88,7 +88,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
   const select = (idx: number) => {
     if (checked) return
-    SoundService.click()
+    SoundService.tap()
     setSelectedIdx(idx)
   }
 

@@ -6,9 +6,10 @@
 // un retour sonore décalé par rapport à l'écran est pire qu'un son simple.
 
 type FxName = 'correct' | 'wrong' | 'perfect' | 'applause' | 'levelup' | 'streak' | 'heart_lost'
+  | 'tap' | 'pop' | 'mic_on' | 'mic_off' | 'tick'
 
 // Ordre = priorité de préchargement (les sons de la boucle de question d'abord).
-const FX: FxName[] = ['correct', 'wrong', 'streak', 'perfect', 'heart_lost', 'levelup', 'applause']
+const FX: FxName[] = ['tap', 'correct', 'wrong', 'pop', 'streak', 'mic_on', 'mic_off', 'perfect', 'tick', 'heart_lost', 'levelup', 'applause']
 
 class SoundServiceClass {
   private ctx: AudioContext | null = null
@@ -149,6 +150,31 @@ class SoundServiceClass {
     this.fx('heart_lost', () => {
       this.tone(440, 0.15, 'sawtooth', 0.2); this.tone(330, 0.15, 'sawtooth', 0.2, 0.15); this.tone(220, 0.3, 'sawtooth', 0.15, 0.3)
     })
+  }
+  // Sons de geste (style Duolingo) : plus discrets que le verdict pour ne pas fatiguer.
+  /** Toucher un choix, une tuile, un mot. */
+  tap() {
+    this.fx('tap', () => this.tone(660, 0.04, 'sine', 0.12), 0.45)
+  }
+  /** Une paire associée se forme. */
+  pop() {
+    this.fx('pop', () => { this.tone(740, 0.06, 'sine', 0.2); this.tone(988, 0.1, 'sine', 0.2, 0.05) }, 0.7)
+  }
+  /** Le micro commence à écouter. */
+  micOn() {
+    this.fx('mic_on', () => { this.tone(587, 0.08, 'sine', 0.22); this.tone(880, 0.12, 'sine', 0.22, 0.08) }, 0.7)
+  }
+  /** Le micro s'arrête. */
+  micOff() {
+    this.fx('mic_off', () => { this.tone(880, 0.08, 'sine', 0.2); this.tone(587, 0.12, 'sine', 0.2, 0.08) }, 0.6)
+  }
+  private lastTick = 0
+  /** Compteur qui monte (XP en fin de leçon) : au plus un tic toutes les 70 ms. */
+  tick() {
+    const now = performance.now()
+    if (now - this.lastTick < 70) return
+    this.lastTick = now
+    this.fx('tick', () => this.tone(1568, 0.03, 'sine', 0.08), 0.3)
   }
   star()  { this.tone(1047, 0.08, 'sine', 0.2); this.tone(1319, 0.15, 'sine', 0.2, 0.08) }
   click() { this.tone(800, 0.05, 'sine', 0.12) }

@@ -42,7 +42,7 @@ export function useLessonCheck(ready: boolean, onCheck: () => void) {
 }
 
 /** Petit son de sélection, commun aux moteurs. */
-export const tapSound = () => SoundService.click()
+export const tapSound = () => SoundService.tap()
 
 interface Props {
   title: string
