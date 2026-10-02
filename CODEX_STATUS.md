@@ -1,5 +1,14 @@
 # Codex Status
 
+## 2026-10-02 - Voix de Mama Judi et sons de geste deployes : f0225ee
+
+- Deploye via `docker/deploy.sh f0225ee` (PR #24, #34). Precedent : `e74fd6b`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T193931Z`. Aucune migration.
+- #24 : pack de voix commun Mama Judi (ElevenLabs, 21 repliques EN + 21 FR, `public/sounds/mama/v2`). Anciens MP3 contenant des prenoms d'enfants retires (verifie : 0 fichier restant sur le serveur).
+- #34 : sons de geste (tap, pop, micro on/off, cliquetis XP), nouvelles versions de « mauvaise reponse » et « lecon parfaite » choisies par l'utilisateur ; niveaux harmonises.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, fichiers de voix et de sons servis (200, audio/mpeg), aucune erreur Laravel.
+- En cours : nouveaux moments de Mama Judi (`feat/mama-judi-moments`, audio a generer) et prenoms des enfants (`feat/child-name-voice`, cle ElevenLabs a poser sur le serveur avec accord).
+- Constat a corriger plus tard : la migration `2026_08_10_180000_personalize_mama_profiles_by_household` modifie `mama_profile`, table creee hors migrations ; une base neuve ne peut pas etre reconstruite.
+
 ## 2026-10-02 - Emojis repares et alerte branchee (accord utilisateur)
 
 - `NurseryLostEmojiRepairSeeder` lance en production : exercices 2650, 2651, 2654, 2659 repares, verifies (dessins coherents avec les reponses). Sauvegarde prealable des 4 lignes : `/home/david/edumaison-backups/emoji-repair-20261002T141651Z.sql`.
