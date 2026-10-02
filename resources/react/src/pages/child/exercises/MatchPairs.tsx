@@ -48,11 +48,23 @@ export default function MatchPairs({ content, onComplete }: Props) {
     setSelLeft(null)
   }
 
-  useLessonCheck(allMatched, () => {
-    let ok = true
+  // Paire juste si (mot, réponse) figure parmi les paires attendues, doublons compris
+  // (« 4+4 » et « 5+3 » vont tous deux avec n'importe quel « 8 ») : même règle que le serveur.
+  const pairVerdicts = (): Record<number, boolean> => {
+    const pool = new Map<string, number>()
+    pairs.forEach(p => { const k = `${p.word}${p.image}`; pool.set(k, (pool.get(k) ?? 0) + 1) })
+    const verdicts: Record<number, boolean> = {}
     Object.entries(matches).forEach(([li, ri]) => {
-      if (pairs[Number(li)].word !== rightOrder[Number(ri)].word) ok = false
+      const k = `${pairs[Number(li)].word}${rightOrder[Number(ri)].image}`
+      const left = pool.get(k) ?? 0
+      verdicts[Number(li)] = left > 0
+      if (left > 0) pool.set(k, left - 1)
     })
+    return verdicts
+  }
+
+  useLessonCheck(allMatched, () => {
+    const ok = Object.values(pairVerdicts()).every(Boolean)
     setResult(ok)
     onComplete(ok, {
       pairs: Object.entries(matches).map(([leftIndex, rightIndex]) => ({
@@ -74,8 +86,7 @@ export default function MatchPairs({ content, onComplete }: Props) {
   const pairOf = (rightIndex: number) => Object.entries(matches).find(([, ri]) => Number(ri) === rightIndex)
   const tone = (leftIndex: number) => {
     if (!checked || result === null) return ''
-    const ri = matches[leftIndex]
-    return ri !== undefined && pairs[leftIndex].word === rightOrder[ri].word ? ' is-right' : ' is-wrong'
+    return pairVerdicts()[leftIndex] ? ' is-right' : ' is-wrong'
   }
 
   return (

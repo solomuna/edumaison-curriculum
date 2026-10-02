@@ -105,7 +105,7 @@ class ExerciseController extends Controller
             (int) $validated['child_id'],
             $householdId
         );
-        $content = is_array($exercise->content) ? $exercise->content : json_decode($exercise->content, true) ?? [];
+        $content = $this->normalizeContent(is_array($exercise->content) ? $exercise->content : json_decode($exercise->content, true) ?? []);
         $type = (string) ($content['type'] ?? '');
         if ($type === 'oral_drill') {
             $validated = $this->resolveSpeakingAssessments($validated, $exercise, $content);
@@ -195,17 +195,68 @@ class ExerciseController extends Controller
         return $validated;
     }
 
+    /**
+     * Même logique que l'écran (resources/react/src/lib/normalizeExercise.ts) :
+     * type déduit de la forme du contenu quand il manque. Sans cela, ces
+     * exercices étaient notés sur la seule note envoyée par le téléphone.
+     */
+    private function normalizeContent(array $content): array
+    {
+        if (($content['type'] ?? '') === '') {
+            $content['type'] = match (true) {
+                is_array($content['questions'] ?? null) || array_key_exists('options', $content) => 'mcq',
+                isset($content['pairs']) => 'match_pairs',
+                isset($content['words']) && array_key_exists('answer', $content) => 'sentence_order',
+                array_key_exists('statement', $content) => 'true_false',
+                array_key_exists('sentence', $content) && array_key_exists('answer', $content) => 'fill_in',
+                default => '',
+            };
+        }
+
+        return $content;
+    }
+
+    /**
+     * Position de la bonne réponse, même règle que l'écran : un entier est une
+     * position ; un texte présent dans les choix désigne ce choix (« 3 » parmi
+     * 1, 2, 3, 4 = le choix « 3 ») ; sinon un texte numérique est une position.
+     */
+    private function optionIndex(mixed $answer, array $options): int|false
+    {
+        if (is_int($answer)) return $answer;
+        if (is_string($answer)) {
+            $found = array_search($answer, $options, true);
+            if ($found !== false) return $found;
+            if (is_numeric($answer)) return (int) $answer;
+        }
+
+        return false;
+    }
+
+    /** Choix de QCM : liste, ou texte JSON enregistré par erreur (« "[\"A\",\"B\"]" »). */
+    private function parseOptions(mixed $options): array
+    {
+        if (is_string($options)) {
+            $decoded = json_decode($options, true);
+            $options = is_array($decoded) ? $decoded : (trim($options) === '' ? [] : [$options]);
+        }
+
+        return array_values(array_map('strval', (array) $options));
+    }
+
     private function verifiedAttemptData(string $type, array $content, array $validated): array
     {
         $answers = $validated['answers'] ?? [];
         $evidence = $validated['evidence'] ?? [];
 
         if (in_array($type, ['mcq', 'multiple_choice'], true)) {
-            $questions = collect($content['questions'] ?? []);
+            $questions = collect($content['questions'] ?? [])->map(fn ($question) => is_array($question)
+                ? ['options' => $this->parseOptions($question['options'] ?? [])] + $question
+                : $question);
             if ($questions->isEmpty() && isset($content['question'], $content['options'])) {
                 $questions = collect([[
                     'question' => $content['question'],
-                    'options' => $content['options'],
+                    'options' => $this->parseOptions($content['options']),
                     'answer' => $content['answer'] ?? 0,
                 ]]);
             }
@@ -218,7 +269,7 @@ class ExerciseController extends Controller
                 $selected = (int) ($entry['selected_index'] ?? -1);
                 $options = array_values((array) ($question['options'] ?? []));
                 $answer = $question['answer'] ?? 0;
-                $correctIndex = is_numeric($answer) ? (int) $answer : array_search($answer, $options, true);
+                $correctIndex = $this->optionIndex($answer, $options);
                 if ($selected < 0 || $selected >= count($options) || $correctIndex === false) {
                     throw ValidationException::withMessages(['answers.items' => 'An answer index is invalid.']);
                 }
@@ -301,7 +352,7 @@ class ExerciseController extends Controller
             }
 
             $answer = $content['answer'] ?? null;
-            $correctIndex = is_numeric($answer) ? (int) $answer : array_search($answer, $options, true);
+            $correctIndex = $this->optionIndex($answer, $options);
             $selected = $answers['selected_index'] ?? null;
             if (! is_int($selected)
                 || $selected < 0
@@ -342,6 +393,7 @@ class ExerciseController extends Controller
         if ($type === 'venn_diagram') {
             $setA = array_values(array_map('strval', (array) ($content['setA'] ?? [])));
             $setB = array_values(array_map('strval', (array) ($content['setB'] ?? [])));
+            $intersection = array_values(array_map('strval', (array) ($content['intersection'] ?? [])));
             $items = array_values(array_map(
                 'strval',
                 (array) ($content['items'] ?? array_values(array_unique(array_merge($setA, $setB)))),
@@ -360,7 +412,9 @@ class ExerciseController extends Controller
                 }
                 $inA = in_array($item, $setA, true);
                 $inB = in_array($item, $setB, true);
-                $expectedZone = $inA && $inB ? 'AB' : ($inA ? 'A' : ($inB ? 'B' : null));
+                // Certains contenus listent l'intersection à part (setA / setB sans les éléments communs).
+                $inBoth = ($inA && $inB) || in_array($item, $intersection, true);
+                $expectedZone = $inBoth ? 'AB' : ($inA ? 'A' : ($inB ? 'B' : null));
                 if ($expectedZone === null) {
                     throw ValidationException::withMessages(['answers.placements' => 'A Venn item does not belong to either set.']);
                 }

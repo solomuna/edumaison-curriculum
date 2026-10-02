@@ -44,6 +44,45 @@ class LanguageAttemptVerificationTest extends TestCase
         }
     }
 
+    public function test_mcq_options_stored_as_json_text_are_read_as_a_list(): void
+    {
+        [$score] = $this->verify('mcq', ['type' => 'mcq', 'questions' => [[
+            'question' => 'Germany lost its colonies in Cameroon after which event?',
+            'options' => '["World War I","World War II","The Berlin Conference","The French Revolution"]',
+            'answer' => 0,
+        ]]], ['answers' => ['items' => [['question_index' => 0, 'selected_index' => 0]]]]);
+
+        $this->assertSame(100, $score);
+    }
+
+    public function test_untyped_flat_mcq_is_recognised_and_scored(): void
+    {
+        $normalize = new ReflectionMethod(ExerciseController::class, 'normalizeContent');
+        $normalize->setAccessible(true);
+        $content = $normalize->invoke(new ExerciseController(), [
+            'question' => 'How many stars are there? ★★★', 'options' => ['1', '2', '3', '4'], 'answer' => '3',
+        ]);
+
+        $this->assertSame('mcq', $content['type']);
+        [$score] = $this->verify('mcq', $content, ['answers' => ['items' => [['question_index' => 0, 'selected_index' => 2]]]]);
+        $this->assertSame(100, $score);
+    }
+
+    public function test_venn_items_listed_only_in_intersection_belong_to_both(): void
+    {
+        $content = ['type' => 'venn_diagram', 'setA' => ['1', '3'], 'setB' => ['6', '8'], 'intersection' => ['2', '4'], 'items' => ['1', '2', '3', '4', '6', '8']];
+
+        [$score] = $this->verify('venn_diagram', $content, ['answers' => ['placements' => [
+            '1' => 'A', '2' => 'AB', '3' => 'A', '4' => 'AB', '6' => 'B', '8' => 'B',
+        ]]]);
+        $this->assertSame(100, $score);
+
+        [$score] = $this->verify('venn_diagram', $content, ['answers' => ['placements' => [
+            '1' => 'A', '2' => 'B', '3' => 'A', '4' => 'AB', '6' => 'B', '8' => 'B',
+        ]]]);
+        $this->assertSame(0, $score);
+    }
+
     public function test_match_pairs_accepts_repeated_left_words(): void
     {
         $content = ['type' => 'match_pairs', 'pairs' => [
