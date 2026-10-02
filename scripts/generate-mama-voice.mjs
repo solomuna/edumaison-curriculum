@@ -12,8 +12,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const apiKey = process.env.ELEVENLABS_API_KEY
-const voiceId = process.env.ELEVENLABS_VOICE_ID
+// Espaces ou guillemets collés par erreur autour des valeurs : ignorés.
+const clean = value => (value ?? '').trim().replace(/^["']|["']$/g, '')
+const apiKey = clean(process.env.ELEVENLABS_API_KEY)
+const voiceId = clean(process.env.ELEVENLABS_VOICE_ID)
 const modelId = process.env.ELEVENLABS_MODEL || 'eleven_multilingual_v2'
 const force = process.argv.includes('--force')
 
@@ -22,6 +24,25 @@ if (!apiKey || !voiceId) {
   process.exit(1)
 }
 
+// Vérifie la voix avant toute génération (et toute facturation).
+const check = await fetch(`https://api.elevenlabs.io/v1/voices/${encodeURIComponent(voiceId)}`, { headers: { 'xi-api-key': apiKey } })
+if (check.status === 404 || check.status === 400) {
+  console.error([
+    `Voix introuvable (HTTP ${check.status}) pour l'identifiant « ${voiceId} ».`,
+    "- Copie l'ID depuis Voix > « … » > Copier l'ID de la voix (environ 20 caractères).",
+    "- Une voix de la Voice Library doit d'abord être ajoutée à « Mes voix ».",
+  ].join('\n'))
+  process.exitCode = 1
+} else if (!check.ok) {
+  // Clé limitée à Text to Speech : la vérification n'est pas permise, on génère directement.
+  console.log(`Vérification de la voix impossible (HTTP ${check.status}), génération quand même.`)
+  await generate()
+} else {
+  console.log(`Voix trouvée : ${(await check.json()).name}`)
+  await generate()
+}
+
+async function generate() {
 const lines = JSON.parse(await readFile(join(root, 'docs/voice/mama-judi-lines.json'), 'utf-8'))
 const outDir = join(root, 'public/sounds/mama/v2')
 const manifest = { voice_id: voiceId, model_id: modelId, generated_at: new Date().toISOString(), clips: {} }
@@ -51,7 +72,8 @@ for (const [lang, events] of Object.entries(lines)) {
       })
       if (!res.ok) {
         console.error(`Échec ${lang}/${file} : HTTP ${res.status} ${await res.text()}`)
-        process.exit(1)
+        process.exitCode = 1
+        return
       }
       await writeFile(path, Buffer.from(await res.arrayBuffer()))
       created++
@@ -63,3 +85,4 @@ for (const [lang, events] of Object.entries(lines)) {
 
 await writeFile(join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
 console.log(`\nTerminé : ${created} fichier(s) créé(s), ${kept} conservé(s). Inventaire : public/sounds/mama/v2/manifest.json`)
+}
