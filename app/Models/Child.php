@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Jobs\SyncChildNameVoice;
+use App\Services\ChildNameVoice;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,6 +31,19 @@ class Child extends Model
         'campus_school_id'    => 'integer',
         'campus_last_sync_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Voix au prénom : générée à la création, regénérée si le prénom change
+        // (le job ne fait rien sans l'accord du foyer), effacée avec l'enfant.
+        static::created(function (Child $child) {
+            if ($child->household?->child_name_voice_consent_at) SyncChildNameVoice::dispatch($child->id);
+        });
+        static::updated(function (Child $child) {
+            if ($child->wasChanged('first_name') && $child->household?->child_name_voice_consent_at) SyncChildNameVoice::dispatch($child->id);
+        });
+        static::deleting(fn (Child $child) => app(ChildNameVoice::class)->purge($child));
+    }
 
     /** Cet enfant est-il relie a un eleve EduMaison-Campus ? */
     public function isLinkedToCampus(): bool

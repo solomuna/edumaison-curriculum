@@ -15,11 +15,12 @@ class Household extends Model
     protected $fillable = [
         'name', 'city', 'school', 'national_language_id', 'national_language_other_name',
         'locale', 'timezone', 'speaking_audio_consent_at',
-        'speaking_audio_retention_days', 'access_pin_hash', 'is_active',
+        'speaking_audio_retention_days', 'access_pin_hash', 'is_active', 'child_name_voice_consent_at',
     ];
 
     protected $casts = [
         'speaking_audio_consent_at' => 'datetime',
+        'child_name_voice_consent_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 

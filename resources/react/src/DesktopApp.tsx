@@ -88,7 +88,7 @@ export default function DesktopApp({ child, onLogout }: Props) {
   }, [child.id])
 
   useEffect(() => {
-    MamaJudi.setChild(child.name)
+    MamaJudi.setChild(child.name, child.id)
     MamaJudi.scheduleGreeting(600)
     return () => MamaJudi.stop()
   }, [])

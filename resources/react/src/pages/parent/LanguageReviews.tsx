@@ -66,6 +66,56 @@ async function writeJson(url: string, method: string, body?: unknown) {
   return payload
 }
 
+/** Mama Judi dit le prénom des enfants : accord explicite du parent, retrait = effacement. */
+function NameVoiceSetting() {
+  const [state, setState] = useState<{ enabled: boolean; available: boolean } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    fetch('/api/parent/name-voice/settings', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(response => (response.ok ? response.json() : null))
+      .then(setState)
+      .catch(() => setState(null))
+  }, [])
+
+  const toggle = async (enabled: boolean) => {
+    if (enabled && !window.confirm([
+      'Mama Judi dira le prénom de vos enfants (« Bravo Ama ! »).',
+      'Pour fabriquer cette voix, le prénom est envoyé au service de synthèse vocale ElevenLabs. '
+        + 'Les enregistrements restent privés à votre famille et sont effacés si vous décochez cette case.',
+      'Accepter ?',
+    ].join('\n\n'))) return
+    setBusy(true)
+    setError('')
+    try {
+      setState(await writeJson('/api/parent/name-voice/settings', 'PUT', { enabled }))
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Action impossible.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!state) return null
+  return (
+    <div style={{ marginTop: 14 }}>
+      <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, fontWeight: 800 }}>
+        <span>Mama Judi dit le prénom de mes enfants</span>
+        <input type="checkbox" checked={state.enabled} disabled={busy || (!state.available && !state.enabled)} onChange={event => toggle(event.target.checked)} style={{ width: 22, height: 22 }} />
+      </label>
+      <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-soft)' }}>
+        {!state.available && !state.enabled
+          ? 'Bientôt disponible.'
+          : state.enabled
+            ? 'Activé : la voix est préparée en quelques minutes. Décocher efface les enregistrements.'
+            : 'Le prénom est envoyé à ElevenLabs pour fabriquer la voix ; les enregistrements restent privés.'}
+      </div>
+      {error && <div role="alert" style={{ marginTop: 6, fontSize: 13, color: '#B42318' }}>{error}</div>}
+    </div>
+  )
+}
+
 function WritingItem({ item, onReviewed }: { item: WritingReview; onReviewed: () => void }) {
   const rubricLabels = item.type === 'handwriting' ? handwritingRubricLabels : writingRubricLabels
   const [rubric, setRubric] = useState<Record<string, number>>(() => Object.fromEntries(Object.keys(rubricLabels).map(key => [key, 2])))
@@ -228,6 +278,7 @@ export default function LanguageReviews() {
             </select>
           </label>
         )}
+        <NameVoiceSetting />
       </section>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 18 }}>
         <button onClick={() => setSection('writing')} style={{ minHeight: 44, border: section === 'writing' ? '2px solid #1D6B2A' : '1px solid var(--border)', borderRadius: 8, background: section === 'writing' ? '#E7F3E8' : 'var(--card)', color: '#2D1B0E', fontWeight: 900 }}>Écritures ({data.pending_writing.length})</button>

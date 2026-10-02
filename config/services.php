@@ -35,6 +35,13 @@ return [
         'email' => env('ALERT_EMAIL', ''),
     ],
 
+    // Voix de Mama Judi au prénom de l'enfant (accord du foyer requis).
+    'elevenlabs' => [
+        'key' => env('ELEVENLABS_API_KEY', ''),
+        'voice_id' => env('ELEVENLABS_VOICE_ID', ''),
+        'model' => env('ELEVENLABS_MODEL', 'eleven_multilingual_v2'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
