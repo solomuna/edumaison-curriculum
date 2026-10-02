@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-10-02 - Exercice oral sur iPhone corrige : e74fd6b
+
+- Deploye via `docker/deploy.sh e74fd6b` (PR #32). Precedent : `feaa395`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T141011Z`. Aucune migration.
+- Cause (test utilisateur sur iPhone) : Safari envoie des resultats provisoires et souvent jamais de resultat final ; l'exercice oral n'attendait que ce dernier, donc aucune reaction, meme sur Stop.
+- Correction : resultats provisoires gardes ; verdict apres 1,5 s de silence, sur Stop, a la fin de l'ecoute ou apres 8 s au plus tard.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, bundle contenant la correction, aucune erreur Laravel.
+- Verification utilisateur restante : rejouer un exercice oral sur iPhone (Class 1 English, « Listen and Repeat »).
+
 ## 2026-10-02 - Lot de nuit deploye (contenus, alerte, oral, types) : feaa395
 
 - Deploye via `docker/deploy.sh feaa395` (PR #25, #26, #27, #28, #29, #30). Precedent : `cd1bb63`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T075935Z`. Aucune migration.
