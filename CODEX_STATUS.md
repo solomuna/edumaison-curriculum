@@ -1,5 +1,10 @@
 # Codex Status
 
+## 2026-10-02 - Emojis repares et alerte branchee (accord utilisateur)
+
+- `NurseryLostEmojiRepairSeeder` lance en production : exercices 2650, 2651, 2654, 2659 repares, verifies (dessins coherents avec les reponses). Sauvegarde prealable des 4 lignes : `/home/david/edumaison-backups/emoji-repair-20261002T141651Z.sql`.
+- `ALERT_WEBHOOK_URL` (canal ntfy prive, nom aleatoire, non ecrit ici) ajoute au `.env` du serveur. Sauvegarde prealable : `/home/david/edumaison-backups/env-20261002T141735Z`. Notification de test envoyee (HTTP 200). L'e-mail n'est pas utilisable : `MAIL_MAILER=log`.
+
 ## 2026-10-02 - Exercice oral sur iPhone corrige : e74fd6b
 
 - Deploye via `docker/deploy.sh e74fd6b` (PR #32). Precedent : `feaa395`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T141011Z`. Aucune migration.
