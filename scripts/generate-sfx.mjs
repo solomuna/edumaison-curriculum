@@ -87,6 +87,10 @@ if (pick !== null) {
       }
     }
     console.log(`\n${created} candidat(s) créé(s), ${kept} conservé(s) dans storage/app/sfx-candidates/.`)
-    console.log('Écoute-les, puis : node scripts/generate-sfx.mjs --pick tap=1,pop=2,...')
+    if (process.exitCode === 1) {
+      console.log('Génération interrompue : corrige le problème ci-dessus puis relance (les fichiers déjà créés sont gardés).')
+    } else {
+      console.log('Écoute-les, puis : node scripts/generate-sfx.mjs --pick tap=1,pop=2,...')
+    }
   }
 }
