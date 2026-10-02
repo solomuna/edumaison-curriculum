@@ -138,6 +138,7 @@ export default function OralDrill({ title, instructions, content, isFrench: isFr
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const stopTimerRef = useRef<number | null>(null)
+  const finishRef = useRef<((failure?: string) => void) | null>(null)
   const lessonAudioRef = useRef<HTMLAudioElement | null>(null)
   const cancelVoice = useRef<() => void>(() => {})
   const micBtn = useRef<HTMLButtonElement>(null)
@@ -258,34 +259,69 @@ export default function OralDrill({ title, instructions, content, isFrench: isFr
     const recognition = new SR()
     recognitionRef.current = recognition
     recognition.lang = isFrench ? 'fr-FR' : 'en-GB'
-    recognition.interimResults = false
+    // Safari (iPhone, iPad) livre souvent des résultats provisoires sans jamais
+    // de résultat final : on garde le meilleur entendu au fil de l'eau et on
+    // conclut au silence, sur « Stop » ou au délai maximal.
+    recognition.interimResults = true
+    recognition.continuous = false
     recognition.maxAlternatives = 3
-    recognition.onstart = () => setRecording(true)
-    recognition.onend = () => stopAudioCapture()
-    recognition.onerror = (e: any) => {
+    let heardText = ''
+    let heardScore = 0
+    let settled = false
+    let silenceTimer: number | null = null
+    const finish = (failure?: string) => {
+      if (settled) return
+      settled = true
+      finishRef.current = null
+      if (silenceTimer) window.clearTimeout(silenceTimer)
+      try { recognition.abort() } catch { /* déjà arrêtée */ }
       stopAudioCapture()
-      if (e.error === 'no-speech') setError(t.noSpeech)
-      else if (e.error === 'not-allowed') { setSpeechSupported(false); setError('') }
-      else setError(t.notHeard)
+      if (heardText.trim()) verdict(heardText, heardScore)
+      else setError(failure ?? t.noSpeech)
+    }
+    finishRef.current = finish
+    recognition.onstart = () => setRecording(true)
+    recognition.onend = () => finish()
+    recognition.onerror = (e: any) => {
+      if (e.error === 'aborted') return
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        settled = true
+        finishRef.current = null
+        stopAudioCapture()
+        setSpeechSupported(false)
+        setError('')
+        return
+      }
+      finish(e.error === 'no-speech' ? t.noSpeech : t.notHeard)
     }
     recognition.onresult = (e: any) => {
-      // Prendre la meilleure alternative
+      // Phrase entendue jusqu'ici ; pour le dernier morceau, la meilleure alternative.
+      const results = Array.from(e.results as ArrayLike<any>)
+      if (results.length === 0) return
+      const head = results.slice(0, -1).map(r => r[0]?.transcript ?? '').join(' ')
+      const last = results[results.length - 1]
       let best = ''
-      let bestScore = 0
-      for (let i = 0; i < e.results[0].length; i++) {
-        const alt = e.results[0][i].transcript
-        const s = similarity(item.text, alt)
-        if (s > bestScore || !best) { bestScore = s; best = alt }
+      let bestScore = -1
+      for (let i = 0; i < last.length; i++) {
+        const candidate = `${head} ${last[i].transcript}`.replace(/\s+/g, ' ').trim()
+        const s = similarity(item.text, candidate)
+        if (s > bestScore) { bestScore = s; best = candidate }
       }
-      verdict(best, bestScore)
+      if (best) { heardText = best; heardScore = Math.max(0, bestScore) }
+      if (last.isFinal) { finish(); return }
+      if (silenceTimer) window.clearTimeout(silenceTimer)
+      silenceTimer = window.setTimeout(() => finish(), 1500)
     }
     recognition.start()
-    stopTimerRef.current = window.setTimeout(() => recognition.stop(), 12000)
+    stopTimerRef.current = window.setTimeout(() => finish(), 8000)
   }
 
   const stopRecording = () => {
-    recognitionRef.current?.stop()
-    stopAudioCapture()
+    if (finishRef.current) finishRef.current()
+    else {
+      recognitionRef.current?.stop()
+      stopAudioCapture()
+    }
   }
 
   // « Je ne peux pas parler » : la phrase est notée entraînement (practice_only),
