@@ -78,6 +78,12 @@ class SoundServiceClass {
     return this.buffers.has(url)
   }
 
+  /** Durée audible (ms) d'un son décodé, 0 s'il n'est pas prêt. */
+  durationMs(url: string): number {
+    const entry = this.buffers.get(url)
+    return entry ? Math.round((entry.buffer.duration - entry.offset) * 1000) : 0
+  }
+
   /** Joue un son décodé immédiatement. Renvoie false s'il n'est pas prêt. */
   play(url: string, { exclusive = false, volume = 1 } = {}): boolean {
     const entry = this.buffers.get(url)

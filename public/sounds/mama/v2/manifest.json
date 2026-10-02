@@ -1,7 +1,7 @@
 {
   "voice_id": "gsm4lUH9bnZ3pjR1Pw7w",
   "model_id": "eleven_multilingual_v2",
-  "generated_at": "2026-10-02T18:31:16.172Z",
+  "generated_at": "2026-10-02T19:38:05.354Z",
   "clips": {
     "en": {
       "greeting": [
@@ -102,6 +102,56 @@
         {
           "file": "en/session_retry_2.mp3",
           "text": "Every try makes you stronger. Let's try again!"
+        }
+      ],
+      "retry_correct": [
+        {
+          "file": "en/retry_correct_1.mp3",
+          "text": "This time you got it!"
+        },
+        {
+          "file": "en/retry_correct_2.mp3",
+          "text": "Yes! You remembered!"
+        }
+      ],
+      "lesson_start": [
+        {
+          "file": "en/lesson_start_1.mp3",
+          "text": "Let's go! You can do it."
+        },
+        {
+          "file": "en/lesson_start_2.mp3",
+          "text": "Ready? Let's start!"
+        }
+      ],
+      "oral_louder": [
+        {
+          "file": "en/oral_louder_1.mp3",
+          "text": "I couldn't hear you. Speak a little louder."
+        },
+        {
+          "file": "en/oral_louder_2.mp3",
+          "text": "Try again, a bit louder this time."
+        }
+      ],
+      "oral_listen_again": [
+        {
+          "file": "en/oral_listen_again_1.mp3",
+          "text": "Listen to me again, then repeat."
+        },
+        {
+          "file": "en/oral_listen_again_2.mp3",
+          "text": "Let's listen once more and try again."
+        }
+      ],
+      "idle": [
+        {
+          "file": "en/idle_1.mp3",
+          "text": "Take your time. You can do it!"
+        },
+        {
+          "file": "en/idle_2.mp3",
+          "text": "Need help? Tap the speaker to listen again."
         }
       ]
     },
@@ -204,6 +254,56 @@
         {
           "file": "fr/session_retry_2.mp3",
           "text": "Chaque essai te rend plus fort. On recommence !"
+        }
+      ],
+      "retry_correct": [
+        {
+          "file": "fr/retry_correct_1.mp3",
+          "text": "Cette fois, c'est juste !"
+        },
+        {
+          "file": "fr/retry_correct_2.mp3",
+          "text": "Oui ! Cette fois, tu as trouvé !"
+        }
+      ],
+      "lesson_start": [
+        {
+          "file": "fr/lesson_start_1.mp3",
+          "text": "C'est parti ! Tu peux le faire."
+        },
+        {
+          "file": "fr/lesson_start_2.mp3",
+          "text": "On y va ? On commence !"
+        }
+      ],
+      "oral_louder": [
+        {
+          "file": "fr/oral_louder_1.mp3",
+          "text": "Je n'ai rien entendu. Parle un peu plus fort."
+        },
+        {
+          "file": "fr/oral_louder_2.mp3",
+          "text": "Essaie encore, un peu plus fort."
+        }
+      ],
+      "oral_listen_again": [
+        {
+          "file": "fr/oral_listen_again_1.mp3",
+          "text": "Écoute-moi encore une fois, puis répète."
+        },
+        {
+          "file": "fr/oral_listen_again_2.mp3",
+          "text": "On réécoute et on réessaie."
+        }
+      ],
+      "idle": [
+        {
+          "file": "fr/idle_1.mp3",
+          "text": "Prends ton temps, tu peux y arriver !"
+        },
+        {
+          "file": "fr/idle_2.mp3",
+          "text": "Besoin d'aide ? Touche le haut-parleur pour réécouter."
         }
       ]
     }

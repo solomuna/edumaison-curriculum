@@ -3,7 +3,7 @@ import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, exactAnswer, diffAnswer } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, speakAfterIntro, useIdleNudge, exactAnswer, diffAnswer } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler } from '../../../types/exercise'
 
 interface FillInItem {
@@ -108,8 +108,13 @@ export default function FillIn({ title, instructions, content, isFrench = false,
     setInput('')
     setFeedback(null)
     setHintUsed(false)
-    if (item) MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions}. ${spoken}` : spoken, lang, 250, 0.85)
+    if (!item) return
+    const say = () => MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions.trim().replace(/[.!?:;]+$/, '')}. ${spoken}` : spoken, lang, 250, 0.85)
+    // Première phrase : après l'encouragement de début de leçon.
+    if (rq.step === 0) return speakAfterIntro(say)
+    say()
   }, [rq.step])
+  useIdleNudge(feedback === null, rq.step)
 
   const check = () => {
     if (feedback || !input.trim() || !item) return
@@ -130,7 +135,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
       setBestStreak(b => Math.max(b, next))
       setPraise(randomPraise(L))
       if (isStreakMilestone(next)) setCombo({ id: Date.now(), n: next })
-      cancelVoice.current = playVerdict(true, next)
+      cancelVoice.current = playVerdict(true, next, { retry: rq.isRetry })
       const rect = checkBtn.current?.getBoundingClientRect()
       fireSuccess({ xp: XP_PER_CORRECT, x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2, y: rect ? rect.top : window.innerHeight * 0.8 })
     } else {

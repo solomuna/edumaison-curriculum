@@ -37,6 +37,26 @@
     "session_retry": [
       "Good effort! Let's practise again, you can do it.",
       "Every try makes you stronger. Let's try again!"
+    ],
+    "retry_correct": [
+      "This time you got it!",
+      "Yes! You remembered!"
+    ],
+    "lesson_start": [
+      "Let's go! You can do it.",
+      "Ready? Let's start!"
+    ],
+    "oral_louder": [
+      "I couldn't hear you. Speak a little louder.",
+      "Try again, a bit louder this time."
+    ],
+    "oral_listen_again": [
+      "Listen to me again, then repeat.",
+      "Let's listen once more and try again."
+    ],
+    "idle": [
+      "Take your time. You can do it!",
+      "Need help? Tap the speaker to listen again."
     ]
   },
   "fr": {
@@ -76,6 +96,26 @@
     "session_retry": [
       "Beaux efforts ! On s'entraîne encore, tu peux y arriver.",
       "Chaque essai te rend plus fort. On recommence !"
+    ],
+    "retry_correct": [
+      "Cette fois, c'est juste !",
+      "Oui ! Cette fois, tu as trouvé !"
+    ],
+    "lesson_start": [
+      "C'est parti ! Tu peux le faire.",
+      "On y va ? On commence !"
+    ],
+    "oral_louder": [
+      "Je n'ai rien entendu. Parle un peu plus fort.",
+      "Essaie encore, un peu plus fort."
+    ],
+    "oral_listen_again": [
+      "Écoute-moi encore une fois, puis répète.",
+      "On réécoute et on réessaie."
+    ],
+    "idle": [
+      "Prends ton temps, tu peux y arriver !",
+      "Besoin d'aide ? Touche le haut-parleur pour réécouter."
     ]
   }
 }

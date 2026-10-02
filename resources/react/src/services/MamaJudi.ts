@@ -2,7 +2,8 @@
 import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { SoundService } from './SoundService'
 
-type MamaEvent = 'greeting' | 'correct' | 'wrong' | 'session_good' | 'session_perfect' | 'session_retry' | 'streak3' | 'streak5'
+export type MamaEvent = 'greeting' | 'correct' | 'wrong' | 'session_good' | 'session_perfect' | 'session_retry' | 'streak3' | 'streak5'
+  | 'retry_correct' | 'lesson_start' | 'oral_louder' | 'oral_listen_again' | 'idle'
 type VoiceLang = 'en' | 'fr'
 
 // Pack de voix commun à toutes les familles (aucun prénom), généré par
@@ -63,7 +64,7 @@ class MamaJudiClass {
   }
 
   /** Précharge les répliques de la langue courante (lecture instantanée ensuite). */
-  preloadVoices(events: MamaEvent[] = ['correct', 'wrong', 'streak3', 'streak5', 'session_good', 'session_perfect', 'session_retry']) {
+  preloadVoices(events: MamaEvent[] = ['correct', 'wrong', 'retry_correct', 'streak3', 'streak5', 'idle', 'oral_louder', 'oral_listen_again', 'session_good', 'session_perfect', 'session_retry']) {
     const lang = this.lang
     void this.loadManifest().then(() => events
       .flatMap(event => this.clipUrls(event, lang))
@@ -80,6 +81,32 @@ class MamaJudiClass {
     if (!src) return false
     this.stopAudio()
     return SoundService.play(src, { exclusive: true })
+  }
+
+  private introPending: Promise<number> | null = null
+
+  /**
+   * Encouragement de début de leçon (« C'est parti ! »), au plus une fois toutes
+   * les 10 minutes pour ne pas lasser. Renvoie la durée jouée en ms (0 si rien),
+   * pour que la lecture de la première question attende la fin.
+   */
+  intro(): Promise<number> {
+    if (this.introPending) return this.introPending
+    this.introPending = (async () => {
+      try {
+        if (Date.now() - Number(sessionStorage.getItem('mama_intro_at') || 0) < 10 * 60_000) return 0
+      } catch { /* stockage indisponible : on joue quand même */ }
+      await this.loadManifest()
+      const src = this.pick(this.clipUrls('lesson_start'))
+      if (!src) return 0
+      // Réseau lent : pas d'encouragement en retard sur l'écran.
+      await Promise.race([SoundService.load(src), new Promise(r => setTimeout(r, 1500))])
+      const ms = SoundService.durationMs(src)
+      if (!ms || !SoundService.play(src, { exclusive: true })) return 0
+      try { sessionStorage.setItem('mama_intro_at', String(Date.now())) } catch { /* idem */ }
+      return ms
+    })().finally(() => { this.introPending = null })
+    return this.introPending
   }
 
   private async ttsCapacitor(text: string, lang = 'fr-FR', rate = 0.9): Promise<boolean> {

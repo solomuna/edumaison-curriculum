@@ -7,7 +7,7 @@ import { SoundService } from '../../../services/SoundService'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio, useIdleNudge } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler, OralDrillContent } from '../../../types/exercise'
 
 interface Props {
@@ -143,9 +143,10 @@ export default function OralDrill({ title, instructions, content, isFrench: isFr
   const lessonAudioRef = useRef<HTMLAudioElement | null>(null)
   const cancelVoice = useRef<() => void>(() => {})
   const micBtn = useRef<HTMLButtonElement>(null)
+  useIdleNudge(!review && !recording && !speaking && !done, rq.step)
 
   useEffect(() => {
-    prepareLessonAudio()
+    prepareLessonAudio(isFrench)
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     setSpeechSupported(!!SR)
     fetch('/api/language-practice/settings', { headers: { Accept: 'application/json' } })
@@ -213,12 +214,12 @@ export default function OralDrill({ title, instructions, content, isFrench: isFr
       const next = streak + 1
       setStreak(next)
       setBestStreak(b => Math.max(b, next))
-      cancelVoice.current = playVerdict(true, next)
+      cancelVoice.current = playVerdict(true, next, { retry: rq.isRetry })
       const rect = micBtn.current?.getBoundingClientRect()
       fireSuccess({ xp: XP_PER_CORRECT, x: rect ? rect.left + rect.width / 2 : window.innerWidth / 2, y: rect ? rect.top : window.innerHeight * 0.6 })
     } else {
       setStreak(0)
-      cancelVoice.current = playVerdict(false)
+      cancelVoice.current = playVerdict(false, 0, { wrongVoice: score < 50 ? 'oral_listen_again' : 'wrong' })
     }
   }
 
@@ -279,7 +280,12 @@ export default function OralDrill({ title, instructions, content, isFrench: isFr
       stopAudioCapture()
       // Quand une phrase est entendue, le son du verdict marque la fin de l'écoute.
       if (heardText.trim()) verdict(heardText, heardScore)
-      else { SoundService.micOff(); setError(failure ?? t.noSpeech) }
+      else {
+        SoundService.micOff()
+        setError(failure ?? t.noSpeech)
+        // Rien entendu : « Parle un peu plus fort »
+        window.setTimeout(() => MamaJudi.react('oral_louder'), 350)
+      }
     }
     finishRef.current = finish
     recognition.onstart = () => { SoundService.micOn(); setRecording(true) }

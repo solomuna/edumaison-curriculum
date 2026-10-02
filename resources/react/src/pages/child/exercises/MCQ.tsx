@@ -3,7 +3,7 @@ import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { SoundService } from '../../../services/SoundService'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, speakAfterIntro, useIdleNudge } from '../../../components/lesson/lessonKit'
 import { fireSuccess } from '../../../components/SuccessFx'
 import type { ExerciseCompletionHandler, MCQContent } from '../../../types/exercise'
 import { useAssetLibrary } from '../../../hooks/useAssetLibrary'
@@ -83,7 +83,14 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
     prepareLessonAudio(isFrenchSubject)
     return () => { clearVoice(); MamaJudi.stop() }
   }, [])
-  useEffect(() => { if (q) MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions}. ${questionText}` : questionText, ttsLang, 250) }, [rq.step])
+  useEffect(() => {
+    if (!q) return
+    const say = () => MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions.trim().replace(/[.!?:;]+$/, '')}. ${questionText}` : questionText, ttsLang, 250)
+    // Première question : après l'encouragement de début de leçon.
+    if (rq.step === 0) return speakAfterIntro(say)
+    say()
+  }, [rq.step])
+  useIdleNudge(!checked, rq.step)
 
 
   const select = (idx: number) => {
@@ -111,7 +118,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
       setBestStreak(b => Math.max(b, next))
       setPraise(randomPraise(L))
       if (isStreakMilestone(next)) setCombo({ id: Date.now(), n: next })
-      cancelVoice.current = playVerdict(true, next)
+      cancelVoice.current = playVerdict(true, next, { retry: rq.isRetry })
       const rect = checkBtn.current?.getBoundingClientRect()
       fireSuccess({
         xp: XP_PER_CORRECT,
