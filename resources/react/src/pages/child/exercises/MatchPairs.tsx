@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SoundService } from '../../../services/SoundService'
 import { useLesson, useLessonCheck, tapSound, type ReportResult } from '../../../components/lesson/LessonShell'
 
 interface Pair {
@@ -43,7 +44,7 @@ export default function MatchPairs({ content, onComplete }: Props) {
   const pickRight = (i: number) => {
     if (checked || selLeft === null) return
     if (Object.values(matches).includes(i)) return
-    tapSound()
+    SoundService.pop()
     setMatches(prev => ({ ...prev, [selLeft]: i }))
     setSelLeft(null)
   }

@@ -3,6 +3,7 @@
 // La prononciation elle-même n'est pas jugée ici (pronunciation_verified=false).
 import { useEffect, useRef, useState } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
+import { SoundService } from '../../../services/SoundService'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
@@ -276,11 +277,12 @@ export default function OralDrill({ title, instructions, content, isFrench: isFr
       if (silenceTimer) window.clearTimeout(silenceTimer)
       try { recognition.abort() } catch { /* déjà arrêtée */ }
       stopAudioCapture()
+      // Quand une phrase est entendue, le son du verdict marque la fin de l'écoute.
       if (heardText.trim()) verdict(heardText, heardScore)
-      else setError(failure ?? t.noSpeech)
+      else { SoundService.micOff(); setError(failure ?? t.noSpeech) }
     }
     finishRef.current = finish
-    recognition.onstart = () => setRecording(true)
+    recognition.onstart = () => { SoundService.micOn(); setRecording(true) }
     recognition.onend = () => finish()
     recognition.onerror = (e: any) => {
       if (e.error === 'aborted') return
