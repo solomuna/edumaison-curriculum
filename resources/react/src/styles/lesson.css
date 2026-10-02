@@ -919,3 +919,77 @@ body:has(.lesson) .adventure-bottom-nav { display: none !important; }
   color: var(--l-red-ink);
   text-decoration: line-through 2px;
 }
+
+/* ── Exercice oral : phrase à dire, micro, accord parental ─────────────── */
+.lesson-oral-target {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 6px 0 18px;
+  padding: 22px 18px;
+  border: 2px solid var(--l-line);
+  border-bottom-width: 4px;
+  border-radius: 18px;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.lesson-oral-target__swatch { flex: none; width: 34px; height: 34px; border-radius: 50%; }
+.lesson-oral-target .is-ok { color: var(--l-green-ink); text-decoration: underline 3px solid; text-underline-offset: 6px; }
+.lesson-oral-target .is-check { color: var(--l-red-ink); text-decoration: underline 3px wavy; text-underline-offset: 6px; }
+.lesson-mic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 18px 16px 16px;
+  border: 2px solid var(--l-line);
+  border-bottom-width: 4px;
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--l-blue-dark);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.lesson-mic__icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--l-blue);
+  box-shadow: 0 5px 0 var(--l-blue-dark);
+  color: #ffffff;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.lesson-mic__icon svg { width: 36px; height: 36px; }
+.lesson-mic:active:not(:disabled) .lesson-mic__icon { transform: translateY(5px); box-shadow: none; }
+.lesson-mic:disabled { color: #afafaf; cursor: default; }
+.lesson-mic:disabled .lesson-mic__icon { background: var(--l-line); box-shadow: none; }
+.lesson-mic.is-recording { border-color: #ffb2b2; color: var(--l-red-ink); }
+.lesson-mic.is-recording .lesson-mic__icon { background: var(--l-red); box-shadow: 0 5px 0 var(--l-red-dark); animation: lesson-mic-pulse 1.2s ease-out infinite; }
+@keyframes lesson-mic-pulse {
+  0% { box-shadow: 0 5px 0 var(--l-red-dark), 0 0 0 0 rgba(255, 75, 75, 0.45); }
+  100% { box-shadow: 0 5px 0 var(--l-red-dark), 0 0 0 18px rgba(255, 75, 75, 0); }
+}
+.lesson-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 11px 12px;
+  border: 2px solid var(--l-line);
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.lesson-consent input { width: 20px; height: 20px; margin-top: 1px; }
+.lesson-consent small { color: var(--l-muted); font-size: 13px; }
