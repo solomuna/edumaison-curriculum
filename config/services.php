@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Alerte « enregistrements en échec » (app:attempts-health) : notification
+    // HTTP (ex. https://ntfy.sh/<sujet>) et/ou e-mail. Vides = journaux seulement.
+    'alerts' => [
+        'webhook' => env('ALERT_WEBHOOK_URL', ''),
+        'email' => env('ALERT_EMAIL', ''),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

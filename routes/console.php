@@ -33,3 +33,4 @@ Artisan::command('family:trigger-due-revisions', function (FamilyRevisionService
 })->purpose('Déclenche les révisions automatiques dues, isolées par foyer');
 
 Schedule::command('family:trigger-due-revisions')->everyMinute()->withoutOverlapping();
+Schedule::command('app:attempts-health')->hourly()->withoutOverlapping();

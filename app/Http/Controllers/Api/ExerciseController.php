@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\NationalLanguageProfileService;
+use App\Support\AttemptHealth;
 use App\Support\FamilyContext;
 
 class ExerciseController extends Controller
@@ -82,6 +83,22 @@ class ExerciseController extends Controller
     }
 
     public function attempt(Request $request)
+    {
+        // Suivi des refus pour l'alerte « enregistrements en échec » (app:attempts-health).
+        try {
+            return $this->storeAttempt($request);
+        } catch (ValidationException $exception) {
+            AttemptHealth::recordRejection((int) $request->input('exercise_id') ?: null, implode(',', array_keys($exception->errors())));
+            throw $exception;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            AttemptHealth::recordRejection((int) $request->input('exercise_id') ?: null, 'server_error:'.class_basename($exception));
+            throw $exception;
+        }
+    }
+
+    private function storeAttempt(Request $request)
     {
         $validated = $request->validate([
             'child_id'           => 'required|integer|exists:children,id',
