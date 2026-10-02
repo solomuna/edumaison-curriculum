@@ -239,11 +239,9 @@ export default function DesktopApp({ child, onLogout }: Props) {
             exercises={exercises}
             completed={completed}
             loading={loading}
-            streak={streak}
             desktop
             notice={<ExamBanner child={child} onStartExam={setActiveExam} />}
             onStartExercise={setActive}
-            onOpenSubject={subject => { setOpenSubjectName(subject); setTab('subjects') }}
             onOpenPaths={() => setTab('packs')}
           />
         )}

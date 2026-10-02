@@ -66,6 +66,8 @@ import Ardoise from './exercises/Ardoise'
 
 import MamaJudiPose from '../../components/MamaJudiPose'
 
+import { normalizeExerciseContent } from '../../lib/normalizeExercise'
+
 import LessonShell, { type ReportResult } from '../../components/lesson/LessonShell'
 
 
@@ -521,10 +523,9 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-  // Guard: content peut arriver comme string JSON depuis FastAPI
-  const content = typeof exercise.content === 'string'
-    ? (() => { try { return JSON.parse(exercise.content) } catch { return {} } })()
-    : exercise.content
+  // Contenu normalisé (type déduit, choix de QCM relus en liste, réponse en position) :
+  // même logique que le serveur. Voir lib/normalizeExercise.ts.
+  const content: any = normalizeExerciseContent(exercise.content, exercise.title)
   const type = content.type
 
 
@@ -642,123 +643,6 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-  // Adaptateur format simplifie MCQ -> format questions[]
-
-
-
-  let mcqContent = content
-
-
-
-  if ((type === 'multiple_choice' || type === 'mcq') && !content.questions && content.options) {
-
-
-
-    const opts = content.options
-
-
-
-    const ans = content.answer
-
-
-
-    const answerIndex = typeof ans === 'number' ? ans : opts.indexOf(ans)
-
-
-
-    mcqContent = {
-
-
-
-      ...content,
-
-
-
-      questions: [{
-
-
-
-        text: content.question || exercise.title,
-
-
-
-        question: content.question || exercise.title,
-
-
-
-        svg: content.svg || null,
-
-
-
-        options: opts,
-
-
-
-        answer: answerIndex >= 0 ? answerIndex : 0
-
-
-
-      }]
-
-
-
-    }
-
-
-
-  }
-
-
-
-  // Normaliser answer texte->index dans questions[] existants
-
-
-
-  if ((type === 'multiple_choice' || type === 'mcq') && mcqContent.questions) {
-
-
-
-    mcqContent = {
-
-
-
-      ...mcqContent,
-
-
-
-      questions: mcqContent.questions.map((q: any) => {
-
-
-
-        if (typeof q.answer === 'string') {
-
-
-
-          const idx = (q.options || []).indexOf(q.answer)
-
-
-
-          return { ...q, answer: idx >= 0 ? idx : 0 }
-
-
-
-        }
-
-
-
-        return q
-
-
-
-      })
-
-
-
-    }
-
-
-
-  }
 
 
 
@@ -766,7 +650,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <MCQ title={exercise.title} instructions={exercise.instructions} content={mcqContent} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
+    return <MCQ title={exercise.title} instructions={exercise.instructions} content={content} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
 
 
 

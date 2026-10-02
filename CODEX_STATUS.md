@@ -1,5 +1,30 @@
 # Codex Status
 
+## 2026-10-02 - Emojis repares et alerte branchee (accord utilisateur)
+
+- `NurseryLostEmojiRepairSeeder` lance en production : exercices 2650, 2651, 2654, 2659 repares, verifies (dessins coherents avec les reponses). Sauvegarde prealable des 4 lignes : `/home/david/edumaison-backups/emoji-repair-20261002T141651Z.sql`.
+- `ALERT_WEBHOOK_URL` (canal ntfy prive, nom aleatoire, non ecrit ici) ajoute au `.env` du serveur. Sauvegarde prealable : `/home/david/edumaison-backups/env-20261002T141735Z`. Notification de test envoyee (HTTP 200). L'e-mail n'est pas utilisable : `MAIL_MAILER=log`.
+
+## 2026-10-02 - Exercice oral sur iPhone corrige : e74fd6b
+
+- Deploye via `docker/deploy.sh e74fd6b` (PR #32). Precedent : `feaa395`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T141011Z`. Aucune migration.
+- Cause (test utilisateur sur iPhone) : Safari envoie des resultats provisoires et souvent jamais de resultat final ; l'exercice oral n'attendait que ce dernier, donc aucune reaction, meme sur Stop.
+- Correction : resultats provisoires gardes ; verdict apres 1,5 s de silence, sur Stop, a la fin de l'ecoute ou apres 8 s au plus tard.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, bundle contenant la correction, aucune erreur Laravel.
+- Verification utilisateur restante : rejouer un exercice oral sur iPhone (Class 1 English, « Listen and Repeat »).
+
+## 2026-10-02 - Lot de nuit deploye (contenus, alerte, oral, types) : feaa395
+
+- Deploye via `docker/deploy.sh feaa395` (PR #25, #26, #27, #28, #29, #30). Precedent : `cd1bb63`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261002T075935Z`. Aucune migration.
+- #25 : contenus mal lus ou mal notes corriges (QCM aux choix stockes en texte, QCM sans type, reponses numeriques en texte mal notees par le serveur, Venn a intersection separee, associations a doublons a droite).
+- #27 : rapport d'audit des 2 794 exercices actifs (`docs/audits/2026-10-02-contenus.md`).
+- #28 : `app:attempts-health` planifiee toutes les heures (verifie dans `schedule:list`). Sans `ALERT_WEBHOOK_URL` / `ALERT_EMAIL`, l'alerte ne va que dans les journaux.
+- #29 : exercice oral dans la boucle de lecon (seuil 70 % de mots reconnus ; contenu envoye inchange).
+- #30 : zero erreur TypeScript, `npm run typecheck` en CI ; bugs corriges : sortie de remediation, prenom vide en remediation, niveau par defaut de la revision.
+- #26 fusionne mais seeder NON lance : `php artisan db:seed --class=NurseryLostEmojiRepairSeeder` attend l'accord explicite.
+- Controles : `/app`, `/mama` 200 x3, API 401, assets 200, conteneurs up, `composer audit` propre, aucune erreur Laravel.
+- En attente : #24 (fichiers audio ElevenLabs), adresse d'alerte sur le serveur, decisions de l'audit (doublons, contenus defectueux), test de l'oral au vrai micro sur tablette.
+
 ## 2026-09-30 - Exercices oraux valides par correspondance des mots : cd1bb63
 
 - Deploye via `docker/deploy.sh cd1bb63` (PR #23). Precedent : `7810b4c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20260930T083657Z`. Aucune migration.

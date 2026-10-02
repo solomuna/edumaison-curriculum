@@ -124,7 +124,7 @@ export default function ChildLogin({ onLogin, onParentMode }: Props) {
       .catch(() => setLegacyAccess(false))
     fetch('/api/mama/profile', { credentials: 'same-origin' })
       .then(response => response.ok ? response.json() : {})
-      .then(data => setCompanionName(data.display_name || 'Accompagnant'))
+      .then((data: { display_name?: string }) => setCompanionName(data.display_name || 'Accompagnant'))
       .catch(() => {})
   }, [])
 
