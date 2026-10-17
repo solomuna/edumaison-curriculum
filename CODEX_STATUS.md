@@ -1,5 +1,11 @@
 # Codex Status
 
+## 2026-10-17 - Audit Class 3/5/6, lot 2 (phrases a trous) applique : 527fbab
+
+- Deploye via `docker/deploy.sh 527fbab` (PR #45, #46). Precedent : `190c236`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T225117Z`. Aucune migration.
+- `AuditClass356FillInSeeder` lance avec accord de l'utilisateur apres sauvegarde `/home/david/edumaison-backups/pre-corrections-lot2-20261017T225205Z` (58 tables, SHA256SUMS) : 35 corrections sur 24 exercices, second passage 0 ; controles en base (93, 102, 1683, 1993) conformes ; aucune erreur Laravel.
+- Reste du plan « rentree sans bug » : ~80 constats « a revoir » (QCM ambigus, imprecisions, lecons mal rattachees, doublons) ; verification des autres niveaux ; voix de Mama Judi sur les enonces ; profils des enfants (record de serie, passage de classe, profil I.).
+
 ## 2026-10-17 - Audit Class 3/5/6 : corrections deployees et appliquees : 190c236
 
 - Deploye via `docker/deploy.sh 190c236` (PR #40 a #44). Precedent : `21931dc`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T223541Z` (contient desormais `react-before.tgz` ; plus aucune `public/react-before-*` sur le site). Aucune migration.
