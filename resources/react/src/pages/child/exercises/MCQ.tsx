@@ -3,7 +3,7 @@ import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { SoundService } from '../../../services/SoundService'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, speakAfterIntro, useIdleNudge } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, speakAfterIntro, useIdleNudge, readStatement } from '../../../components/lesson/lessonKit'
 import { fireSuccess } from '../../../components/SuccessFx'
 import type { ExerciseCompletionHandler, MCQContent } from '../../../types/exercise'
 import { useAssetLibrary } from '../../../hooks/useAssetLibrary'
@@ -14,6 +14,8 @@ interface Props {
   instructions: string
   content: MCQContent
   subject?: string
+  /** Pour lire l'énoncé avec la voix de Mama Judi (fichiers préparés par le serveur). */
+  exerciseId?: number
   onComplete: ExerciseCompletionHandler
   onBack: () => void
 }
@@ -40,7 +42,7 @@ const SpeakerIcon = () => (
   </svg>
 )
 
-export default function MCQ({ title, instructions, content, subject, onComplete, onBack }: Props) {
+export default function MCQ({ title, instructions, content, subject, exerciseId, onComplete, onBack }: Props) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
   const [results, setResults] = useState<Result[]>([])
@@ -85,10 +87,11 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
   }, [])
   useEffect(() => {
     if (!q) return
-    const say = () => MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions.trim().replace(/[.!?:;]+$/, '')}. ${questionText}` : questionText, ttsLang, 250)
-    // Première question : après l'encouragement de début de leçon.
-    if (rq.step === 0) return speakAfterIntro(say)
-    say()
+    // Première question : consigne + question, après l'encouragement de début de leçon.
+    const first = rq.step === 0 && !!instructions
+    const parts = [...(first ? [{ key: 'instructions', text: instructions }] : []), { key: `q:${current}`, text: questionText }]
+    const fallback = () => MamaJudi.speakLangAfter(first ? `${instructions.trim().replace(/[.!?:;]+$/, '')}. ${questionText}` : questionText, ttsLang, 250)
+    return readStatement(exerciseId, parts, fallback, rq.step === 0)
   }, [rq.step])
   useIdleNudge(!checked, rq.step)
 
@@ -236,7 +239,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
           <div className="lesson-bubble">
             {q.french && <div className="lesson-bubble__hint">{q.french}</div>}
             <div className="lesson-bubble__row">
-              <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(questionText || instructions, ttsLang, 0.85) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <button className="lesson-speak" onClick={() => { readStatement(exerciseId, [questionText ? { key: `q:${current}`, text: questionText } : { key: 'instructions', text: instructions }], () => { void MamaJudi.speakLang(questionText || instructions, ttsLang, 0.85) }) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
               <span>{questionText}</span>
             </div>
           </div>

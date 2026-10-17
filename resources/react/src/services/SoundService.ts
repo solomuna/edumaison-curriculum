@@ -19,6 +19,8 @@ class SoundServiceClass {
   private buffers = new Map<string, { buffer: AudioBuffer; offset: number }>()
   private loading = new Map<string, Promise<void>>()
   private clip: AudioBufferSourceNode | null = null
+  /** Change à chaque voix lancée ou coupée : sert à savoir si une lecture en plusieurs morceaux a été interrompue. */
+  clipToken = 0
   private unlockBound = false
 
   private getCtx(): AudioContext | null {
@@ -122,6 +124,7 @@ class SoundServiceClass {
     src.connect(gain).connect(exclusive ? this.getVoiceBus(ctx) : ctx.destination)
     src.start(0, entry.offset)
     if (exclusive) {
+      this.clipToken++
       this.clip = src
       src.onended = () => { if (this.clip === src) this.clip = null }
     }
@@ -132,6 +135,7 @@ class SoundServiceClass {
   stopClip() {
     try { this.clip?.stop() } catch {}
     this.clip = null
+    this.clipToken++
   }
 
   private fx(name: FxName, fallback: () => void, volume = 0.9) {

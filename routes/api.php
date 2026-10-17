@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\FamilyRevisionController;
 use App\Http\Controllers\Api\AcademicCalendarController;
 use App\Http\Controllers\Api\LearningPackController;
 use App\Http\Controllers\Api\ChildNameVoiceController;
+use App\Http\Controllers\Api\StatementVoiceController;
 use App\Http\Controllers\Api\LanguageReviewController;
 use App\Http\Controllers\Api\NationalLanguageProfileController;
 
@@ -48,6 +49,7 @@ Route::post('/family-auth/claim-legacy', [FamilyAuthController::class, 'claimLeg
 
 Route::middleware('family.access')->group(function () {
 Route::get('/language-practice/settings', [LanguageReviewController::class, 'settings']);
+Route::get('/exercises/{exerciseId}/speech', [StatementVoiceController::class, 'show'])->whereNumber('exerciseId');
 Route::get('/children/{childId}/name-voice', [ChildNameVoiceController::class, 'manifest'])->whereNumber('childId')->middleware('child.family');
 Route::get('/children/{childId}/name-voice/{clipId}', [ChildNameVoiceController::class, 'audio'])->whereNumber(['childId', 'clipId'])->middleware('child.family');
 Route::middleware('auth:sanctum')->group(function () {

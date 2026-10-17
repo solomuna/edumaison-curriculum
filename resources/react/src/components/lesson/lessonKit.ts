@@ -2,6 +2,7 @@
 // de retour (son -> bandeau -> voix) partagés par le QCM et LessonShell.
 import { useEffect } from 'react'
 import { MamaJudi, type MamaEvent } from '../../services/MamaJudi'
+import { speakStatement, type StatementPart } from '../../services/StatementVoice'
 import { SoundService } from '../../services/SoundService'
 import '../../styles/lesson.css'
 
@@ -150,6 +151,19 @@ export function speakAfterIntro(speak: () => void): () => void {
   let timer = 0
   void introDone.then(ms => { if (!cancelled) timer = window.setTimeout(speak, ms) })
   return () => { cancelled = true; window.clearTimeout(timer) }
+}
+
+/**
+ * Lit un énoncé : voix de Mama Judi (morceaux préparés par le serveur) si tout
+ * est prêt, sinon `fallback` (voix du téléphone). Avec `afterIntro`, attend la
+ * fin de « C'est parti ! ». Renvoie la fonction qui arrête la lecture.
+ */
+export function readStatement(exerciseId: number | undefined, parts: StatementPart[], fallback: () => void, afterIntro = false): () => void {
+  let stop = () => {}
+  const run = () => { stop = speakStatement(exerciseId, parts.filter(part => part.text.trim()), fallback) }
+  if (!afterIntro) { run(); return () => stop() }
+  const cancelIntro = speakAfterIntro(run)
+  return () => { cancelIntro(); stop() }
 }
 
 /** Mama Judi relance l'enfant s'il ne touche à rien pendant 25 s (une fois par question). */

@@ -9,7 +9,7 @@ import { MamaJudi } from '../../services/MamaJudi'
 import { SoundService } from '../../services/SoundService'
 import { fireSuccess } from '../SuccessFx'
 import Ardoise from '../../pages/child/exercises/Ardoise'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio, useIdleNudge, type LessonLabels } from './lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, playVerdict, prepareLessonAudio, readStatement, useIdleNudge, type LessonLabels } from './lessonKit'
 
 /** detail : texte de correction affiché dans le bandeau (jamais envoyé au serveur). */
 export type ReportResult = (correct: boolean, answers?: Record<string, unknown>, detail?: string) => void
@@ -47,6 +47,8 @@ export const tapSound = () => SoundService.tap()
 interface Props {
   title: string
   instructions?: string
+  /** Pour lire la consigne avec la voix de Mama Judi (fichiers préparés par le serveur). */
+  exerciseId?: number
   isFrench: boolean
   onBack: () => void
   /** Enregistre la tentative (appelé sur « Continuer », une seule fois). */
@@ -62,7 +64,7 @@ const SpeakerIcon = () => (
   </svg>
 )
 
-export default function LessonShell({ title, instructions, isFrench, onBack, onSubmit, extras, children }: Props) {
+export default function LessonShell({ title, instructions, exerciseId, isFrench, onBack, onSubmit, extras, children }: Props) {
   const L = labelsFor(isFrench)
   const lang = isFrench ? 'fr-FR' : 'en-GB'
   const [verdict, setVerdict] = useState<{ correct: boolean; answers?: Record<string, unknown>; detail?: string; praise: string } | null>(null)
@@ -153,7 +155,7 @@ export default function LessonShell({ title, instructions, isFrench, onBack, onS
               <img className="lesson-prompt__judi" src={JUDI.explain} alt="" />
               <div className="lesson-bubble">
                 <div className="lesson-bubble__row">
-                  <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(instructions, lang, 0.9) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+                  <button className="lesson-speak" onClick={() => { readStatement(exerciseId, [{ key: 'instructions', text: instructions }], () => { void MamaJudi.speakLang(instructions, lang, 0.9) }) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
                   <span>{instructions}</span>
                 </div>
               </div>
