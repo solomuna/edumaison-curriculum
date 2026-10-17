@@ -93,4 +93,7 @@ docker exec curriculum-app composer audit --no-dev --locked 2>/dev/null | tail -
 
 trap - ERR
 rm -rf "$BUILD"
+# L'ancienne version de l'appli quitte le site web (elle y restait accessible)
+# et rejoint la sauvegarde de ce déploiement.
+tar czf "$BK/react-before.tgz" -C public "react-before-deploy-$TS" && rm -rf "public/react-before-deploy-$TS"
 log "OK — déployé $SHA (précédent : $PREV_SHA). Sauvegarde : $BK"
