@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-10-17 - Volume de Mama Judi et lecture de l'enonce deployes : 21931dc
+
+- Deploye via `docker/deploy.sh 21931dc` (PR #39). Precedent : `1476804`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T214209Z`. Aucune migration.
+- Voix de Mama Judi passees par un compresseur + gain (~ -22 -> -15 dB, effets -16) ; synthese vocale reveillee au premier toucher (iPhone) ; boutons haut-parleur immediats ; lecture automatique qui attend « C'est parti ! » et lit l'affirmation du vrai/faux et la question de geometrie.
+- Controles : `/app`, `/mama` 200 x3, API 401, bundle contenant les corrections, 40 repliques au prenom intactes, aucune erreur Laravel.
+- Operations faites le 02/10 avec accord de l'utilisateur, notees ici : cle ElevenLabs posee dans le `.env` par l'utilisateur (bloc en double avec une cle vide, nettoyage en attente d'accord) ; les 3 comptes parents supprimes par l'utilisateur (sauvegarde `/home/david/edumaison-backups/pre-suppression-comptes-20261002T211847Z`), familles, 4 enfants et 2 469 tentatives intacts ; nouveau compte parent cree, accord « prenom » donne, 40 repliques generees.
+- Constat 17/10 : aucun changement hors git depuis le 02/10. Restes a nettoyer (avec accord) : scripts Codex du 10-12/08 a la racine de `/opt/edumaison-curriculum`, `public/react-before-*` et `public/react.before-*` (anciennes versions, accessibles par le web), `docker/nginx/.htpasswd.bak-*`.
+
 ## 2026-10-02 - Nouveaux moments de Mama Judi et prenoms des enfants deployes : 1476804
 
 - Migration `2026_10_02_150000_create_child_voice_clips` (additive : colonne `households.child_name_voice_consent_at` + table `child_voice_clips`) appliquee seule depuis `origin/master`, apres sauvegarde verifiee : `/home/david/edumaison-backups/pre-migration-20261002T202726Z` (57 tables, SHA256SUMS).
