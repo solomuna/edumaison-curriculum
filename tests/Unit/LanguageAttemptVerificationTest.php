@@ -420,4 +420,24 @@ class LanguageAttemptVerificationTest extends TestCase
         $this->assertSame(2, $evidence['sentence_count']);
         $this->assertSame('written_response_precheck_and_parent_review', $evidence['method']);
     }
+
+    public function test_a_duplicated_option_is_right_whichever_copy_is_touched(): void
+    {
+        $content = ['type' => 'mcq', 'questions' => [['question' => '0.3 x 0.4 = ?', 'options' => ['0.07', '0.12', '0.12', '1.2'], 'answer' => 1]]];
+
+        [$first] = $this->verify('mcq', $content, ['answers' => ['items' => [['question_index' => 0, 'selected_index' => 1]]]]);
+        [$second] = $this->verify('mcq', $content, ['answers' => ['items' => [['question_index' => 0, 'selected_index' => 2]]]]);
+        [$wrong] = $this->verify('mcq', $content, ['answers' => ['items' => [['question_index' => 0, 'selected_index' => 3]]]]);
+
+        $this->assertSame([100, 100, 0], [$first, $second, $wrong]);
+    }
+
+    public function test_a_duplicated_geometry_option_is_right_whichever_copy_is_touched(): void
+    {
+        $content = ['type' => 'geometry', 'options' => ['3 sides', '4 sides', '4 sides'], 'answer' => 1];
+
+        [$score] = $this->verify('geometry', $content, ['answers' => ['selected_index' => 2]]);
+
+        $this->assertSame(100, $score);
+    }
 }

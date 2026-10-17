@@ -66,7 +66,7 @@ export default function ClockReading({ content, onComplete }: Props) {
 
   useLessonCheck(sel !== null, () => {
     if (sel === null) return
-    const ok = sel === ans
+    const ok = sel === ans || opts[sel] === opts[ans]
     onComplete(ok, { selected_index: sel },
       ok ? t(`Yes, it is ${opts[ans]}!`, `Oui, il est ${opts[ans]} !`)
          : t(`It is ${opts[ans]}. Look carefully at the hands!`, `Il est ${opts[ans]}. Regarde bien les aiguilles !`))
@@ -74,7 +74,7 @@ export default function ClockReading({ content, onComplete }: Props) {
 
   const state = (i: number) => {
     if (!checked) return sel === i ? ' is-selected' : ''
-    if (i === ans) return ' is-right'
+    if (i === ans || opts[i] === opts[ans]) return ' is-right'
     return i === sel ? ' is-wrong' : ' is-faded'
   }
 
