@@ -1,5 +1,11 @@
 # Codex Status
 
+## 2026-10-18 - Carte « New School Year » corrigee : 6a8fc0b
+
+- Deploye via `docker/deploy.sh 6a8fc0b` (PR #49, #50). Precedent : `ae91c8c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T231742Z`. Aucune migration.
+- Apres un passage de classe, la carte affiche le passage reellement fait (elle montrait le suivant, ce qui a fait croire que I. etait en Class 3).
+- Passages faits par l'utilisateur le 17/10 : R. -> Class 6, M. -> Class 5, I. -> Class 2 (un passage de plus attendu pour Class 3). Profil J. desactive, laisse tel quel.
+
 ## 2026-10-18 - Passage de classe repare : ae91c8c
 
 - Deploye via `docker/deploy.sh ae91c8c` (PR #47, #48). Precedent : `527fbab`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T230145Z`. Aucune migration.
