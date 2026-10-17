@@ -218,14 +218,10 @@ class ChildController extends Controller
             'updated_at' => now(),
         ]);
 
-        // Archive exercise attempts (mark as archived)
-        // We keep attempts but just update the child's level
-        // Optionally reset streaks for new year
-        DB::table('streaks')->where('child_id', $childId)->update([
-            'streak'      => 0,
-            'best_streak' => DB::raw('streak'),
-            'updated_at'  => now(),
-        ]);
+        // Les tentatives sont conservées. La série et le record sont calculés à
+        // partir d'elles (StreakController) : rien à remettre à zéro ici. Une
+        // ancienne remise à zéro visait une table « streaks » qui n'existe pas
+        // et faisait planter le passage de classe après le changement de niveau.
 
         return response()->json([
             'success'    => true,
@@ -239,16 +235,13 @@ class ChildController extends Controller
     {
         $householdId = FamilyContext::householdId($request);
         abort_unless($householdId, 401);
-        $children = DB::table('children')->where('household_id', $householdId)->get();
+        $children = DB::table('children')->where('household_id', $householdId)->whereNull('deleted_at')->get();
         $promoted = [];
         foreach ($children as $child) {
             $nextLevelId = $this->nextLevel[$child->level_id] ?? null;
             if ($nextLevelId) {
                 DB::table('children')->where('id', $child->id)->update([
                     'level_id' => $nextLevelId, 'updated_at' => now()
-                ]);
-                DB::table('streaks')->where('child_id', $child->id)->update([
-                    'streak' => 0, 'best_streak' => DB::raw('streak'), 'updated_at' => now()
                 ]);
                 $promoted[] = $child->id;
             }
