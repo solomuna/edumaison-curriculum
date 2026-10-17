@@ -1,5 +1,13 @@
 # Codex Status
 
+## 2026-10-17 - Audit Class 3/5/6 : corrections deployees et appliquees : 190c236
+
+- Deploye via `docker/deploy.sh 190c236` (PR #40 a #44). Precedent : `21931dc`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T223541Z` (contient desormais `react-before.tgz` ; plus aucune `public/react-before-*` sur le site). Aucune migration.
+- Audit (PR #42, `docs/audits/2026-10-17-class-3-5-6.md`) : 1 392 exercices joues automatiquement (ecran + serveur) : 1 347 justes partout, 1 casse (#2082), 44 manuels ; relecture du contenu : 40 bloquants, 110 a revoir.
+- Code (PR #43) : option en double comptee juste quelle que soit la copie (ecran + serveur) ; trous de plus de 3 tirets.
+- Contenu (PR #44) : `AuditClass356ContentFixSeeder` lance avec accord de l'utilisateur apres sauvegarde verifiee `/home/david/edumaison-backups/pre-corrections-class356-20261017T223651Z` (58 tables, SHA256SUMS) : 56 corrections appliquees sur 40 exercices, second passage 0 ; controles en base (92, 496, 1837, 1884, 1925, 1987, 2082, 2153, 2938, 2974) conformes ; aucune erreur Laravel.
+- Reste : 110 constats « a revoir » (par lots) ; meme verification a faire sur Nursery, Class 1, 2 et 4 (les cles fausses suivent un schema de generation) ; passage de classe des enfants (J. -> C3, M. -> C5, R. -> C6) et decision sur le profil I. ; correction du record de serie au passage de classe.
+
 ## 2026-10-17 - Volume de Mama Judi et lecture de l'enonce deployes : 21931dc
 
 - Deploye via `docker/deploy.sh 21931dc` (PR #39). Precedent : `1476804`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T214209Z`. Aucune migration.
