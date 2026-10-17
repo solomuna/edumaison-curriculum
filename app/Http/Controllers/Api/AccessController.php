@@ -20,6 +20,11 @@ class AccessController extends Controller
         return response()->json([
             'unlocked' => $householdId !== null,
             'family' => $householdId ? DB::table('households')->where('id', $householdId)->first(['name']) : null,
+            // Famille déjà sécurisée : l'espace parent propose la connexion au
+            // compte plutôt qu'un formulaire de création qui serait refusé.
+            'has_parent_account' => $householdId
+                ? DB::table('household_user')->where('household_id', $householdId)->where('is_active', true)->exists()
+                : false,
         ]);
     }
 
