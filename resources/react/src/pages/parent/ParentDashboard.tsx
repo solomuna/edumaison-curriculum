@@ -34,7 +34,9 @@ export default function ParentDashboard() {
   const [detail, setDetail] = useState<ChildDetail | null>(null)
   const [tab, setTab] = useState<Tab>('children')
   const [promoting, setPromoting] = useState<number | null>(null)
-  const [promoted, setPromoted] = useState<number[]>([])
+  // Passages faits pendant cette visite : la carte montre le changement réel
+  // (« Class 1 → Class 2 ✓ »), pas le passage suivant.
+  const [promoted, setPromoted] = useState<Record<number, { from: string; to: string }>>({})
   const [hasFamilyAccount, setHasFamilyAccount] = useState(false)
   const [accountChecked, setAccountChecked] = useState(false)
 
@@ -57,7 +59,12 @@ export default function ParentDashboard() {
       await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
       const token = decodeURIComponent(document.cookie.split('; ').find(v => v.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || '')
       const r = await fetch(`/api/children/${childId}/promote`, { method: 'POST', credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': token, Accept: 'application/json' } })
-      if (r.ok) { setPromoted(p => [...p, childId]); setData(await fetch('/api/parent/dashboard').then(x => x.json())) }
+      if (r.ok) {
+        const from = data?.children.find(c => c.id === childId)?.level ?? ''
+        const result = await r.json().catch(() => ({}))
+        setPromoted(p => ({ ...p, [childId]: { from, to: result.new_level ?? NEXT_LEVEL[from] ?? '' } }))
+        setData(await fetch('/api/parent/dashboard').then(x => x.json()))
+      }
     } finally { setPromoting(null) }
   }
 
@@ -68,7 +75,9 @@ export default function ParentDashboard() {
       const token = decodeURIComponent(document.cookie.split('; ').find(v => v.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=') || '')
       await fetch('/api/children/promote-all', { method: 'POST', credentials: 'same-origin', headers: { 'X-XSRF-TOKEN': token, Accept: 'application/json' } })
       const fresh = await fetch('/api/parent/dashboard').then(x => x.json())
-      setData(fresh); setPromoted(data?.children.map(c => c.id) || [])
+      const before = Object.fromEntries((data?.children ?? []).map(c => [c.id, c.level]))
+      setData(fresh)
+      setPromoted(p => ({ ...p, ...Object.fromEntries((fresh?.children ?? []).filter((c: { id: number; level: string }) => before[c.id] && before[c.id] !== c.level).map((c: { id: number; level: string }) => [c.id, { from: before[c.id], to: c.level }])) }))
     } finally { setPromoting(null) }
   }
 
@@ -158,19 +167,20 @@ export default function ParentDashboard() {
                 </div>
               </div>
             )}
-            {!loading && data && data.children.some(c => NEXT_LEVEL[c.level]) && (
+            {!loading && data && data.children.some(c => NEXT_LEVEL[c.level] || promoted[c.id]) && (
               <div style={{ background: '#DBEAFE', borderRadius: 18, padding: '16px', marginBottom: 20, border: '2px solid #93C5FD' }}>
                 <div style={{ fontSize: 14, fontWeight: 900, color: '#1D4ED8', marginBottom: 4 }}>🎓 New School Year</div>
                 <div style={{ fontSize: 12, color: '#3B82F6', marginBottom: 14, lineHeight: 1.4 }}>Promote children to the next class.</div>
                 {data.children.map(child => {
+                  const done = promoted[child.id]
                   const next = NEXT_LEVEL[child.level]
-                  if (!next) return null
-                  const isDone = promoted.includes(child.id)
+                  if (!next && !done) return null
+                  const isDone = !!done
                   return (
                     <div key={child.id} style={{ background: 'var(--white)', borderRadius: 12, padding: '12px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10, opacity: isDone ? 0.55 : 1 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 14, fontWeight: 800, color: '#1E3A5F' }}>{child.name.split(' ')[0]}</div>
-                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{child.level} → {next}</div>
+                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{done ? `${done.from} → ${done.to}` : `${child.level} → ${next}`}</div>
                       </div>
                       <button onClick={() => !isDone && promoteChild(child.id)} disabled={isDone || promoting === child.id}
                         style={{ padding: '7px 14px', borderRadius: 10, border: 'none', background: isDone ? '#D1FAE5' : '#1D4ED8', color: isDone ? '#059669' : 'white', fontWeight: 800, fontSize: 12, cursor: isDone ? 'default' : 'pointer', fontFamily: 'Nunito, system-ui, sans-serif' }}>
