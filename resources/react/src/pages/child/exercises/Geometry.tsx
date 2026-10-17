@@ -90,13 +90,13 @@ export default function Geometry({ content, onComplete }: Props) {
   useLessonCheck(practiceOnly || sel !== null, () => {
     if (practiceOnly) { onComplete(false, { practice_only: true }); return }
     if (sel === null) return
-    const ok = sel === ans
+    const ok = sel === ans || opts[sel] === opts[ans]
     onComplete(ok, { selected_index: sel }, ok ? undefined : `${t('The correct answer is', 'La bonne réponse est')} : ${opts[ans]}`)
   })
 
   const state = (i: number) => {
     if (!checked) return sel === i ? ' is-selected' : ''
-    if (i === ans) return ' is-right'
+    if (i === ans || opts[i] === opts[ans]) return ' is-right'
     return i === sel ? ' is-wrong' : ' is-faded'
   }
 

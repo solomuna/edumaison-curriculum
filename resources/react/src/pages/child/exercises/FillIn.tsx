@@ -92,8 +92,9 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const current = rq.current
   const item = items[current]
   const text = item?.prompt || item?.text || item?.sentence || ''
-  const parts = text.split('___')
-  const spoken = text.replace('___', C.blank)
+  // Un trou s'écrit « ___ » ; certains contenus en mettent plus (« _____ »).
+  const parts = text.split(/_{3,}/)
+  const spoken = text.replace(/_{3,}/, C.blank)
   const isLast = rq.isLastStep
   // Indice : lettres seulement (« Goodbye! » -> G, 7 lettres)
   const answerLetters = (item?.answer || '').match(/[\p{L}\p{N}]/gu) ?? []
@@ -189,7 +190,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
     return (
       <LessonEnd
         isFrench={isFrench}
-        results={items.map((it, i) => ({ title: (it.prompt || it.text || it.sentence || '').replace('___', '…'), correct: !!scores[i] }))}
+        results={items.map((it, i) => ({ title: (it.prompt || it.text || it.sentence || '').replace(/_{3,}/, '…'), correct: !!scores[i] }))}
         total={items.length}
         bestStreak={bestStreak}
        

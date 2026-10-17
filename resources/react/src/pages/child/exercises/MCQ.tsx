@@ -101,7 +101,8 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
   const check = useCallback(() => {
     if (checked || selectedIdx === null || !q) return
-    const correct = selectedIdx === shuffledQ.answerIndex
+    // Une option présente deux fois (« 0.12 », « 0.12 ») : les deux sont justes.
+    const correct = selectedIdx === shuffledQ.answerIndex || String(shuffledQ.options[selectedIdx]) === String(shuffledQ.options[shuffledQ.answerIndex])
     setChecked(true)
     setLastCorrect(correct)
     if (!rq.isRetry) setResults(r => [...r, {
@@ -243,7 +244,7 @@ export default function MCQ({ title, instructions, content, subject, onComplete,
 
         <div className={`lesson-choices${shortOptions ? ' is-grid' : ''}`} role="radiogroup">
           {shuffledQ.options.map((opt: string, i: number) => {
-            const isAnswer = i === shuffledQ.answerIndex
+            const isAnswer = i === shuffledQ.answerIndex || String(opt) === String(shuffledQ.options[shuffledQ.answerIndex])
             const isChosen = selectedIdx === i
             let state = ''
             if (checked) state = isAnswer ? ' is-right' : isChosen ? ' is-wrong' : ' is-faded'

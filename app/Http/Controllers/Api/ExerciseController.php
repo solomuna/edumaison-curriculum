@@ -293,7 +293,8 @@ class ExerciseController extends Controller
                 return [
                     'question_index' => $index,
                     'selected_index' => $selected,
-                    'correct' => $selected === $correctIndex,
+                    // Une option présente deux fois : les deux sont justes.
+                    'correct' => $selected === $correctIndex || $options[$selected] === $options[$correctIndex],
                 ];
             });
             $score = (int) round($cleanItems->where('correct', true)->count() / $questions->count() * 100);
@@ -380,7 +381,7 @@ class ExerciseController extends Controller
                 throw ValidationException::withMessages(['answers.selected_index' => 'A valid option is required.']);
             }
 
-            $correct = $selected === $correctIndex;
+            $correct = $selected === $correctIndex || (string) $options[$selected] === (string) $options[$correctIndex];
             return [$correct ? 100 : 0, 'auto_checked', [
                 'selected_index' => $selected,
                 'correct' => $correct,
