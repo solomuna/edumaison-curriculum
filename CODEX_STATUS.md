@@ -4,7 +4,8 @@
 
 - Deploye via `docker/deploy.sh 6a8fc0b` (PR #49, #50). Precedent : `ae91c8c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T231742Z`. Aucune migration.
 - Apres un passage de classe, la carte affiche le passage reellement fait (elle montrait le suivant, ce qui a fait croire que I. etait en Class 3).
-- Passages faits par l'utilisateur le 17/10 : R. -> Class 6, M. -> Class 5, I. -> Class 2 (un passage de plus attendu pour Class 3). Profil J. desactive, laisse tel quel.
+- Niveaux des enfants (18/10) : R. Class 6, M. Class 5, I. Class 3. M. avait ete promu deux fois par erreur (Class 6) : remis en Class 5 en base avec accord explicite de l'utilisateur (UPDATE garde sur le niveau Class 6, 1 ligne). Profil J. desactive, laisse tel quel.
+- A corriger : Parametres propose « Securiser cette famille » a une famille qui a deja un compte (devrait proposer la connexion) ; en-tete « 2025-2026 » au lieu de l'annee en cours.
 
 ## 2026-10-18 - Passage de classe repare : ae91c8c
 
