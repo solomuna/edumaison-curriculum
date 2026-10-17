@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 class AuditClass356ContentFixSeeder extends Seeder
 {
     /** [id, chemin dans content, valeur trouvée à l'audit, valeur corrigée] */
-    private function fixes(): array
+    protected function fixes(): array
     {
         $headSentence = 'The head of the family who makes important decisions is called the family _____.';
         $headFixed = 'The person who makes important decisions for the family is called the family ___.';
