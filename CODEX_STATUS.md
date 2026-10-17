@@ -1,5 +1,12 @@
 # Codex Status
 
+## 2026-10-18 - Passage de classe repare : ae91c8c
+
+- Deploye via `docker/deploy.sh ae91c8c` (PR #47, #48). Precedent : `527fbab`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T230145Z`. Aucune migration.
+- Cause : `promote()` / `promoteAll()` mettaient a jour une table `streaks` inexistante -> erreur 500 apres le changement de niveau (risque de double clic = classe sautee). Serie et record calcules depuis les tentatives : lignes retirees.
+- Controles : `/app`, `/mama` 200 x3, API 401, plus aucune reference a `streaks` dans le code deploye, aucune erreur Laravel.
+- A faire par l'utilisateur : passage de classe de J. (C2->C3), M. (C4->C5), R. (C5->C6), un clic chacun ; decision sur le profil I.
+
 ## 2026-10-17 - Audit Class 3/5/6, lot 2 (phrases a trous) applique : 527fbab
 
 - Deploye via `docker/deploy.sh 527fbab` (PR #45, #46). Precedent : `190c236`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T225117Z`. Aucune migration.
