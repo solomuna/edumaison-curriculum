@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 
 type Props = { onClaimed: () => void }
 
@@ -10,6 +10,27 @@ export default function LegacyFamilyClaim({ onClaimed }: Props) {
   const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '' })
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [hasAccount, setHasAccount] = useState(false)
+
+  // Famille déjà sécurisée (entrée ici avec l'ancien code familial) : proposer la
+  // connexion au compte au lieu d'un formulaire de création qui serait refusé.
+  useEffect(() => {
+    fetch('/api/access/status', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(response => (response.ok ? response.json() : null))
+      .then(status => setHasAccount(Boolean(status?.has_parent_account)))
+      .catch(() => {})
+  }, [])
+
+  // Quitte l'accès par code familial : l'écran d'accueil propose « J'ai déjà un compte ».
+  const signIn = async () => {
+    setSubmitting(true)
+    try {
+      await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' })
+      await fetch('/api/access/lock', { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-XSRF-TOKEN': token() } })
+    } finally {
+      window.location.reload()
+    }
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -40,7 +61,20 @@ export default function LegacyFamilyClaim({ onClaimed }: Props) {
 
   const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', minHeight: 50, borderRadius: 12, border: '2px solid #D7E8DA', padding: '0 14px', fontSize: 15, background: '#FFF' }
 
-  return <section style={{ maxWidth: 560, margin: '0 auto', background: 'var(--card)', border: '1.5px solid var(--border)', borderTop: '5px solid #1D6B2A', borderRadius: 8, padding: 20 }}>
+  const card: React.CSSProperties = { maxWidth: 560, margin: '0 auto', background: 'var(--card)', border: '1.5px solid var(--border)', borderTop: '5px solid #1D6B2A', borderRadius: 8, padding: 20 }
+
+  if (hasAccount) return <section style={card}>
+    <div style={{ width: 46, height: 46, borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#DDEFE1', color: '#1D6B2A', fontSize: 22, fontWeight: 900 }} aria-hidden="true">🔑</div>
+    <h2 style={{ margin: '14px 0 6px', fontSize: 22, color: 'var(--text-dark)' }}>Connecte-toi à ton compte parent</h2>
+    <p style={{ margin: '0 0 16px', color: 'var(--text-soft)', lineHeight: 1.5, fontSize: 14 }}>
+      Cette famille est déjà sécurisée par un compte parent. Pour voir les paramètres, les fiches des enfants et les productions à valider, connecte-toi avec ton adresse e-mail et ton mot de passe.
+    </p>
+    <button onClick={signIn} disabled={submitting} style={{ width: '100%', minHeight: 50, border: 0, borderRadius: 12, background: '#1D6B2A', color: '#FFF', fontWeight: 900, fontSize: 15, cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? .65 : 1 }}>
+      {submitting ? 'Un instant…' : 'Se connecter avec mon compte'}
+    </button>
+  </section>
+
+  return <section style={card}>
     <div style={{ width: 46, height: 46, borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#DDEFE1', color: '#1D6B2A', fontSize: 22, fontWeight: 900 }} aria-hidden="true">✓</div>
     <h2 style={{ margin: '14px 0 6px', fontSize: 22, color: 'var(--text-dark)' }}>Sécuriser cette famille</h2>
     <p style={{ margin: '0 0 16px', color: 'var(--text-soft)', lineHeight: 1.5, fontSize: 14 }}>
