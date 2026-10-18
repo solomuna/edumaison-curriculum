@@ -1,5 +1,15 @@
 # Codex Status
 
+## 2026-10-18 - Enonces Mama Judi (systeme), connexion parent, audit et corrections des autres niveaux : 82ae849
+
+- Migration `2026_10_18_010000_create_speech_clips` appliquee seule depuis `origin/master` apres sauvegarde `/home/david/edumaison-backups/pre-migration-speech-20261018T054932Z` (58 tables, SHA256SUMS).
+- Deploye via `docker/deploy.sh 82ae849` (PR #52 a #56). Precedent : `6a8fc0b`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261018T054946Z`.
+- #53 : enonces lus par Mama Judi (ElevenLabs) si les morceaux sont prets et identiques au texte affiche, sinon voix du telephone. Aucun morceau genere pour l'instant : `ELEVENLABS_STATEMENT_*` absents du `.env` (modele par defaut, generation en arriere-plan desactivee). Prochaine etape (accord) : essai d'ecoute `app:voice-statements --sample`.
+- #54 : Parametres propose « Se connecter avec mon compte » a une famille deja securisee.
+- #55/#56 : audit des autres niveaux (1 285 jouables justes ecran + serveur) ; `AuditOtherLevelsContentFixSeeder` lance avec accord apres sauvegarde `/home/david/edumaison-backups/pre-corrections-autres-niveaux-20261018T055105Z` (59 tables) : 71 corrections sur 41 exercices, second passage 0 ; controles en base (1818, 1386, 2761, 2896, 2996) conformes.
+- Controles : aucune migration en attente, route `/api/exercises/{id}/speech` presente, `/app` `/mama` 200 x3, API 401, aucune erreur Laravel.
+- En attente de decision : annee scolaire courante (2025-2026 en base) ; essai d'ecoute des enonces ; ~220 constats « a revoir » (tous niveaux).
+
 ## 2026-10-18 - Carte « New School Year » corrigee : 6a8fc0b
 
 - Deploye via `docker/deploy.sh 6a8fc0b` (PR #49, #50). Precedent : `ae91c8c`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261017T231742Z`. Aucune migration.
