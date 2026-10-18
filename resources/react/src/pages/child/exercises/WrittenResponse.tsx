@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MamaJudi } from '../../../services/MamaJudi'
 import { SoundService } from '../../../services/SoundService'
 import { fireSuccess } from '../../../components/SuccessFx'
-import { JUDI, labelsFor, prepareLessonAudio } from '../../../components/lesson/lessonKit'
+import { JUDI, labelsFor, prepareLessonAudio, readStatement } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler, WrittenResponseContent } from '../../../types/exercise'
 
 interface Props {
@@ -10,6 +10,8 @@ interface Props {
   instructions: string
   content: WrittenResponseContent
   isFrench?: boolean
+  /** Pour lire la consigne avec la voix de Mama Judi (fichiers préparés par le serveur). */
+  exerciseId?: number
   onComplete: ExerciseCompletionHandler
   onBack: () => void
 }
@@ -43,7 +45,7 @@ const SpeakerIcon = () => (
   </svg>
 )
 
-export default function WrittenResponse({ title, instructions, content, isFrench = false, onComplete, onBack }: Props) {
+export default function WrittenResponse({ title, instructions, content, isFrench = false, exerciseId, onComplete, onBack }: Props) {
   const [text, setText] = useState('')
   const [submissionError, setSubmissionError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -135,7 +137,7 @@ export default function WrittenResponse({ title, instructions, content, isFrench
           <div className="lesson-bubble">
             {instructions && <div className="lesson-bubble__hint">{instructions}</div>}
             <div className="lesson-bubble__row">
-              <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(content.prompt, lang, 0.9) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <button className="lesson-speak" onClick={() => { readStatement(exerciseId, [{ key: 'prompt', text: content.prompt }], () => { void MamaJudi.speakLang(content.prompt, lang, 0.9) }) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
               <span>{content.prompt}</span>
             </div>
           </div>

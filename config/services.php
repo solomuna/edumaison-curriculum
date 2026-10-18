@@ -40,6 +40,10 @@ return [
         'key' => env('ELEVENLABS_API_KEY', ''),
         'voice_id' => env('ELEVENLABS_VOICE_ID', ''),
         'model' => env('ELEVENLABS_MODEL', 'eleven_multilingual_v2'),
+        // Énoncés lus par Mama Judi : modèle (eleven_flash_v2_5 = moitié prix)
+        // et plafond mensuel de caractères générés en arrière-plan (0 = aucun).
+        'statement_model' => env('ELEVENLABS_STATEMENT_MODEL', 'eleven_multilingual_v2'),
+        'statement_monthly_chars' => (int) env('ELEVENLABS_STATEMENT_MONTHLY_CHARS', 0),
     ],
 
     'slack' => [

@@ -68,7 +68,7 @@ import MamaJudiPose from '../../components/MamaJudiPose'
 
 import { normalizeExerciseContent } from '../../lib/normalizeExercise'
 
-import { speakAfterIntro } from '../../components/lesson/lessonKit'
+import { readStatement } from '../../components/lesson/lessonKit'
 import LessonShell, { type ReportResult } from '../../components/lesson/LessonShell'
 
 
@@ -570,8 +570,14 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
       .join(' ')
     if (!text) return
     const lang = isFrench ? 'fr-FR' : 'en-GB'
-    // Après l'encouragement de début de leçon (« C'est parti ! »), sans le couper.
-    const cancel = speakAfterIntro(() => MamaJudi.speakLangAfter(text, lang, 800))
+    // Voix de Mama Judi si les morceaux sont prêts (sinon voix du téléphone),
+    // après l'encouragement de début de leçon (« C'est parti ! »), sans le couper.
+    const parts = [
+      ...(exercise.instructions ? [{ key: 'instructions', text: exercise.instructions }] : []),
+      ...(typeof content.statement === 'string' ? [{ key: 'statement', text: content.statement }]
+        : statement ? [{ key: 'question', text: statement }] : []),
+    ]
+    const cancel = readStatement(exercise.id, parts, () => MamaJudi.speakLangAfter(text, lang, 800), true)
     return () => { cancel(); MamaJudi.stop() }
 
 
@@ -606,6 +612,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
     <LessonShell
       title={exercise.title}
       instructions={exercise.instructions}
+      exerciseId={exercise.id}
       isFrench={isFrench}
       onBack={onBack}
       onSubmit={handleBool}
@@ -641,7 +648,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <MCQ title={exercise.title} instructions={exercise.instructions} content={content} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
+    return <MCQ exerciseId={exercise.id} title={exercise.title} instructions={exercise.instructions} content={content} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
 
 
 
@@ -668,7 +675,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
   }
 
   if (type === 'written_response') {
-    return <WrittenResponse title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
+    return <WrittenResponse exerciseId={exercise.id} title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
   }
 
 
@@ -681,7 +688,7 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
 
 
 
-    return <FillIn title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
+    return <FillIn exerciseId={exercise.id} title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
 
 
 
@@ -935,12 +942,12 @@ export default function ExercisePlayer({ exercise, onComplete, onBack }: Props) 
         return q
       })
     }
-    return <MCQ title={exercise.title} instructions={exercise.instructions} content={fallbackMcq} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
+    return <MCQ exerciseId={exercise.id} title={exercise.title} instructions={exercise.instructions} content={fallbackMcq} subject={(exercise as any).subject} onComplete={onComplete} onBack={onBack} />
   }
 
   // Fallback FillIn — sentence/answer sans champ type
   if (content.sentence !== undefined && content.answer !== undefined) {
-    return <FillIn title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
+    return <FillIn exerciseId={exercise.id} title={exercise.title} instructions={exercise.instructions} content={content} isFrench={isFrench} onComplete={onComplete} onBack={onBack} />
   }
 
 

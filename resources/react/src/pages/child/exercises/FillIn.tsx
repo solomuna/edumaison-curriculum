@@ -3,7 +3,7 @@ import { MamaJudi } from '../../../services/MamaJudi'
 import { fireSuccess } from '../../../components/SuccessFx'
 import LessonEnd from '../../../components/lesson/LessonEnd'
 import { useRetryQueue } from '../../../components/lesson/useRetryQueue'
-import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, speakAfterIntro, useIdleNudge, exactAnswer, diffAnswer } from '../../../components/lesson/lessonKit'
+import { JUDI, XP_PER_CORRECT, labelsFor, randomPraise, isStreakMilestone, playVerdict, prepareLessonAudio, speakAfterIntro, useIdleNudge, exactAnswer, diffAnswer, readStatement } from '../../../components/lesson/lessonKit'
 import type { ExerciseCompletionHandler } from '../../../types/exercise'
 
 interface FillInItem {
@@ -26,13 +26,15 @@ interface Props {
   instructions: string
   content: FillInContent
   isFrench?: boolean
+  /** Pour lire l'énoncé avec la voix de Mama Judi (fichiers préparés par le serveur). */
+  exerciseId?: number
   onComplete: ExerciseCompletionHandler
   onBack: () => void
 }
 
 const COPY = {
-  en: { complete: 'Complete the sentence', hint: 'Hint', hintText: (l: string, n: number) => `starts with ${l} (${n} letters)`, youWrote: 'You wrote:', blank: 'blank' },
-  fr: { complete: 'Complète la phrase', hint: 'Indice', hintText: (l: string, n: number) => `commence par ${l} (${n} lettres)`, youWrote: 'Tu as écrit :', blank: 'blanc' },
+  en: { complete: 'Complete the sentence', hint: 'Hint', hintText: (l: string, n: number) => `starts with ${l} (${n} letters)`, youWrote: 'You wrote:' },
+  fr: { complete: 'Complète la phrase', hint: 'Indice', hintText: (l: string, n: number) => `commence par ${l} (${n} lettres)`, youWrote: 'Tu as écrit :' },
 }
 
 /** Bonne réponse avec ce qui manque surligné, puis la réponse de l'enfant avec ce qui est en trop barré. */
@@ -65,7 +67,7 @@ const SpeakerIcon = () => (
 )
 
 
-export default function FillIn({ title, instructions, content, isFrench = false, onComplete, onBack }: Props) {
+export default function FillIn({ title, instructions, content, isFrench = false, exerciseId, onComplete, onBack }: Props) {
   const [lastAnswer, setLastAnswer] = useState('')
   const [input, setInput] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
@@ -94,7 +96,9 @@ export default function FillIn({ title, instructions, content, isFrench = false,
   const text = item?.prompt || item?.text || item?.sentence || ''
   // Un trou s'écrit « ___ » ; certains contenus en mettent plus (« _____ »).
   const parts = text.split(/_{3,}/)
-  const spoken = text.replace(/_{3,}/, C.blank)
+  // Le trou est lu comme une courte pause : « blank » / « blanc » prêtait à confusion
+  // (« Le chat blanc du lait »).
+  const spoken = text.replace(/_{3,}/, '…')
   const isLast = rq.isLastStep
   // Indice : lettres seulement (« Goodbye! » -> G, 7 lettres)
   const answerLetters = (item?.answer || '').match(/[\p{L}\p{N}]/gu) ?? []
@@ -110,10 +114,11 @@ export default function FillIn({ title, instructions, content, isFrench = false,
     setFeedback(null)
     setHintUsed(false)
     if (!item) return
-    const say = () => MamaJudi.speakLangAfter(rq.step === 0 && instructions ? `${instructions.trim().replace(/[.!?:;]+$/, '')}. ${spoken}` : spoken, lang, 250, 0.85)
-    // Première phrase : après l'encouragement de début de leçon.
-    if (rq.step === 0) return speakAfterIntro(say)
-    say()
+    // Première phrase : consigne + phrase, après l'encouragement de début de leçon.
+    const first = rq.step === 0 && !!instructions
+    const parts = [...(first ? [{ key: 'instructions', text: instructions }] : []), { key: `item:${current}`, text }]
+    const fallback = () => MamaJudi.speakLangAfter(first ? `${instructions.trim().replace(/[.!?:;]+$/, '')}. ${spoken}` : spoken, lang, 250, 0.85)
+    return readStatement(exerciseId, parts, fallback, rq.step === 0)
   }, [rq.step])
   useIdleNudge(feedback === null, rq.step)
 
@@ -227,7 +232,7 @@ export default function FillIn({ title, instructions, content, isFrench = false,
           <div className="lesson-bubble">
             {instructions && <div className="lesson-bubble__hint">{instructions}</div>}
             <div className="lesson-bubble__row">
-              <button className="lesson-speak" onClick={() => { void MamaJudi.speakLang(spoken, lang, 0.85) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
+              <button className="lesson-speak" onClick={() => { readStatement(exerciseId, [{ key: `item:${current}`, text }], () => { void MamaJudi.speakLang(spoken, lang, 0.85) }) }} aria-label={L.listen} title={L.listen}><SpeakerIcon /></button>
               <span className="lesson-fill__sentence">
                 <span>{parts[0]}</span>
                 {feedback ? (
