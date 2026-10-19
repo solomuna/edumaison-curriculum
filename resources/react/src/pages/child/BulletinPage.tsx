@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SchoolYearSelect, { useSchoolYears } from '../../components/SchoolYearSelect'
 import type { Child } from '../../types/child'
 
 interface Result {
@@ -14,6 +15,7 @@ interface Result {
 interface BulletinData {
   child: { name: string; first_name: string; level: string; birth_date: string; student_number: string }
   year: string
+  school_year_id?: number | null
   results: Result[]
   average: number
   total_xp: number
@@ -70,10 +72,14 @@ export default function BulletinPage({ child, onBack }: Props) {
   const [data, setData] = useState<BulletinData | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Année du bulletin : l'année en cours par défaut, les précédentes restent consultables.
+  const years = useSchoolYears()
+  const [yearId, setYearId] = useState<number | null>(null)
+
   useEffect(() => {
-    fetch(`/api/bulletin/child/${child.id}`)
+    fetch(`/api/bulletin/child/${child.id}${yearId ? `?school_year_id=${yearId}` : ''}`)
       .then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false))
-  }, [child.id])
+  }, [child.id, yearId])
 
   if (loading) return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui,sans-serif' }}>
@@ -126,7 +132,9 @@ export default function BulletinPage({ child, onBack }: Props) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 12, color: '#666' }}>School Year</div>
-            <div style={{ fontSize: 14, fontWeight: 900, color: '#333' }}>{data.year}</div>
+            <div style={{ fontSize: 14, fontWeight: 900, color: '#333' }}>
+              {years.length > 1 ? <SchoolYearSelect years={years} value={yearId ?? data.school_year_id ?? null} onChange={setYearId} /> : data.year}
+            </div>
             <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
               {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
             </div>

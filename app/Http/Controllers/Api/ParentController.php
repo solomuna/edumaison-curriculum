@@ -9,13 +9,14 @@ use App\Models\SchoolYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Support\FamilyContext;
+use App\Support\SchoolYears;
 
 class ParentController extends Controller
 {
     // Vue globale de tous les enfants
     public function dashboard(Request $request)
     {
-        $schoolYear = SchoolYear::where("is_current", true)->first();
+        $schoolYear = SchoolYears::resolve($request);
 
         $householdId = FamilyContext::householdId($request);
         abort_unless($householdId, 401);
@@ -33,17 +34,26 @@ class ParentController extends Controller
             });
 
         return response()->json([
-            "school_year" => $schoolYear?->label ?? "2025-2026",
+            "school_year" => $schoolYear?->label ?? "",
+            "school_year_id" => $schoolYear?->id,
             "children"    => $children,
             "total_completed_exercises" => $children->sum("completed_exercises"),
             "total_attempts"  => $children->sum("attempts"),
         ]);
     }
 
+    // Années consultables par la famille (sélecteur de l'espace parent)
+    public function schoolYears(Request $request)
+    {
+        $householdId = (int) (FamilyContext::householdId($request) ?? 0);
+        abort_unless($householdId > 0, 401);
+        return response()->json(SchoolYears::forHousehold($householdId));
+    }
+
     // Détail d un enfant
     public function childDetail(Request $request, int $childId)
     {
-        $schoolYear = SchoolYear::where("is_current", true)->first();
+        $schoolYear = SchoolYears::resolve($request);
         $householdId = FamilyContext::householdId($request);
         abort_unless($householdId, 401);
         $child = Child::with("level")->where('household_id', $householdId)

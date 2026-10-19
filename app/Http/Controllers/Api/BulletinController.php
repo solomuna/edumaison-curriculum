@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Support\SchoolYears;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 
@@ -15,13 +17,15 @@ class BulletinController extends Controller
         return "Let's Work Harder!";
     }
 
-    public function forChild(int $childId)
+    public function forChild(Request $request, int $childId)
     {
         $child = DB::table('children')->where('id', $childId)->first();
         if (!$child) return response()->json(null);
 
         $level  = DB::table('levels')->where('id', $child->level_id)->first();
-        $year   = DB::table('school_years')->orderByDesc('id')->first();
+        // Année demandée (sélecteur), sinon l'année en cours (et non la dernière créée).
+        $year   = SchoolYears::resolve($request);
+        $yearId = (int) ($year?->id ?? 0);
 
         // ?? Calcul dynamique depuis exercise_attempts ?????????????????????
         $dynamic = DB::select("
@@ -40,10 +44,11 @@ class BulletinController extends Controller
             LEFT JOIN school_results sr ON sr.child_id = :cid AND sr.subject_id = s.id
             WHERE ea.child_id = :cid2
               AND ea.status   = 'completed'
+              AND (:yid = 0 OR ea.school_year_id = :yid2)
               AND ea.max_score > 0
             GROUP BY s.id, s.name, sr.teacher_comment
             ORDER BY s.id
-        ", ['cid' => $childId, 'cid2' => $childId]);
+        ", ['cid' => $childId, 'cid2' => $childId, 'yid' => $yearId, 'yid2' => $yearId]);
 
         // ?? Fallback school_results si pas encore d'attempts ?????????????
         if (empty($dynamic)) {
@@ -92,7 +97,8 @@ class BulletinController extends Controller
         }
 
         $avg      = round($results->avg('average_score'), 2);
-        $total_xp = DB::table('exercise_attempts')->where('child_id', $childId)->sum('score');
+        $total_xp = DB::table('exercise_attempts')->where('child_id', $childId)
+            ->when($yearId > 0, fn ($q) => $q->where('school_year_id', $yearId))->sum('score');
 
         // ?? Rang & moyenne classe ?????????????????????????????????????????
         $classmateIds = DB::table('children')->where('level_id', $child->level_id)->pluck('id')->toArray();
@@ -119,7 +125,8 @@ class BulletinController extends Controller
                 'birth_date'     => $child->birth_date,
                 'student_number' => $studentNumber,
             ],
-            'year'         => $year->label ?? $year->name ?? date('Y'),
+            'year'         => $year?->label ?? date('Y'),
+            'school_year_id' => $year?->id,
             'results'      => $results->values(),
             'average'      => $avg,
             'total_xp'     => (int)$total_xp,

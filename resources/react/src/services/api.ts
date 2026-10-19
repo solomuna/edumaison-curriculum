@@ -88,13 +88,15 @@ export async function selectNationalLanguage(childId: number, householdLanguageI
   return data
 }
 
-export async function getParentDashboard() {
-  const res = await fetch(`${BASE}/parent/dashboard`)
+const yearQuery = (yearId?: number | null) => (yearId ? `?school_year_id=${yearId}` : '')
+
+export async function getParentDashboard(yearId?: number | null) {
+  const res = await fetch(`${BASE}/parent/dashboard${yearQuery(yearId)}`)
   return res.json()
 }
 
-export async function getChildDetail(childId: number) {
-  const res = await fetch(`${BASE}/parent/child/${childId}`)
+export async function getChildDetail(childId: number, yearId?: number | null) {
+  const res = await fetch(`${BASE}/parent/child/${childId}${yearQuery(yearId)}`)
   return res.json()
 }
 export async function getExercisesForSubject(childId: number, subjectId: number) {
