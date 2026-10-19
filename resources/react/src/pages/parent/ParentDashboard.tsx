@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getParentDashboard, getChildDetail } from '../../services/api'
+import SchoolYearSelect, { useSchoolYears } from '../../components/SchoolYearSelect'
 import ExamResultsDashboard from './ExamResultsDashboard'
 import ExamCreator from '../../components/ExamCreator'
 import FamilySettings from './FamilySettings'
@@ -23,7 +24,7 @@ interface ProgressSummary {
   progress_pct: number
 }
 interface ChildSummary extends ProgressSummary { id: number; name: string; level: string; level_id: number }
-interface Dashboard { school_year: string; children: ChildSummary[]; total_completed_exercises: number; total_attempts: number }
+interface Dashboard { school_year: string; school_year_id?: number | null; children: ChildSummary[]; total_completed_exercises: number; total_attempts: number }
 interface ChildDetail { child: Pick<ChildSummary, 'id' | 'name' | 'level'>; summary: ProgressSummary; recent_attempts: unknown[] }
 type Tab = 'children' | 'calendar' | 'timetable' | 'exams' | 'create' | 'reviews' | 'settings'
 
@@ -40,7 +41,10 @@ export default function ParentDashboard() {
   const [hasFamilyAccount, setHasFamilyAccount] = useState(false)
   const [accountChecked, setAccountChecked] = useState(false)
 
-  useEffect(() => { getParentDashboard().then(setData).finally(() => setLoading(false)) }, [])
+  // Année affichée : l'année en cours par défaut, les précédentes restent consultables.
+  const years = useSchoolYears()
+  const [yearId, setYearId] = useState<number | null>(null)
+  useEffect(() => { getParentDashboard(yearId).then(setData).finally(() => setLoading(false)) }, [yearId])
   useEffect(() => {
     fetch('/api/family-auth/me', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(r => setHasFamilyAccount(r.ok))
@@ -50,7 +54,7 @@ export default function ParentDashboard() {
 
   const openDetail = async (childId: number) => {
     setSelected(childId)
-    setDetail(await getChildDetail(childId))
+    setDetail(await getChildDetail(childId, yearId))
   }
 
   const promoteChild = async (childId: number) => {
@@ -136,7 +140,9 @@ export default function ParentDashboard() {
       <div style={{ background: '#1D6B2A', padding: '14px 18px 0' }}>
         <div style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.6)', letterSpacing: '2px' }}>EDUMAISON</div>
         <div style={{ fontSize: 20, fontWeight: 900, color: 'white', marginTop: 2 }}>Parent Dashboard</div>
-        {data && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2, paddingBottom: 12 }}>{data.school_year}</div>}
+        {data && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2, paddingBottom: 12 }}>
+          {years.length > 1 ? <SchoolYearSelect years={years} value={yearId ?? data.school_year_id ?? null} onChange={setYearId} light /> : data.school_year}
+        </div>}
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 6, paddingBottom: 0, overflowX: 'auto' }}>
           {TABS.map(([id, label, icon]) => (

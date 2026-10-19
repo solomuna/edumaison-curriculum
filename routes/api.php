@@ -88,6 +88,7 @@ Route::get("/exercises/child/{childId}", [ExerciseController::class, "forChild"]
 Route::post("/exercises/attempt", [ExerciseController::class, "attempt"])->middleware('child.family');
 Route::get("/child/{childId}/profile", [ChildController::class, "profile"])->middleware('child.family');
 Route::get("/parent/dashboard", [ParentController::class, "dashboard"]);
+Route::get("/school-years", [ParentController::class, "schoolYears"]);
 Route::get("/parent/child/{childId}", [ParentController::class, "childDetail"])->middleware('child.family');
 Route::get('/exercises/child/{childId}/subject/{subjectId}', [ExerciseController::class, 'forSubject'])->middleware('child.family');
 Route::get('/streak/child/{childId}', [StreakController::class, 'forChild'])->middleware('child.family');
