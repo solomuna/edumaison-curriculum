@@ -1,5 +1,12 @@
 # Codex Status
 
+## 2026-10-19 - Annee scolaire 2026-2027 en cours ; enonces Class 3 ; selecteur d'annee : d4b9f2e
+
+- Deploye via `docker/deploy.sh d4b9f2e` (PR #57, #58). Precedent : `82ae849`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261019T080158Z`. Aucune migration.
+- #58 : selecteur d'annee (espace parent, bulletin) ; le bulletin suit l'annee choisie (il prenait la derniere annee creee et melangeait les annees).
+- Passage a 2026-2027 (accord de l'utilisateur) apres sauvegarde `/home/david/edumaison-backups/pre-annee-2026-2027-20261019T080314Z` (59 tables, SHA256SUMS) : 2026-2027 du 2026-09-01 au 2027-06-30 marquee en cours ; 2025-2026 n'est plus en cours ; 9 tentatives faites depuis le 2026-09-01 rattachees a 2026-2027 (2 463 restent en 2025-2026). school_results, remediation_plans et terms inchanges. Controle : annee en cours 2026-2027, selecteur de la famille [2026-2027, 2025-2026], aucune erreur Laravel.
+- Enonces lus par Mama Judi : essai d'ecoute (14 enonces Multilingual + 14 Flash, Class 5) puis choix Multilingual ; Class 3 entierement generee (443 enonces, ~18 600 credits, plafond 20 000 donne par l'utilisateur). Class 5 et 6 : mois prochain (credits ElevenLabs).
+
 ## 2026-10-18 - Enonces Mama Judi (systeme), connexion parent, audit et corrections des autres niveaux : 82ae849
 
 - Migration `2026_10_18_010000_create_speech_clips` appliquee seule depuis `origin/master` apres sauvegarde `/home/david/edumaison-backups/pre-migration-speech-20261018T054932Z` (58 tables, SHA256SUMS).
