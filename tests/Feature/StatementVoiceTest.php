@@ -131,4 +131,19 @@ class StatementVoiceTest extends TestCase
         $this->withCredentials()->withUnencryptedCookie('edumaison_access', $family)->getJson('/api/exercises/1/speech')->assertOk();
         Queue::assertPushed(GenerateStatementVoice::class, fn ($job) => $job->exerciseId === 1);
     }
+
+    public function test_a_network_failure_skips_one_text_without_stopping_the_batch(): void
+    {
+        Http::fake([
+            'api.elevenlabs.io/*' => Http::sequence()
+                ->pushFailedConnection()->pushFailedConnection()->pushFailedConnection() // 1er texte : 3 essais en échec
+                ->push('ID3-fake-mp3', 200), // 2e texte : réussi
+        ]);
+        $exercise = $this->exercise(1, 1, 'True or false?', ['type' => 'true_false', 'statement' => 'Ice is hot.', 'answer' => false]);
+
+        [$created, , $left] = app(StatementVoice::class)->generateFor($exercise, 10_000);
+
+        $this->assertSame([1, 1], [$created, $left]);
+        $this->assertSame(1, SpeechClip::query()->count());
+    }
 }
