@@ -1,5 +1,11 @@
 # Codex Status
 
+## 2026-10-19 - Generation des enonces tolerante aux coupures ; Class 6 partielle : 3bffcd7
+
+- Deploye via `docker/deploy.sh 3bffcd7` (PR #60, #61). Precedent : `d4b9f2e`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261019T173732Z`. Aucune migration.
+- #61 : 3 essais par enonce en cas de coupure reseau, la commande continue si un enonce echoue (une coupure cURL 28 avait arrete la generation de Class 6 au 72e enonce).
+- Enonces Class 6 (accord, budget 9 000 caracteres) : 215 faits ; restent 279 enonces / 13 055 caracteres (~5 200 credits) au renouvellement des credits ElevenLabs. Solde estime ~1 300 credits.
+
 ## 2026-10-19 - Annee scolaire 2026-2027 en cours ; enonces Class 3 ; selecteur d'annee : d4b9f2e
 
 - Deploye via `docker/deploy.sh d4b9f2e` (PR #57, #58). Precedent : `82ae849`. Sauvegarde : `/home/david/edumaison-backups/deploy-20261019T080158Z`. Aucune migration.
