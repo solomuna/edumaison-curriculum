@@ -139,7 +139,17 @@ class StatementVoice
             if (SpeechClip::query()->where('hash', $hash)->exists()) continue;
             $chars = mb_strlen($text);
             if ($spent + $chars > $budget) { $left++; continue; }
-            if (! $dryRun) $this->generate($text, $language, $model);
+            if (! $dryRun) {
+                try {
+                    $this->generate($text, $language, $model);
+                } catch (\Throwable $e) {
+                    // Coupure réseau persistante : on passe au suivant (relancer la
+                    // commande reprend les manquants, sans refacturer les autres).
+                    report($e);
+                    $left++;
+                    continue;
+                }
+            }
             $created++;
             $spent += $chars;
         }
@@ -161,7 +171,10 @@ class StatementVoice
         // Les modèles « flash » / « turbo » acceptent la langue imposée (meilleure prononciation).
         if (str_contains($model, 'flash') || str_contains($model, 'turbo')) $payload['language_code'] = $language;
 
+        // Réseau instable (délai de connexion dépassé) : 3 essais espacés.
         $response = Http::timeout(40)
+            ->connectTimeout(15)
+            ->retry(3, 2000, fn ($exception) => $exception instanceof \Illuminate\Http\Client\ConnectionException, throw: false)
             ->withHeaders(['xi-api-key' => config('services.elevenlabs.key'), 'Accept' => 'audio/mpeg'])
             ->post('https://api.elevenlabs.io/v1/text-to-speech/'.rawurlencode(config('services.elevenlabs.voice_id')).'?output_format=mp3_44100_128', $payload);
         if (! $response->successful()) {
